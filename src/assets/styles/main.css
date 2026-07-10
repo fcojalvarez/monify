@@ -1,0 +1,75 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─────────────────────────────────────────────────────────────
+   Tokens de superficie — cambian con el modo claro / oscuro.
+   Los colores de marca viven en tailwind.config.ts.
+   ───────────────────────────────────────────────────────────── */
+@layer base {
+  :root {
+    --surface: #f7f8fb;
+    --surface-muted: #eef0f6;
+    --surface-raised: #ffffff;
+
+    --content: #161d3b;
+    --content-muted: #4a5378;
+    --content-subtle: #8a91ad;
+    --content-inverted: #ffffff;
+
+    --line: #e5e8f0;
+    --line-strong: #cfd4e3;
+
+    color-scheme: light;
+  }
+
+  .dark {
+    --surface: #0c1024;
+    --surface-muted: #141a33;
+    --surface-raised: #1a2140;
+
+    --content: #eef1fb;
+    --content-muted: #a8b0cf;
+    --content-subtle: #6a739a;
+    --content-inverted: #0c1024;
+
+    --line: #26305a;
+    --line-strong: #333f70;
+
+    color-scheme: dark;
+  }
+
+  html,
+  body {
+    @apply h-full;
+  }
+
+  body {
+    @apply bg-surface text-content font-sans antialiased;
+    /* respeta el notch en Capacitor / PWA */
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* Focus visible coherente en toda la app */
+  :focus-visible {
+    @apply outline-none ring-2 ring-primary-500/60 ring-offset-2 ring-offset-surface;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Clases de componente reutilizables del sistema de diseño
+   ───────────────────────────────────────────────────────────── */
+@layer components {
+  .card {
+    @apply rounded-card bg-surface-raised shadow-card;
+  }
+
+  .field-label {
+    @apply mb-1.5 block text-sm font-medium text-content-muted;
+  }
+
+  .helper-text {
+    @apply mt-1.5 text-xs text-content-subtle;
+  }
+}

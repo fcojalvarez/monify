@@ -1,0 +1,73 @@
+/* ─────────────────────────────────────────────────────────────
+   View Transitions API — transiciones tipo app nativa entre rutas.
+   Se activan desde el router (document.startViewTransition).
+   El sentido (avanzar / retroceder) lo marca el atributo
+   data-transition en <html>, que fija el router.
+   ───────────────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: no-preference) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: 0.32s;
+    animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Avanzar: la vista nueva entra desde la derecha */
+  html[data-transition='forward']::view-transition-old(root) {
+    animation-name: slide-out-left;
+  }
+  html[data-transition='forward']::view-transition-new(root) {
+    animation-name: slide-in-right;
+  }
+
+  /* Retroceder: la vista nueva entra desde la izquierda */
+  html[data-transition='back']::view-transition-old(root) {
+    animation-name: slide-out-right;
+  }
+  html[data-transition='back']::view-transition-new(root) {
+    animation-name: slide-in-left;
+  }
+
+  /* Fundido por defecto (sin dirección) */
+  html:not([data-transition])::view-transition-old(root) {
+    animation-name: fade-out;
+  }
+  html:not([data-transition])::view-transition-new(root) {
+    animation-name: fade-in;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes fade-out {
+  to {
+    opacity: 0;
+  }
+}
+@keyframes slide-in-right {
+  from {
+    transform: translateX(24px);
+    opacity: 0;
+  }
+}
+@keyframes slide-out-left {
+  to {
+    transform: translateX(-24px);
+    opacity: 0;
+  }
+}
+@keyframes slide-in-left {
+  from {
+    transform: translateX(-24px);
+    opacity: 0;
+  }
+}
+@keyframes slide-out-right {
+  to {
+    transform: translateX(24px);
+    opacity: 0;
+  }
+}
