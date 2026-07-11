@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import type { FamilyMember } from '@/types'
 import { useFamilyStore } from '@/stores/family'
 import FamilyForm from './FamilyForm.vue'
@@ -16,6 +16,16 @@ async function onDelete(member: FamilyMember) {
   if (!window.confirm(`¿Eliminar a "${member.name}"? Sus movimientos también se borrarán.`)) return
   await family.remove(member.id)
 }
+
+const view = computed(() => mode.value.view)
+function openForm(member?: FamilyMember) {
+  mode.value = { view: 'form', member }
+}
+
+defineExpose({
+  view,
+  openForm,
+})
 </script>
 
 <template>
@@ -64,9 +74,5 @@ async function onDelete(member: FamilyMember) {
       </li>
     </ul>
 
-    <BaseButton block variant="secondary" @click="mode = { view: 'form' }">
-      <AppIcon name="solar:add-circle-bold" :size="20" />
-      Añadir miembro
-    </BaseButton>
   </div>
 </template>
