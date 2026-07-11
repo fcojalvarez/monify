@@ -139,7 +139,7 @@ onMounted(async () => {
         <RouterLink :to="{ name: ROUTE_NAMES.dashboard }"
           class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-muted text-content-muted hover:bg-line transition-colors"
           title="Volver al Dashboard">
-          <AppIcon name="solar:alt-arrow-left-bold" :size="20" />
+          <AppIcon name="solar:arrow-left-bold" :size="20" />
         </RouterLink>
         <div>
           <h1 class="text-2xl font-bold text-content">Histórico de movimientos</h1>
