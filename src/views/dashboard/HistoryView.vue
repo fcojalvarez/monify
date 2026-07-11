@@ -35,6 +35,7 @@ const filterTo = ref(dates.to)
 const activeMemberId = ref('')
 const activeKind = ref<'all' | 'expense' | 'income'>('all')
 const activeCategoryId = ref('')
+const isShowFilters = ref(false)
 
 const historyItems = ref<TransactionWithRelations[]>([])
 const loading = ref(false)
@@ -134,7 +135,6 @@ onMounted(async () => {
     <AppHeader />
 
     <main class="mx-auto max-w-2xl space-y-6 px-4 py-6">
-      <!-- Back button and title -->
       <div class="flex items-center gap-3">
         <RouterLink :to="{ name: ROUTE_NAMES.dashboard }"
           class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-muted text-content-muted hover:bg-line transition-colors"
@@ -147,71 +147,79 @@ onMounted(async () => {
         </div>
       </div>
 
-      <!-- Filters Panel -->
       <BaseCard class="p-5 space-y-4">
-        <div class="flex items-center justify-between border-b border-line pb-2">
-          <span class="text-sm font-semibold text-content">Filtros</span>
-          <button type="button" class="text-xs font-semibold text-primary-500 hover:text-primary-600 transition-colors"
+        <div class="flex items-center justify-between cursor-pointer" @click="isShowFilters = !isShowFilters">
+          <div class="flex">
+            <AppIcon :name="`solar:alt-arrow-${isShowFilters ? 'up' : 'down'}-linear`" :size="18"
+              class="text-content-secondary mr-2" />
+            <span class="text-sm font-semibold text-content">
+              Filtros
+            </span>
+          </div>
+          <button v-if="isShowFilters" type="button"
+            class="text-xs font-semibold text-primary-500 hover:text-primary-600 transition-colors"
             @click="clearFilters">
             Limpiar filtros
           </button>
         </div>
 
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="field-label">Desde</label>
-            <input type="date" v-model="filterFrom"
-              class="w-full h-10 px-3 rounded-field border border-line bg-surface text-content text-sm focus-visible:ring-primary-500" />
-          </div>
-          <div>
-            <label class="field-label">Hasta</label>
-            <input type="date" v-model="filterTo"
-              class="w-full h-10 px-3 rounded-field border border-line bg-surface text-content text-sm focus-visible:ring-primary-500" />
-          </div>
-        </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <!-- Miembro -->
-          <div class="relative">
-            <label class="field-label">Persona</label>
-            <select v-model="activeMemberId"
-              class="w-full h-10 px-3 rounded-field border border-line bg-surface text-content text-sm focus-visible:ring-primary-500 appearance-none">
-              <option value="">Todos</option>
-              <option v-for="member in family.items" :key="member.id" :value="member.id">
-                {{ member.name }}
-              </option>
-            </select>
-            <AppIcon name="solar:alt-arrow-down-linear" :size="18"
-              class="pointer-events-none absolute right-3 bottom-3 text-content-secondary" />
+        <section v-if="isShowFilters" class="space-y-3">
+          <div class="grid grid-cols-2 gap-3 border-t border-line pt-4">
+            <div>
+              <label class="field-label">Desde</label>
+              <input type="date" v-model="filterFrom"
+                class="w-full h-10 px-3 rounded-field border border-line bg-surface text-content text-sm focus-visible:ring-primary-500" />
+            </div>
+            <div>
+              <label class="field-label">Hasta</label>
+              <input type="date" v-model="filterTo"
+                class="w-full h-10 px-3 rounded-field border border-line bg-surface text-content text-sm focus-visible:ring-primary-500" />
+            </div>
           </div>
 
-          <!-- Tipo -->
-          <div class="relative">
-            <label class="field-label">Tipo de flujo</label>
-            <select v-model="activeKind"
-              class="w-full h-10 pl-3 pr-10 rounded-field border border-line bg-surface text-content text-sm appearance-none focus-visible:ring-primary-500">
-              <option value="all">Todos</option>
-              <option value="expense">Gasto</option>
-              <option value="income">Ingreso</option>
-            </select>
-            <AppIcon name="solar:alt-arrow-down-linear" :size="18"
-              class="pointer-events-none absolute right-3 bottom-3 text-content-secondary" />
-          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <!-- Miembro -->
+            <div class="relative">
+              <label class="field-label">Persona</label>
+              <select v-model="activeMemberId"
+                class="w-full h-10 px-3 rounded-field border border-line bg-surface text-content text-sm focus-visible:ring-primary-500 appearance-none">
+                <option value="">Todos</option>
+                <option v-for="member in family.items" :key="member.id" :value="member.id">
+                  {{ member.name }}
+                </option>
+              </select>
+              <AppIcon name="solar:alt-arrow-down-linear" :size="18"
+                class="pointer-events-none absolute right-3 bottom-3 text-content-secondary" />
+            </div>
 
-          <!-- Categoría -->
-          <div class="relative">
-            <label class="field-label">Categoría</label>
-            <select v-model="activeCategoryId"
-              class="w-full h-10 pl-3 pr-10 rounded-field border border-line bg-surface text-content text-sm appearance-none focus-visible:ring-primary-500">
-              <option value="">Todas</option>
-              <option v-for="cat in filteredCategories" :key="cat.id" :value="cat.id">
-                {{ cat.name }}
-              </option>
-            </select>
-            <AppIcon name="solar:alt-arrow-down-linear" :size="18"
-              class="pointer-events-none absolute right-3 bottom-3 text-content-secondary" />
+            <!-- Tipo -->
+            <div class="relative">
+              <label class="field-label">Tipo de flujo</label>
+              <select v-model="activeKind"
+                class="w-full h-10 pl-3 pr-10 rounded-field border border-line bg-surface text-content text-sm appearance-none focus-visible:ring-primary-500">
+                <option value="all">Todos</option>
+                <option value="expense">Gasto</option>
+                <option value="income">Ingreso</option>
+              </select>
+              <AppIcon name="solar:alt-arrow-down-linear" :size="18"
+                class="pointer-events-none absolute right-3 bottom-3 text-content-secondary" />
+            </div>
+
+            <!-- Categoría -->
+            <div class="relative">
+              <label class="field-label">Categoría</label>
+              <select v-model="activeCategoryId"
+                class="w-full h-10 pl-3 pr-10 rounded-field border border-line bg-surface text-content text-sm appearance-none focus-visible:ring-primary-500">
+                <option value="">Todas</option>
+                <option v-for="cat in filteredCategories" :key="cat.id" :value="cat.id">
+                  {{ cat.name }}
+                </option>
+              </select>
+              <AppIcon name="solar:alt-arrow-down-linear" :size="18"
+                class="pointer-events-none absolute right-3 bottom-3 text-content-secondary" />
+            </div>
           </div>
-        </div>
+        </section>
       </BaseCard>
 
       <!-- Totales del Periodo -->
