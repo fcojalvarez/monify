@@ -24,7 +24,7 @@ function defaultDate() {
   const activeFrom = transactions.filters.from
   if (activeFrom) {
     const today = todayISO()
-    // Si hoy está dentro del mes activo, usamos hoy, de lo contrario el primer día de ese mes
+
     if (today >= activeFrom && today <= (transactions.filters.to || '')) {
       return today
     }
@@ -56,7 +56,6 @@ const memberOptions = computed(() =>
   family.items.map((m) => ({ value: m.id, label: m.name })),
 )
 
-// Al cambiar ingreso/gasto, descarta la categoría si ya no encaja
 watch(
   () => form.kind,
   () => {
@@ -116,81 +115,38 @@ async function onDelete() {
 
 <template>
   <form class="space-y-4" novalidate @submit.prevent="onSubmit">
-    <SegmentedControl
-      v-model="form.kind"
-      :options="[
-        { value: 'expense', label: 'Gasto' },
-        { value: 'income', label: 'Ingreso' },
-      ]"
-    />
+    <SegmentedControl v-model="form.kind" :options="[
+      { value: 'expense', label: 'Gasto' },
+      { value: 'income', label: 'Ingreso' },
+    ]" />
 
-    <BaseInput
-      v-if="form.kind ==='income'"
-      v-model="form.gross"
-      label="Importe bruto"
-      type="number"
-      icon="solar:tag-price-bold"
-      placeholder="0,00"
-      :error="errors.gross"
-    />
+    <BaseInput v-if="form.kind === 'income'" v-model="form.gross" label="Importe bruto" type="number"
+      icon="solar:tag-price-bold" placeholder="0,00" :error="errors.gross" />
 
-    <BaseInput
-      v-model="form.amount"
-      label="Importe"
-      type="number"
-      icon="solar:tag-price-bold"
-      placeholder="0,00"
-      :error="errors.amount"
-    />
+    <BaseInput v-model="form.amount" label="Importe" type="number" icon="solar:tag-price-bold" placeholder="0,00"
+      :error="errors.amount" />
 
-    <BaseSelect
-      v-if="categoryOptions.length"
-      v-model="form.categoryId"
-      label="Categoría"
-      placeholder="Selecciona una categoría"
-      :options="categoryOptions"
-      :error="errors.categoryId"
-    />
+    <BaseSelect v-if="categoryOptions.length" v-model="form.categoryId" label="Categoría"
+      placeholder="Selecciona una categoría" :options="categoryOptions" :error="errors.categoryId" />
     <p v-else class="rounded-field bg-surface-muted p-3 text-sm text-content-muted">
       No tienes categorías de {{ form.kind === 'income' ? 'ingreso' : 'gasto' }} todavía. Crea una primero.
     </p>
 
-    <BaseSelect
-      v-model="form.familyMemberId"
-      label="Miembro"
-      placeholder="¿De quién es?"
-      :options="memberOptions"
-      :error="errors.familyMemberId"
-    />
+    <BaseSelect v-model="form.familyMemberId" label="Miembro" placeholder="¿De quién es?" :options="memberOptions"
+      :error="errors.familyMemberId" />
 
     <BaseInput v-model="form.occurredOn" label="Fecha" type="date" icon="solar:calendar-bold" />
 
-    <BaseInput
-      v-model="form.note"
-      label="Nota (opcional)"
-      icon="solar:pen-bold"
-      placeholder="Descripción breve"
-    />
+    <BaseInput v-model="form.note" label="Nota (opcional)" icon="solar:pen-bold" placeholder="Descripción breve" />
 
     <p v-if="serverError" class="text-sm font-medium text-expense">{{ serverError }}</p>
 
-    <div class="flex gap-3 pt-1">
-      <BaseButton type="button" variant="secondary" block @click="emit('cancel')">
-        Cancelar
-      </BaseButton>
+    <div class="flex flex-col gap-3 pt-1">
       <BaseButton type="submit" block :loading="saving" :disabled="!categoryOptions.length">
         {{ isEdit ? 'Guardar' : 'Añadir' }}
       </BaseButton>
-    </div>
 
-    <div v-if="isEdit" class="pt-2 border-t border-line">
-      <BaseButton
-        type="button"
-        variant="danger"
-        block
-        :loading="deleting"
-        @click="onDelete"
-      >
+      <BaseButton v-if="isEdit" type="button" variant="danger" block :loading="deleting" @click="onDelete">
         Eliminar movimiento
       </BaseButton>
     </div>
