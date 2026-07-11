@@ -96,6 +96,22 @@ async function onSubmit() {
     saving.value = false
   }
 }
+
+const deleting = ref(false)
+
+async function onDelete() {
+  if (!props.transaction) return
+  if (!confirm('¿Estás seguro de que deseas eliminar este movimiento?')) return
+  deleting.value = true
+  try {
+    await transactions.remove(props.transaction.id)
+    emit('saved')
+  } catch (error) {
+    serverError.value = error instanceof Error ? error.message : 'No se pudo eliminar.'
+  } finally {
+    deleting.value = false
+  }
+}
 </script>
 
 <template>
@@ -164,6 +180,18 @@ async function onSubmit() {
       </BaseButton>
       <BaseButton type="submit" block :loading="saving" :disabled="!categoryOptions.length">
         {{ isEdit ? 'Guardar' : 'Añadir' }}
+      </BaseButton>
+    </div>
+
+    <div v-if="isEdit" class="pt-2 border-t border-line">
+      <BaseButton
+        type="button"
+        variant="danger"
+        block
+        :loading="deleting"
+        @click="onDelete"
+      >
+        Eliminar movimiento
       </BaseButton>
     </div>
   </form>

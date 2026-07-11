@@ -19,8 +19,18 @@ async function signOut() {
 <template>
   <header class="sticky top-0 z-10 border-b border-line bg-surface/80 backdrop-blur-lg">
     <div class="mx-auto flex h-14 max-w-2xl items-center justify-between px-4">
-      <AppLogo :size="30" />
+      <RouterLink :to="{ name: ROUTE_NAMES.dashboard }" class="focus-visible:ring-0">
+        <AppLogo :size="30" />
+      </RouterLink>
       <div class="flex items-center gap-1">
+        <RouterLink
+          v-if="auth.isAuthenticated"
+          :to="{ name: ROUTE_NAMES.history }"
+          class="flex h-9 w-9 items-center justify-center rounded-full text-content-muted hover:bg-surface-muted hover:text-content"
+          title="Histórico de movimientos"
+        >
+          <AppIcon name="solar:bill-list-bold" :size="20" />
+        </RouterLink>
         <button
           class="flex h-9 w-9 items-center justify-center rounded-full text-content-muted hover:bg-surface-muted"
           :aria-label="ui.theme === 'dark' ? 'Modo claro' : 'Modo oscuro'"
