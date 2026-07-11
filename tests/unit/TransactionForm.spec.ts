@@ -66,4 +66,76 @@ describe('TransactionForm', () => {
     )
     expect(wrapper.emitted('saved')).toBeTruthy()
   })
+
+  it('muestra el botón de eliminar y elimina al confirmar', async () => {
+    const tx = {
+      id: 'tx-123',
+      kind: 'expense',
+      amount: 50,
+      gross: null,
+      category_id: 'cat-1',
+      family_member_id: 'mem-1',
+      occurred_on: '2026-07-01',
+      note: 'test note',
+    } as any
+
+    const wrapper = mount(TransactionForm, {
+      props: { transaction: tx },
+      global: {
+        plugins: [
+          createTestingPinia({
+            createSpy: vi.fn,
+            initialState: {
+              categories: { items: [category], loaded: true },
+              family: { items: [member], loaded: true },
+            },
+          }),
+        ],
+      },
+    })
+    const store = useTransactionsStore()
+    ;(store.remove as ReturnType<typeof vi.fn>).mockResolvedValue({})
+
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true)
+
+    // Busca el botón con variante danger (que en BaseButton mapea a bg-expense)
+    const deleteBtn = wrapper.find('button[class*="bg-expense"]')
+    expect(deleteBtn.exists()).toBe(true)
+    expect(deleteBtn.text()).toContain('Eliminar movimiento')
+
+    await deleteBtn.trigger('click')
+
+    expect(confirmSpy).toHaveBeenCalled()
+    expect(store.remove).toHaveBeenCalledWith('tx-123')
+    expect(wrapper.emitted('saved')).toBeTruthy()
+
+    confirmSpy.mockRestore()
+  })
+
+  it('usa la fecha de inicio del filtro como valor por defecto si hoy no está en el mes activo', async () => {
+    const wrapper = mount(TransactionForm, {
+      global: {
+        plugins: [
+          createTestingPinia({
+            createSpy: vi.fn,
+            initialState: {
+              categories: { items: [category], loaded: true },
+              family: { items: [member], loaded: true },
+              transactions: {
+                filters: {
+                  from: '2026-05-01',
+                  to: '2026-05-31',
+                },
+              },
+            },
+          }),
+        ],
+      },
+    })
+
+    const dateInput = wrapper.find('input[type="date"]')
+    // Como hoy es Julio de 2026 (por la fecha del sistema en el prompt),
+    // hoy no cae en mayo de 2026, por lo que debe tomar el 2026-05-01 como valor por defecto
+    expect((dateInput.element as HTMLInputElement).value).toBe('2026-05-01')
+  })
 })
