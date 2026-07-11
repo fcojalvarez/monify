@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
+import { ROUTE_NAMES } from '@/constants'
 import type { TransactionWithRelations } from '@/types'
 import { useAuthStore } from '@/stores/auth'
 import { useTransactionsStore } from '@/stores/transactions'
@@ -87,6 +88,14 @@ onMounted(async () => {
           <h1 class="text-2xl font-bold text-content">{{ auth.displayName || 'de nuevo' }} 👋</h1>
         </div>
         <div class="flex gap-1">
+          <RouterLink
+            :to="{ name: ROUTE_NAMES.history }"
+            class="flex h-10 w-10 items-center justify-center rounded-full bg-surface-muted text-content-muted hover:bg-line hover:text-content transition-colors"
+            title="Ver histórico de movimientos"
+            aria-label="Ver histórico de movimientos"
+          >
+            <AppIcon name="solar:bill-list-bold" :size="20" />
+          </RouterLink>
           <button
             class="flex h-10 w-10 items-center justify-center rounded-full bg-surface-muted text-content-muted hover:bg-line"
             aria-label="Gestionar categorías"

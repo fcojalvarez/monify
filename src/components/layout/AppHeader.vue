@@ -23,14 +23,6 @@ async function signOut() {
         <AppLogo :size="30" />
       </RouterLink>
       <div class="flex items-center gap-1">
-        <RouterLink
-          v-if="auth.isAuthenticated"
-          :to="{ name: ROUTE_NAMES.history }"
-          class="flex h-9 w-9 items-center justify-center rounded-full text-content-muted hover:bg-surface-muted hover:text-content"
-          title="Histórico de movimientos"
-        >
-          <AppIcon name="solar:bill-list-bold" :size="20" />
-        </RouterLink>
         <button
           class="flex h-9 w-9 items-center justify-center rounded-full text-content-muted hover:bg-surface-muted"
           :aria-label="ui.theme === 'dark' ? 'Modo claro' : 'Modo oscuro'"
