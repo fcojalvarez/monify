@@ -210,20 +210,20 @@ onMounted(async () => {
       </BaseCard>
 
       <!-- Totales del Periodo -->
-      <div class="grid grid-cols-3 gap-3">
-        <BaseCard class="p-4 text-center bg-surface-raised border border-line">
+      <div class="flex gap-3">
+        <BaseCard v-if="['income', 'all'].includes(activeKind)"
+          class="flex-1 p-4 text-center bg-surface-raised border border-line">
           <p class="text-xs font-semibold text-content-muted">Ingresos</p>
-          <p class="text-lg font-bold text-income mt-1">
-            {{ formatCurrency(summary.income) }}
-          </p>
+          <p class="text-lg font-bold text-income mt-1">{{ formatCurrency(summary.income) }}</p>
         </BaseCard>
-        <BaseCard class="p-4 text-center bg-surface-raised border border-line">
+
+        <BaseCard v-if="['expense', 'all'].includes(activeKind)"
+          class="flex-1 p-4 text-center bg-surface-raised border border-line">
           <p class="text-xs font-semibold text-content-muted">Gastos</p>
-          <p class="text-lg font-bold text-expense mt-1">
-            {{ formatCurrency(summary.expense) }}
-          </p>
+          <p class="text-lg font-bold text-expense mt-1">{{ formatCurrency(summary.expense) }}</p>
         </BaseCard>
-        <BaseCard class="p-4 text-center bg-surface-raised border border-line">
+
+        <BaseCard class="flex-1 p-4 text-center bg-surface-raised border border-line">
           <p class="text-xs font-semibold text-content-muted">Balance neto</p>
           <p class="text-lg font-bold mt-1" :class="summary.balance >= 0 ? 'text-income' : 'text-expense'">
             {{ formatCurrency(summary.balance) }}
