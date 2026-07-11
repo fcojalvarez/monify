@@ -1,29 +1,34 @@
 name: Supabase Database Backup
 
 on:
+  workflow_dispatch:
+
   schedule:
     # Todos los días a las 02:00 UTC
     - cron: '0 2 * * *'
-
-  workflow_dispatch:
 
 jobs:
   backup:
     runs-on: ubuntu-latest
 
-    steps:
-      - name: Instalar cliente PostgreSQL
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y postgresql-client
+    container:
+      image: postgres:17
 
-      - name: Crear backup
+    steps:
+      - name: Crear carpeta de backups
+        run: mkdir -p backups
+
+      - name: Exportar base de datos
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: |
-          mkdir -p backups
-          FILE="backups/backup-$(date +%F-%H-%M-%S).sql"
-          pg_dump "$DATABASE_URL" > "$FILE"
+          FILE="backups/supabase-$(date +%Y-%m-%d_%H-%M-%S).sql"
+          pg_dump \
+            --no-owner \
+            --no-privileges \
+            --format=plain \
+            "$DATABASE_URL" > "$FILE"
+
           gzip "$FILE"
 
       - name: Subir backup
