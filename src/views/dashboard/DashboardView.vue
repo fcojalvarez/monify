@@ -34,6 +34,7 @@ const showTransaction = ref(false)
 const editingTransaction = ref<TransactionWithRelations | undefined>()
 const showCategories = ref(false)
 const showFamily = ref(false)
+const categoryManagerRef = ref<InstanceType<typeof CategoryManager> | null>(null)
 
 function openNewTransaction() {
   editingTransaction.value = undefined
@@ -163,7 +164,17 @@ onMounted(async () => {
     </BaseSheet>
 
     <BaseSheet v-model="showCategories" title="Categorías">
-      <CategoryManager />
+      <template #actions>
+        <button
+          v-if="categoryManagerRef?.view === 'list'"
+          class="flex h-9 w-9 items-center justify-center rounded-full text-content-muted hover:bg-surface-muted"
+          aria-label="Nueva categoría"
+          @click="categoryManagerRef?.openForm()"
+        >
+          <AppIcon name="solar:add-circle-bold" :size="22" />
+        </button>
+      </template>
+      <CategoryManager ref="categoryManagerRef" />
     </BaseSheet>
 
     <BaseSheet v-model="showFamily" title="Familia">

@@ -21,6 +21,16 @@ async function onDelete(category: Category) {
   if (!window.confirm(`¿Eliminar la categoría "${category.name}"?`)) return
   await categories.remove(category.id)
 }
+
+const view = computed(() => mode.value.view)
+function openForm(category?: Category) {
+  mode.value = { view: 'form', category }
+}
+
+defineExpose({
+  view,
+  openForm,
+})
 </script>
 
 <template>
@@ -75,9 +85,5 @@ async function onDelete(category: Category) {
       </div>
     </template>
 
-    <BaseButton block variant="secondary" @click="mode = { view: 'form' }">
-      <AppIcon name="solar:add-circle-bold" :size="20" />
-      Nueva categoría
-    </BaseButton>
   </div>
 </template>

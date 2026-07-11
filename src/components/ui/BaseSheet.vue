@@ -55,13 +55,16 @@ onBeforeUnmount(() => {
 
           <header class="flex items-center justify-between px-5 pb-3 pt-4">
             <h2 class="text-lg font-bold text-content">{{ title }}</h2>
-            <button
-              class="flex h-9 w-9 items-center justify-center rounded-full text-content-muted hover:bg-surface-muted"
-              aria-label="Cerrar"
-              @click="close"
-            >
-              <AppIcon name="solar:close-circle-bold" :size="22" />
-            </button>
+            <div class="flex items-center gap-1">
+              <slot name="actions" />
+              <button
+                class="flex h-9 w-9 items-center justify-center rounded-full text-content-muted hover:bg-surface-muted"
+                aria-label="Cerrar"
+                @click="close"
+              >
+                <AppIcon name="solar:close-circle-bold" :size="22" />
+              </button>
+            </div>
           </header>
 
           <div class="max-h-[75dvh] overflow-y-auto px-5 pb-6">
