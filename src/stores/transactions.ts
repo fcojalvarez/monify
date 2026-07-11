@@ -52,11 +52,40 @@ export const useTransactionsStore = defineStore('transactions', () => {
       .filter((usage) => usage.spent > 0 || usage.limit != null)
   })
 
+  const annualSummary = ref<PeriodSummary>({
+    income: 0,
+    expense: 0,
+    balance: 0,
+    currency: env.defaultCurrency,
+  })
+
+  async function fetchAnnual() {
+    const year = new Date().getFullYear()
+    try {
+      const list = await transactionsService.list({
+        from: `${year}-01-01`,
+        to: `${year}-12-31`,
+        familyMemberId: filters.value.familyMemberId,
+      })
+      const income = list.filter((t) => t.kind === 'income').reduce((sum, t) => sum + t.amount, 0)
+      const expense = list.filter((t) => t.kind === 'expense').reduce((sum, t) => sum + t.amount, 0)
+      annualSummary.value = {
+        income,
+        expense,
+        balance: income - expense,
+        currency: env.defaultCurrency,
+      }
+    } catch (e) {
+      console.error('Error fetching annual summary', e)
+    }
+  }
+
   async function fetch(nextFilters?: TransactionFilters) {
     if (nextFilters) filters.value = { ...filters.value, ...nextFilters }
     loading.value = true
     try {
       items.value = await transactionsService.list(filters.value)
+      await fetchAnnual()
     } finally {
       loading.value = false
     }
@@ -65,6 +94,7 @@ export const useTransactionsStore = defineStore('transactions', () => {
   async function create(payload: Omit<TablesInsert<'transactions'>, 'owner_id'>) {
     const created = await transactionsService.create(payload)
     items.value.unshift(created)
+    await fetchAnnual()
     return created
   }
 
@@ -72,12 +102,14 @@ export const useTransactionsStore = defineStore('transactions', () => {
     const updated = await transactionsService.update(id, changes)
     const index = items.value.findIndex((t) => t.id === id)
     if (index !== -1) items.value[index] = updated
+    await fetchAnnual()
     return updated
   }
 
   async function remove(id: string) {
     await transactionsService.remove(id)
     items.value = items.value.filter((t) => t.id !== id)
+    await fetchAnnual()
   }
 
   return {
@@ -87,6 +119,7 @@ export const useTransactionsStore = defineStore('transactions', () => {
     totalIncome,
     totalExpense,
     summary,
+    annualSummary,
     usageByCategory,
     fetch,
     create,

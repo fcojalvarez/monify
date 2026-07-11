@@ -22,7 +22,7 @@ const categories = useCategoriesStore()
 const family = useFamilyStore()
 const transactions = useTransactionsStore()
 
-const { summary, usageByCategory, items, loading } = storeToRefs(transactions)
+const { summary, annualSummary, usageByCategory, items, loading } = storeToRefs(transactions)
 
 const activeMember = ref<string | null>(null)
 const limitedUsage = computed(() =>
@@ -89,7 +89,7 @@ onMounted(async () => {
         </div>
       </div>
 
-      <BalanceSummary :summary="summary" />
+      <BalanceSummary :monthly-summary="summary" :annual-summary="annualSummary" />
 
       <!-- Filtro por miembro de la familia -->
       <div v-if="family.items.length > 1" class="flex gap-2 overflow-x-auto pb-1">
