@@ -11,6 +11,7 @@ const makeTx = (over: Partial<TransactionWithRelations>): TransactionWithRelatio
     family_member_id: 'm1',
     category_id: 'c1',
     kind: 'expense',
+    gross: null,
     amount: 0,
     note: null,
     occurred_on: '2026-07-01',

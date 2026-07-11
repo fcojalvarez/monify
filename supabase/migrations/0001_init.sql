@@ -59,6 +59,7 @@ create table if not exists public.transactions (
   family_member_id uuid                not null references public.family_members (id) on delete restrict,
   category_id      uuid                not null references public.categories (id) on delete restrict,
   kind             public.category_kind not null,
+  gross            numeric(12, 2)      check (gross is null or gross > 0),
   amount           numeric(12, 2)      not null check (amount > 0),
   note             text,
   occurred_on      date                not null default current_date,

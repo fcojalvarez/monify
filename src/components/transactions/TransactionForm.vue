@@ -22,6 +22,7 @@ const isEdit = computed(() => !!props.transaction)
 
 const form = reactive({
   kind: (props.transaction?.kind ?? 'expense') as CategoryKind,
+  gross: props.transaction ? String(props.transaction.gross) : '',
   amount: props.transaction ? String(props.transaction.amount) : '',
   categoryId: props.transaction?.category_id ?? '',
   familyMemberId: props.transaction?.family_member_id ?? family.self?.id ?? '',
@@ -52,6 +53,7 @@ watch(
 
 function validate(): boolean {
   const amount = parseAmount(form.amount)
+  errors.gross = form.kind === 'income' && isPositiveAmount(parseAmount(form.gross)) ? undefined : 'Introduce un importe mayor que 0'
   errors.amount = isPositiveAmount(amount) ? undefined : 'Introduce un importe mayor que 0'
   errors.categoryId = form.categoryId ? undefined : 'Elige una categoría'
   errors.familyMemberId = form.familyMemberId ? undefined : 'Elige un miembro'
@@ -65,6 +67,7 @@ async function onSubmit() {
   try {
     const payload = {
       kind: form.kind,
+      gross: form.kind === 'income' ? parseAmount(form.gross || form.amount) : null,
       amount: parseAmount(form.amount),
       category_id: form.categoryId,
       family_member_id: form.familyMemberId,
@@ -90,6 +93,16 @@ async function onSubmit() {
         { value: 'expense', label: 'Gasto' },
         { value: 'income', label: 'Ingreso' },
       ]"
+    />
+
+    <BaseInput
+      v-if="form.kind ==='income'"
+      v-model="form.gross"
+      label="Importe bruto"
+      type="number"
+      icon="solar:tag-price-bold"
+      placeholder="0,00"
+      :error="errors.gross"
     />
 
     <BaseInput
