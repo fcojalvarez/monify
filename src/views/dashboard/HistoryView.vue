@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
 import { ROUTE_NAMES } from '@/constants'
-import type { TransactionWithRelations, TransactionFilters } from '@/types'
+import type { TransactionWithRelations } from '@/types'
+import { transactionsService, type TransactionFilters } from '@/services/transactions.service'
 import { useFamilyStore } from '@/stores/family'
 import { useCategoriesStore } from '@/stores/categories'
-import { transactionsService } from '@/services/transactions.service'
 import { formatCurrency } from '@/utils/format'
 import AppHeader from '@/components/layout/AppHeader.vue'
 import TransactionItem from '@/components/transactions/TransactionItem.vue'
@@ -137,11 +137,9 @@ onMounted(async () => {
     <main class="mx-auto max-w-2xl space-y-6 px-4 py-6">
       <!-- Back button and title -->
       <div class="flex items-center gap-3">
-        <RouterLink
-          :to="{ name: ROUTE_NAMES.dashboard }"
+        <RouterLink :to="{ name: ROUTE_NAMES.dashboard }"
           class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-muted text-content-muted hover:bg-line transition-colors"
-          title="Volver al Dashboard"
-        >
+          title="Volver al Dashboard">
           <AppIcon name="solar:alt-arrow-left-bold" :size="20" />
         </RouterLink>
         <div>
@@ -154,11 +152,8 @@ onMounted(async () => {
       <BaseCard class="p-5 space-y-4">
         <div class="flex items-center justify-between border-b border-line pb-2">
           <span class="text-sm font-semibold text-content">Filtros</span>
-          <button
-            type="button"
-            class="text-xs font-semibold text-primary-500 hover:text-primary-600 transition-colors"
-            @click="clearFilters"
-          >
+          <button type="button" class="text-xs font-semibold text-primary-500 hover:text-primary-600 transition-colors"
+            @click="clearFilters">
             Limpiar filtros
           </button>
         </div>
@@ -166,19 +161,13 @@ onMounted(async () => {
         <div class="grid grid-cols-2 gap-3">
           <div>
             <label class="field-label">Desde</label>
-            <input
-              type="date"
-              v-model="filterFrom"
-              class="w-full h-10 px-3 rounded-field border border-line bg-surface text-content text-sm focus-visible:ring-primary-500"
-            />
+            <input type="date" v-model="filterFrom"
+              class="w-full h-10 px-3 rounded-field border border-line bg-surface text-content text-sm focus-visible:ring-primary-500" />
           </div>
           <div>
             <label class="field-label">Hasta</label>
-            <input
-              type="date"
-              v-model="filterTo"
-              class="w-full h-10 px-3 rounded-field border border-line bg-surface text-content text-sm focus-visible:ring-primary-500"
-            />
+            <input type="date" v-model="filterTo"
+              class="w-full h-10 px-3 rounded-field border border-line bg-surface text-content text-sm focus-visible:ring-primary-500" />
           </div>
         </div>
 
@@ -186,10 +175,8 @@ onMounted(async () => {
           <!-- Miembro -->
           <div>
             <label class="field-label">Persona</label>
-            <select
-              v-model="activeMemberId"
-              class="w-full h-10 px-3 rounded-field border border-line bg-surface text-content text-sm focus-visible:ring-primary-500"
-            >
+            <select v-model="activeMemberId"
+              class="w-full h-10 px-3 rounded-field border border-line bg-surface text-content text-sm focus-visible:ring-primary-500">
               <option value="">Todos</option>
               <option v-for="member in family.items" :key="member.id" :value="member.id">
                 {{ member.name }}
@@ -200,10 +187,8 @@ onMounted(async () => {
           <!-- Tipo -->
           <div>
             <label class="field-label">Tipo de flujo</label>
-            <select
-              v-model="activeKind"
-              class="w-full h-10 px-3 rounded-field border border-line bg-surface text-content text-sm focus-visible:ring-primary-500"
-            >
+            <select v-model="activeKind"
+              class="w-full h-10 px-3 rounded-field border border-line bg-surface text-content text-sm focus-visible:ring-primary-500">
               <option value="all">Todos</option>
               <option value="expense">Gasto</option>
               <option value="income">Ingreso</option>
@@ -213,10 +198,8 @@ onMounted(async () => {
           <!-- Categoría -->
           <div>
             <label class="field-label">Categoría</label>
-            <select
-              v-model="activeCategoryId"
-              class="w-full h-10 px-3 rounded-field border border-line bg-surface text-content text-sm focus-visible:ring-primary-500"
-            >
+            <select v-model="activeCategoryId"
+              class="w-full h-10 px-3 rounded-field border border-line bg-surface text-content text-sm focus-visible:ring-primary-500">
               <option value="">Todas</option>
               <option v-for="cat in filteredCategories" :key="cat.id" :value="cat.id">
                 {{ cat.name }}
@@ -242,10 +225,7 @@ onMounted(async () => {
         </BaseCard>
         <BaseCard class="p-4 text-center bg-surface-raised border border-line">
           <p class="text-xs font-semibold text-content-muted">Balance neto</p>
-          <p
-            class="text-lg font-bold mt-1"
-            :class="summary.balance >= 0 ? 'text-income' : 'text-expense'"
-          >
+          <p class="text-lg font-bold mt-1" :class="summary.balance >= 0 ? 'text-income' : 'text-expense'">
             {{ formatCurrency(summary.balance) }}
           </p>
         </BaseCard>
@@ -263,27 +243,17 @@ onMounted(async () => {
         </div>
 
         <ul v-else class="divide-y divide-line">
-          <TransactionItem
-            v-for="transaction in historyItems"
-            :key="transaction.id"
-            :transaction="transaction"
+          <TransactionItem v-for="transaction in historyItems" :key="transaction.id" :transaction="transaction"
             class="cursor-pointer hover:bg-surface-muted/30 px-2 rounded-field transition-colors"
-            @click="openEditTransaction(transaction)"
-          />
+            @click="openEditTransaction(transaction)" />
         </ul>
       </BaseCard>
     </main>
 
     <!-- BaseSheet para Editar Transacción -->
-    <BaseSheet
-      v-model="showTransaction"
-      title="Editar movimiento"
-    >
-      <TransactionForm
-        :transaction="editingTransaction"
-        @saved="onTransactionSaved"
-        @cancel="showTransaction = false"
-      />
+    <BaseSheet v-model="showTransaction" title="Editar movimiento">
+      <TransactionForm :transaction="editingTransaction" @saved="onTransactionSaved"
+        @cancel="showTransaction = false" />
     </BaseSheet>
   </div>
 </template>
