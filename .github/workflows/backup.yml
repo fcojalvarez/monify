@@ -1,0 +1,34 @@
+name: Supabase Database Backup
+
+on:
+  schedule:
+    # Todos los días a las 02:00 UTC
+    - cron: '0 2 * * *'
+
+  workflow_dispatch:
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Instalar cliente PostgreSQL
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+
+      - name: Crear backup
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          mkdir -p backups
+          FILE="backups/backup-$(date +%F-%H-%M-%S).sql"
+          pg_dump "$DATABASE_URL" > "$FILE"
+          gzip "$FILE"
+
+      - name: Subir backup
+        uses: actions/upload-artifact@v4
+        with:
+          name: supabase-backup-${{ github.run_number }}
+          path: backups/*.gz
+          retention-days: 30
