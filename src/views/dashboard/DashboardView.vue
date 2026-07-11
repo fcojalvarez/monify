@@ -74,26 +74,19 @@ onMounted(async () => {
           <h1 class="text-2xl font-bold text-content">{{ auth.displayName || 'de nuevo' }} 👋</h1>
         </div>
         <div class="flex gap-1">
-          <RouterLink
-            :to="{ name: ROUTE_NAMES.history }"
+          <RouterLink :to="{ name: ROUTE_NAMES.history }"
             class="flex h-10 w-10 items-center justify-center rounded-full bg-surface-muted text-content-muted hover:bg-line hover:text-content transition-colors"
-            title="Ver histórico de movimientos"
-            aria-label="Ver histórico de movimientos"
-          >
+            title="Ver histórico de movimientos" aria-label="Ver histórico de movimientos">
             <AppIcon name="solar:bill-list-bold" :size="20" />
           </RouterLink>
           <button
             class="flex h-10 w-10 items-center justify-center rounded-full bg-surface-muted text-content-muted hover:bg-line"
-            aria-label="Gestionar categorías"
-            @click="showCategories = true"
-          >
+            aria-label="Gestionar categorías" @click="showCategories = true">
             <AppIcon name="solar:widget-add-bold" :size="20" />
           </button>
           <button
             class="flex h-10 w-10 items-center justify-center rounded-full bg-surface-muted text-content-muted hover:bg-line"
-            aria-label="Gestionar familia"
-            @click="showFamily = true"
-          >
+            aria-label="Gestionar familia" @click="showFamily = true">
             <AppIcon name="solar:users-group-rounded-bold" :size="20" />
           </button>
         </div>
@@ -103,20 +96,15 @@ onMounted(async () => {
 
       <!-- Filtro por miembro de la familia -->
       <div v-if="family.items.length > 1" class="flex gap-2 overflow-x-auto pb-1">
-        <button
-          class="shrink-0 rounded-pill px-4 py-2 text-sm font-medium transition-colors"
+        <button class="shrink-0 rounded-pill px-4 py-2 text-sm font-medium transition-colors"
           :class="activeMember === null ? 'bg-primary-500 text-white' : 'bg-surface-muted text-content-muted'"
-          @click="selectMember(null)"
-        >
+          @click="selectMember(null)">
           Todos
         </button>
-        <button
-          v-for="member in family.items"
-          :key="member.id"
+        <button v-for="member in family.items" :key="member.id"
           class="shrink-0 rounded-pill px-4 py-2 text-sm font-medium transition-colors"
           :class="activeMember === member.id ? 'bg-primary-500 text-white' : 'bg-surface-muted text-content-muted'"
-          @click="selectMember(member.id)"
-        >
+          @click="selectMember(member.id)">
           {{ member.name }}
         </button>
       </div>
@@ -141,13 +129,8 @@ onMounted(async () => {
         </div>
 
         <ul v-else class="divide-y divide-line">
-          <TransactionItem
-            v-for="transaction in items"
-            :key="transaction.id"
-            :transaction="transaction"
-            class="cursor-pointer"
-            @click="openEditTransaction(transaction)"
-          />
+          <TransactionItem v-for="transaction in items" :key="transaction.id" :transaction="transaction"
+            class="cursor-pointer" @click="openEditTransaction(transaction)" />
         </ul>
       </BaseCard>
     </main>
@@ -155,34 +138,24 @@ onMounted(async () => {
     <!-- Botón flotante: nuevo movimiento -->
     <button
       class="fixed bottom-[calc(1.5rem+env(safe-area-inset-bottom))] right-4 md:right-[calc(50vw-20rem)] flex h-14 items-center gap-2 rounded-pill bg-primary-500 px-6 font-semibold text-white shadow-primary-glow transition-transform active:scale-95"
-      aria-label="Añadir movimiento"
-      @click="openNewTransaction"
-    >
+      aria-label="Añadir movimiento" @click="openNewTransaction">
       <AppIcon name="solar:add-circle-bold" :size="22" />
       Añadir
     </button>
 
     <!-- Sheets -->
-    <BaseSheet
-      v-model="showTransaction"
-      :title="editingTransaction ? 'Editar movimiento' : 'Nuevo movimiento'"
-    >
-      <TransactionForm
-        :transaction="editingTransaction"
-        @saved="onTransactionSaved"
-        @cancel="showTransaction = false"
-      />
+    <BaseSheet v-model="showTransaction" :title="editingTransaction ? 'Editar movimiento' : 'Nuevo movimiento'">
+      <TransactionForm :transaction="editingTransaction" @saved="onTransactionSaved"
+        @cancel="showTransaction = false" />
     </BaseSheet>
 
     <BaseSheet v-model="showCategories" title="Categorías">
       <template #actions>
-        <button
-          v-if="categoryManagerRef?.view === 'list'"
-          class="flex h-9 w-9 items-center justify-center rounded-full text-content-muted hover:bg-surface-muted"
-          aria-label="Nueva categoría"
-          @click="categoryManagerRef?.openForm()"
-        >
-          <AppIcon name="solar:add-circle-bold" :size="22" />
+        <button v-if="categoryManagerRef?.view === 'list'" type="button"
+          class="inline-flex h-7 items-center gap-2 rounded-full px-3 text-sm font-medium text-content-muted transition-colors hover:bg-surface-muted border border-primary-500"
+          aria-label="Nueva categoría" @click="categoryManagerRef?.openForm()">
+          <AppIcon name="solar:add-circle-bold" class="text-primary-500" :size="20" />
+          <span class="text-primary-500">Añadir</span>
         </button>
       </template>
       <CategoryManager ref="categoryManagerRef" />
@@ -190,13 +163,11 @@ onMounted(async () => {
 
     <BaseSheet v-model="showFamily" title="Familia">
       <template #actions>
-        <button
-          v-if="familyManagerRef?.view === 'list'"
-          class="flex h-9 w-9 items-center justify-center rounded-full text-content-muted hover:bg-surface-muted"
-          aria-label="Añadir miembro"
-          @click="familyManagerRef?.openForm()"
-        >
-          <AppIcon name="solar:add-circle-bold" :size="22" />
+        <button v-if="familyManagerRef?.view === 'list'"
+          class="inline-flex h-7 items-center gap-2 rounded-full px-3 text-sm font-medium text-content-muted transition-colors hover:bg-surface-muted border border-primary-500"
+          aria-label="Añadir miembro" @click="familyManagerRef?.openForm()">
+          <AppIcon name="solar:add-circle-bold" class="text-primary-500" :size="20" />
+          <span class="text-primary-500">Añadir</span>
         </button>
       </template>
       <FamilyManager ref="familyManagerRef" />
