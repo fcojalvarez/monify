@@ -4,32 +4,36 @@ on:
   workflow_dispatch:
 
   schedule:
-    # Todos los días a las 02:00 UTC
     - cron: '0 2 * * *'
 
 jobs:
   backup:
     runs-on: ubuntu-latest
 
-    container:
-      image: postgres:17
-
     steps:
       - name: Crear carpeta de backups
         run: mkdir -p backups
 
-      - name: Exportar base de datos
+      - name: Crear backup con PostgreSQL 17
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: |
-          FILE="backups/supabase-$(date +%Y-%m-%d_%H-%M-%S).sql"
-          pg_dump \
-            --no-owner \
-            --no-privileges \
-            --format=plain \
-            "$DATABASE_URL" > "$FILE"
+          docker run --rm \
+            -v "$PWD/backups:/backups" \
+            -e DATABASE_URL="$DATABASE_URL" \
+            postgres:17 \
+            bash -c '
+              FILE="/backups/supabase-$(date +%Y-%m-%d_%H-%M-%S).sql"
+              pg_dump \
+                --no-owner \
+                --no-privileges \
+                --format=plain \
+                "$DATABASE_URL" > "$FILE"
+              gzip "$FILE"
+            '
 
-          gzip "$FILE"
+      - name: Verificar backup
+        run: ls -lh backups
 
       - name: Subir backup
         uses: actions/upload-artifact@v4
