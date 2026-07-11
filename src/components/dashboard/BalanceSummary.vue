@@ -48,11 +48,10 @@ function previousCard() {
       <!-- Card 1: Balance del mes -->
       <div
         class="relative w-full shrink-0 snap-center rounded-card bg-gradient-to-br from-secondary-700 to-secondary-900 p-6 text-white shadow-raised animate-fade-in">
-        <!-- Flecha siguiente (solo escritorio) -->
         <button
           class="absolute right-0 top-1/2 hidden h-full w-10 -translate-y-1/2 items-center justify-center rounded-full  backdrop-blur transition md:flex"
           aria-label="Ver balance anual" @click="nextCard">
-          <AppIcon name="solar:alt-arrow-right-bold" :size="20" />
+          <AppIcon name="solar:alt-arrow-right-bold" class="opacity-50" :size="20" />
         </button>
 
         <section class="md:w-11/12 m-auto">
@@ -94,7 +93,7 @@ function previousCard() {
         <button
           class="absolute left-0 top-1/2 hidden h-full w-10 -translate-y-1/2 items-center justify-center rounded-full  backdrop-blur transition md:flex"
           aria-label="Ver balance mensual" @click="previousCard">
-          <AppIcon name="solar:alt-arrow-left-bold" :size="20" />
+          <AppIcon name="solar:alt-arrow-left-bold" class="opacity-50" :size="20" />
         </button>
 
         <section class="md:w-11/12 m-auto">
