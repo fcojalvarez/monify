@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { ROUTE_NAMES } from '@/constants'
 import type { TransactionWithRelations } from '@/types'
@@ -10,7 +10,6 @@ import { useFamilyStore } from '@/stores/family'
 import { monthRange } from '@/utils/format'
 import AppHeader from '@/components/layout/AppHeader.vue'
 import BalanceSummary from '@/components/dashboard/BalanceSummary.vue'
-import MonthSelector from '@/components/dashboard/MonthSelector.vue'
 import CategoryProgress from '@/components/dashboard/CategoryProgress.vue'
 import TransactionItem from '@/components/transactions/TransactionItem.vue'
 import TransactionForm from '@/components/transactions/TransactionForm.vue'
@@ -26,19 +25,6 @@ const family = useFamilyStore()
 const transactions = useTransactionsStore()
 
 const { summary, annualSummary, usageByCategory, items, loading } = storeToRefs(transactions)
-
-const currentDate = ref(new Date())
-
-// Sincroniza la fecha de referencia con el filtro activo del store si existe
-if (transactions.filters.from) {
-  currentDate.value = new Date(transactions.filters.from + 'T00:00:00')
-}
-
-// Al cambiar el mes, actualiza los filtros y recarga transacciones
-watch(currentDate, async (newDate) => {
-  const range = monthRange(newDate)
-  await transactions.fetch(range)
-})
 
 const activeMember = ref<string | null>(null)
 const limitedUsage = computed(() =>
@@ -73,7 +59,7 @@ async function selectMember(memberId: string | null) {
 
 onMounted(async () => {
   await Promise.all([categories.fetchAll(), family.fetchAll()])
-  await transactions.fetch()
+  await transactions.fetch(monthRange())
 })
 </script>
 
@@ -113,9 +99,6 @@ onMounted(async () => {
         </div>
       </div>
 
-      <!-- Selector de Mes / Histórico -->
-      <MonthSelector v-model="currentDate" />
-
       <BalanceSummary :monthly-summary="summary" :annual-summary="annualSummary" />
 
       <!-- Filtro por miembro de la familia -->
@@ -146,19 +129,15 @@ onMounted(async () => {
         </div>
       </BaseCard>
 
-      <!-- Movimientos del periodo -->
+      <!-- Movimientos recientes -->
       <BaseCard as="section">
-        <h2 class="mb-1 text-sm font-semibold text-content-muted capitalize">
-          Movimientos de {{ currentDate.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' }) }}
-        </h2>
+        <h2 class="mb-1 text-sm font-semibold text-content-muted">Movimientos recientes</h2>
 
         <div v-if="loading" class="py-10 text-center text-sm text-content-subtle">Cargando…</div>
 
         <div v-else-if="!items.length" class="py-10 text-center">
           <AppIcon name="solar:wallet-money-bold-duotone" :size="40" class="mx-auto text-content-subtle" />
-          <p class="mt-2 text-sm text-content-muted">
-            Aún no hay movimientos en {{ currentDate.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' }) }}.
-          </p>
+          <p class="mt-2 text-sm text-content-muted">Aún no hay movimientos este mes.</p>
         </div>
 
         <ul v-else class="divide-y divide-line">
