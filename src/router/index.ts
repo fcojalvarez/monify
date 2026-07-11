@@ -1,3 +1,4 @@
+import { nextTick } from 'vue'
 import { createRouter, createWebHistory } from 'vue-router'
 import { ROUTE_NAMES } from '@/constants'
 import { authGuard } from './guards'
@@ -79,10 +80,9 @@ router.beforeResolve((to, from) => {
   }
 
   return new Promise<void>((resolve) => {
-    const transition = doc.startViewTransition!(() => {
+    const transition = doc.startViewTransition!(async () => {
       resolve() // deja continuar la navegación → Vue re-renderiza la RouterView
-      // esperamos un frame para que Vue aplique el DOM antes de capturar el "after"
-      return new Promise<void>((done) => requestAnimationFrame(() => done()))
+      await nextTick() // espera a que Vue actualice el DOM de forma reactiva en el microtask
     })
     transition.finished.finally(() => root.removeAttribute('data-transition'))
   })
