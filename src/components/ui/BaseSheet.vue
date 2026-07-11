@@ -41,7 +41,7 @@ onBeforeUnmount(() => {
         :aria-label="title"
       >
         <!-- Backdrop -->
-        <div class="sheet-backdrop absolute inset-0 bg-secondary-950/50 backdrop-blur-sm" @click="close" />
+        <div class="sheet-backdrop absolute inset-0 bg-secondary-950/50 backdrop-blur-sm" />
 
         <!-- Panel -->
         <div
