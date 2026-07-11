@@ -20,13 +20,26 @@ const transactions = useTransactionsStore()
 
 const isEdit = computed(() => !!props.transaction)
 
+function defaultDate() {
+  const activeFrom = transactions.filters.from
+  if (activeFrom) {
+    const today = todayISO()
+    // Si hoy está dentro del mes activo, usamos hoy, de lo contrario el primer día de ese mes
+    if (today >= activeFrom && today <= (transactions.filters.to || '')) {
+      return today
+    }
+    return activeFrom
+  }
+  return todayISO()
+}
+
 const form = reactive({
   kind: (props.transaction?.kind ?? 'expense') as CategoryKind,
   gross: props.transaction ? String(props.transaction.gross) : '',
   amount: props.transaction ? String(props.transaction.amount) : '',
   categoryId: props.transaction?.category_id ?? '',
   familyMemberId: props.transaction?.family_member_id ?? family.self?.id ?? '',
-  occurredOn: props.transaction?.occurred_on ?? todayISO(),
+  occurredOn: props.transaction?.occurred_on ?? defaultDate(),
   note: props.transaction?.note ?? '',
 })
 

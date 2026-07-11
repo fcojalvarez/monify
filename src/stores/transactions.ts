@@ -60,7 +60,9 @@ export const useTransactionsStore = defineStore('transactions', () => {
   })
 
   async function fetchAnnual() {
-    const year = new Date().getFullYear()
+    const year = filters.value.from
+      ? new Date(filters.value.from + 'T00:00:00').getFullYear()
+      : new Date().getFullYear()
     try {
       const list = await transactionsService.list({
         from: `${year}-01-01`,
