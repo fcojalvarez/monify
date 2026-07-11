@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { watch, onBeforeUnmount } from 'vue'
-import AppIcon from './AppIcon.vue'
 
 const props = defineProps<{ modelValue: boolean; title?: string }>()
 const emit = defineEmits<{ 'update:modelValue': [value: boolean] }>()
@@ -36,7 +35,7 @@ onBeforeUnmount(() => {
       <div v-if="modelValue" class="fixed inset-0 z-50 flex items-end justify-center sm:items-center" role="dialog"
         aria-modal="true" :aria-label="title">
         <!-- Backdrop -->
-        <div class="sheet-backdrop absolute inset-0 bg-secondary-950/50 backdrop-blur-sm" />
+        <div class="sheet-backdrop absolute inset-0 bg-secondary-950/50 backdrop-blur-sm" @click="close" />
 
         <!-- Panel -->
         <div
