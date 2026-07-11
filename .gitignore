@@ -36,3 +36,4 @@ supabase/.temp
 # Capacitor (preparado para el futuro)
 /android
 /ios
+.aider*
