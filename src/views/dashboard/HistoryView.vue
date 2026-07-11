@@ -12,7 +12,6 @@ import TransactionForm from '@/components/transactions/TransactionForm.vue'
 import BaseCard from '@/components/ui/BaseCard.vue'
 import BaseSheet from '@/components/ui/BaseSheet.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
-import BaseButton from '@/components/ui/BaseButton.vue'
 
 const family = useFamilyStore()
 const categories = useCategoriesStore()
@@ -173,38 +172,44 @@ onMounted(async () => {
 
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <!-- Miembro -->
-          <div>
+          <div class="relative">
             <label class="field-label">Persona</label>
             <select v-model="activeMemberId"
-              class="w-full h-10 px-3 rounded-field border border-line bg-surface text-content text-sm focus-visible:ring-primary-500">
+              class="w-full h-10 px-3 rounded-field border border-line bg-surface text-content text-sm focus-visible:ring-primary-500 appearance-none">
               <option value="">Todos</option>
               <option v-for="member in family.items" :key="member.id" :value="member.id">
                 {{ member.name }}
               </option>
             </select>
+            <AppIcon name="solar:alt-arrow-down-linear" :size="18"
+              class="pointer-events-none absolute right-3 bottom-3 text-content-secondary" />
           </div>
 
           <!-- Tipo -->
-          <div>
+          <div class="relative">
             <label class="field-label">Tipo de flujo</label>
             <select v-model="activeKind"
-              class="w-full h-10 px-3 rounded-field border border-line bg-surface text-content text-sm focus-visible:ring-primary-500">
+              class="w-full h-10 pl-3 pr-10 rounded-field border border-line bg-surface text-content text-sm appearance-none focus-visible:ring-primary-500">
               <option value="all">Todos</option>
               <option value="expense">Gasto</option>
               <option value="income">Ingreso</option>
             </select>
+            <AppIcon name="solar:alt-arrow-down-linear" :size="18"
+              class="pointer-events-none absolute right-3 bottom-3 text-content-secondary" />
           </div>
 
           <!-- Categoría -->
-          <div>
+          <div class="relative">
             <label class="field-label">Categoría</label>
             <select v-model="activeCategoryId"
-              class="w-full h-10 px-3 rounded-field border border-line bg-surface text-content text-sm focus-visible:ring-primary-500">
+              class="w-full h-10 pl-3 pr-10 rounded-field border border-line bg-surface text-content text-sm appearance-none focus-visible:ring-primary-500">
               <option value="">Todas</option>
               <option v-for="cat in filteredCategories" :key="cat.id" :value="cat.id">
                 {{ cat.name }}
               </option>
             </select>
+            <AppIcon name="solar:alt-arrow-down-linear" :size="18"
+              class="pointer-events-none absolute right-3 bottom-3 text-content-secondary" />
           </div>
         </div>
       </BaseCard>
