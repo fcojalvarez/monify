@@ -22,22 +22,26 @@ export const useSavingsStore = defineStore('savings', () => {
 
   async function fetchAll() {
     loading.value = true
+
     try {
       const [savingsList, transactionsList] = await Promise.all([
         savingsService.list(),
         savingsService.listTransactions(),
       ])
+
       items.value = savingsList
       transactions.value = transactionsList
 
       // Garantizar que la cuenta de ahorro general siempre exista
       let general = savingsList.find((s) => s.name === 'general')
+
       if (!general) {
         general = await savingsService.create({
           name: 'general',
           target: null,
           color: '#8b5cf6',
         })
+
         items.value.push(general)
       }
     } catch (error) {
@@ -50,6 +54,7 @@ export const useSavingsStore = defineStore('savings', () => {
   async function create(payload: Omit<Savings, 'id' | 'owner_id' | 'created_at' | 'balance'>) {
     const created = await savingsService.create(payload)
     items.value.push(created)
+
     return created
   }
 
@@ -58,13 +63,19 @@ export const useSavingsStore = defineStore('savings', () => {
     payload: Partial<Omit<Savings, 'id' | 'owner_id' | 'created_at'>>,
   ) {
     const updated = await savingsService.update(id, payload)
+
     const index = items.value.findIndex((s) => s.id === id)
-    if (index !== -1) items.value[index] = updated
+
+    if (index !== -1) {
+      items.value[index] = updated
+    }
+
     return updated
   }
 
   async function remove(id: string) {
     await savingsService.remove(id)
+
     items.value = items.value.filter((s) => s.id !== id)
     transactions.value = transactions.value.filter((t) => t.savings_id !== id)
   }
@@ -87,6 +98,7 @@ export const useSavingsStore = defineStore('savings', () => {
 
     const savingsAccount = items.value.find((s) => s.id === savingsId)
     const isGeneral = savingsAccount?.name === 'general'
+
     const accountName = savingsAccount
       ? isGeneral
         ? 'Ahorro general'
@@ -95,7 +107,6 @@ export const useSavingsStore = defineStore('savings', () => {
 
     // 1. Crear movimiento en la cuenta principal si se solicita
     if (shouldCreateMainTransaction) {
-      // Cargar las categorías si no están cargadas para evitar duplicación
       await categoriesStore.fetchAll()
 
       let category = categoriesStore.items.find(
@@ -146,10 +157,18 @@ export const useSavingsStore = defineStore('savings', () => {
 
     // 3. Recargar datos para tener los balances actualizados
     const promises: Promise<any>[] = [fetchAll()]
+
     if (shouldCreateMainTransaction) {
       promises.push(transactionsStore.fetch())
     }
+
     await Promise.all(promises)
+  }
+
+  function $reset() {
+    items.value = []
+    transactions.value = []
+    loading.value = false
   }
 
   return {
@@ -161,5 +180,6 @@ export const useSavingsStore = defineStore('savings', () => {
     update,
     remove,
     transfer,
+    $reset,
   }
 })

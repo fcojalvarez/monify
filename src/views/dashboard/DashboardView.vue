@@ -81,7 +81,7 @@ onMounted(async () => {
   await Promise.all([
     categories.fetchAll(),
     family.fetchAll(),
-    savingsStore.fetchAll(),
+    ...(ui.savingsEnabled ? [savingsStore.fetchAll()] : []),
     transactions.fetch(monthRange()),
   ])
 

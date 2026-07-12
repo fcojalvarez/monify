@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import type { PeriodSummary, Savings } from '@/types'
 import { formatCurrency } from '@/utils/format'
 import AppIcon from '@/components/ui/AppIcon.vue'
@@ -9,11 +9,13 @@ import { useRouter } from 'vue-router'
 
 const router = useRouter()
 
-defineProps<{
+const props = defineProps<{
   monthlySummary: PeriodSummary
   annualSummary: PeriodSummary
   savings: Savings[]
 }>()
+
+const totalCards = computed(() => 2 + (props.savings.length > 0 ? 1 : 0))
 
 const activeIndex = ref(0)
 const carouselRef = ref<HTMLElement>()
@@ -58,14 +60,18 @@ function previousCard() {
         <button v-if="isDesktop"
           class="absolute right-0 top-1/2 h-full w-10 -translate-y-1/2 items-center justify-center rounded-full blur-fade-left transition"
           aria-label="Ver balance anual" @click="nextCard">
-          <AppIcon name="solar:alt-arrow-right-bold" class="opacity-50 ml-3" :size="20" />
+          <AppIcon name="solar:alt-arrow-right-bold" class="ml-3 opacity-50" :size="20" />
         </button>
 
-        <section class="md:w-11/12 m-auto cursor-pointer" @click="router.push('/history')">
+        <section class="m-auto cursor-pointer md:w-11/12" @click="router.push('/history')">
           <p class="text-sm text-white/70">Balance del mes</p>
 
           <p class="mt-1 text-3xl font-bold tracking-tight">
-            {{ formatCurrency(monthlySummary.balance, { currency: monthlySummary.currency }) }}
+            {{
+              formatCurrency(props.monthlySummary.balance, {
+                currency: props.monthlySummary.currency,
+              })
+            }}
           </p>
 
           <div class="mt-5 grid grid-cols-2 gap-3">
@@ -76,7 +82,11 @@ function previousCard() {
               </div>
 
               <p class="mt-1 font-semibold">
-                {{ formatCurrency(monthlySummary.income, { currency: monthlySummary.currency }) }}
+                {{
+                  formatCurrency(props.monthlySummary.income, {
+                    currency: props.monthlySummary.currency,
+                  })
+                }}
               </p>
             </div>
 
@@ -87,7 +97,11 @@ function previousCard() {
               </div>
 
               <p class="mt-1 font-semibold">
-                {{ formatCurrency(monthlySummary.expense, { currency: monthlySummary.currency }) }}
+                {{
+                  formatCurrency(props.monthlySummary.expense, {
+                    currency: props.monthlySummary.currency,
+                  })
+                }}
               </p>
             </div>
           </div>
@@ -95,20 +109,21 @@ function previousCard() {
       </div>
 
       <!-- Card 2: Balance de ahorros -->
-      <div
+      <div v-if="props.savings.length > 0"
         class="relative w-full shrink-0 snap-center rounded-card bg-gradient-to-br from-secondary-700 to-secondary-900 p-6 text-white shadow-raised cursor-pointer">
         <button v-if="isDesktop"
           class="absolute right-0 top-1/2 h-full w-10 -translate-y-1/2 items-center justify-center rounded-full blur-fade-left transition"
           aria-label="Ver balance anual" @click="nextCard">
-          <AppIcon name="solar:alt-arrow-right-bold" class="opacity-50 ml-3" :size="20" />
+          <AppIcon name="solar:alt-arrow-right-bold" class="ml-3 opacity-50" :size="20" />
         </button>
 
-        <SavingsSummaryCard @click="router.push('/savings')" :savings="savings" :currency="monthlySummary.currency" />
+        <SavingsSummaryCard :savings="props.savings" :currency="props.monthlySummary.currency"
+          @click="router.push('/savings')" />
 
         <button v-if="isDesktop"
           class="absolute left-0 top-1/2 h-full w-10 -translate-y-1/2 items-center justify-center rounded-full blur-fade-right transition"
           aria-label="Ver balance mensual" @click="previousCard">
-          <AppIcon name="solar:alt-arrow-left-bold" class="opacity-50 ml-1" :size="20" />
+          <AppIcon name="solar:alt-arrow-left-bold" class="ml-1 opacity-50" :size="20" />
         </button>
       </div>
 
@@ -118,14 +133,18 @@ function previousCard() {
         <button v-if="isDesktop"
           class="absolute left-0 top-1/2 h-full w-10 -translate-y-1/2 items-center justify-center rounded-full blur-fade-right transition"
           aria-label="Ver balance mensual" @click="previousCard">
-          <AppIcon name="solar:alt-arrow-left-bold" class="opacity-50 ml-1" :size="20" />
+          <AppIcon name="solar:alt-arrow-left-bold" class="ml-1 opacity-50" :size="20" />
         </button>
 
-        <section class="md:w-11/12 m-auto cursor-pointer" @click="router.push('/history')">
+        <section class="m-auto cursor-pointer md:w-11/12" @click="router.push('/history')">
           <p class="text-sm text-white/70">Balance del año</p>
 
           <p class="mt-1 text-3xl font-bold tracking-tight">
-            {{ formatCurrency(annualSummary.balance, { currency: annualSummary.currency }) }}
+            {{
+              formatCurrency(props.annualSummary.balance, {
+                currency: props.annualSummary.currency,
+              })
+            }}
           </p>
 
           <div class="mt-5 grid grid-cols-2 gap-3">
@@ -136,7 +155,11 @@ function previousCard() {
               </div>
 
               <p class="mt-1 font-semibold">
-                {{ formatCurrency(annualSummary.income, { currency: annualSummary.currency }) }}
+                {{
+                  formatCurrency(props.annualSummary.income, {
+                    currency: props.annualSummary.currency,
+                  })
+                }}
               </p>
             </div>
 
@@ -147,7 +170,11 @@ function previousCard() {
               </div>
 
               <p class="mt-1 font-semibold">
-                {{ formatCurrency(annualSummary.expense, { currency: annualSummary.currency }) }}
+                {{
+                  formatCurrency(props.annualSummary.expense, {
+                    currency: props.annualSummary.currency,
+                  })
+                }}
               </p>
             </div>
           </div>
@@ -156,12 +183,8 @@ function previousCard() {
     </div>
 
     <div class="mt-3 flex justify-center gap-2 md:hidden">
-      <span class="h-2 rounded-full transition-all duration-200"
-        :class="activeIndex === 0 ? 'bg-primary-500 w-4' : 'bg-line-strong w-2'" />
-      <span class="h-2 rounded-full transition-all duration-200"
-        :class="activeIndex === 1 ? 'bg-primary-500 w-4' : 'bg-line-strong w-2'" />
-      <span class="h-2 rounded-full transition-all duration-200"
-        :class="activeIndex === 2 ? 'bg-primary-500 w-4' : 'bg-line-strong w-2'" />
+      <span v-for="index in totalCards" :key="index" class="h-2 rounded-full transition-all duration-200"
+        :class="activeIndex === index - 1 ? 'bg-primary-500 w-4' : 'bg-line-strong w-2'" />
     </div>
   </div>
 </template>
