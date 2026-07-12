@@ -7,6 +7,8 @@ export const ROUTE_NAMES = {
   authCallback: 'auth-callback',
   dashboard: 'dashboard',
   history: 'history',
+  profile: 'profile',
+  savings: 'savings',
 } as const
 
 export const CATEGORY_KIND: Record<CategoryKind, CategoryKind> = {

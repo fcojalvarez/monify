@@ -59,6 +59,25 @@ export const useAuthStore = defineStore('auth', () => {
     setSession(null)
   }
 
+  async function updateProfile(name: string) {
+    loading.value = true
+    try {
+      const updatedUser = await authService.updateProfile(name)
+      user.value = updatedUser
+    } finally {
+      loading.value = false
+    }
+  }
+
+  async function updatePassword(newPassword: string) {
+    loading.value = true
+    try {
+      await authService.updatePassword(newPassword)
+    } finally {
+      loading.value = false
+    }
+  }
+
   return {
     session,
     user,
@@ -71,5 +90,7 @@ export const useAuthStore = defineStore('auth', () => {
     signUp,
     requestPasswordReset,
     signOut,
+    updateProfile,
+    updatePassword,
   }
 })

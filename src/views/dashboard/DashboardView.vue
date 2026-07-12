@@ -18,6 +18,8 @@ import FamilyManager from '@/components/family/FamilyManager.vue'
 import BaseCard from '@/components/ui/BaseCard.vue'
 import BaseSheet from '@/components/ui/BaseSheet.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
+import BaseDialog from '@/components/ui/BaseDialog.vue'
+import { useUiStore } from '@/stores/ui'
 
 const auth = useAuthStore()
 const categories = useCategoriesStore()
@@ -58,9 +60,30 @@ async function selectMember(memberId: string | null) {
   await transactions.fetch({ familyMemberId: memberId ?? undefined })
 }
 
+const ui = useUiStore()
+
+const showSavingsPrompt = ref(false)
+
+function activateSavings() {
+  ui.setSavingsEnabled(true)
+  ui.setSavingsPromptDismissed(true)
+  showSavingsPrompt.value = false
+}
+
+function dismissSavingsPrompt() {
+  ui.setSavingsPromptDismissed(true)
+  showSavingsPrompt.value = false
+}
+
 onMounted(async () => {
   await Promise.all([categories.fetchAll(), family.fetchAll()])
   await transactions.fetch(monthRange())
+
+  if (!ui.savingsEnabled && !ui.savingsPromptDismissed) {
+    setTimeout(() => {
+      showSavingsPrompt.value = true
+    }, 1000)
+  }
 })
 </script>
 
@@ -75,6 +98,11 @@ onMounted(async () => {
           <h1 class="text-2xl font-bold text-content">{{ auth.displayName || 'de nuevo' }} 👋</h1>
         </div>
         <div class="flex gap-1">
+          <RouterLink v-if="ui.savingsEnabled" :to="{ name: ROUTE_NAMES.savings }"
+            class="flex h-10 w-10 items-center justify-center rounded-full bg-surface-muted text-content-muted hover:bg-line hover:text-content transition-colors mr-1"
+            title="Ver ahorros" aria-label="Ver ahorros">
+            <AppIcon name="solar:safe-square-bold" :size="20" />
+          </RouterLink>
           <RouterLink :to="{ name: ROUTE_NAMES.history }"
             class="flex h-10 w-10 items-center justify-center rounded-full bg-surface-muted text-content-muted hover:bg-line hover:text-content transition-colors"
             title="Ver histórico de movimientos" aria-label="Ver histórico de movimientos">
@@ -145,7 +173,8 @@ onMounted(async () => {
     </button>
 
     <!-- Sheets -->
-    <BaseSheet v-model="showTransaction" :title="editingTransaction ? 'Editar movimiento' : 'Nuevo movimiento'" :has-changes="transactionFormRef?.hasChanges">
+    <BaseSheet v-model="showTransaction" :title="editingTransaction ? 'Editar movimiento' : 'Nuevo movimiento'"
+      :has-changes="transactionFormRef?.hasChanges">
       <TransactionForm ref="transactionFormRef" :transaction="editingTransaction" @saved="onTransactionSaved"
         @cancel="showTransaction = false" />
     </BaseSheet>
@@ -173,5 +202,19 @@ onMounted(async () => {
       </template>
       <FamilyManager ref="familyManagerRef" />
     </BaseSheet>
+
+    <!-- Modal discreto para invitar a gestionar ahorros -->
+    <BaseDialog v-slot:default v-model="showSavingsPrompt" variant="confirm" title="¿Quieres gestionar tus ahorros?"
+      confirm-text="Activar ahorros" cancel-text="No, gracias" show-cancel @confirm="activateSavings"
+      @cancel="dismissSavingsPrompt" @close="dismissSavingsPrompt">
+      <p class="text-content">
+        Monify ahora incluye un módulo para ayudarte a organizar tus metas de ahorro y separar dinero de tu cuenta
+        principal.
+      </p>
+      <p class="mt-2 text-sm text-content-subtle">
+        Si decides no activarlo ahora, podrás hacerlo más adelante desde la sección de <strong>Ajustes de
+          cuenta</strong>.
+      </p>
+    </BaseDialog>
   </div>
 </template>

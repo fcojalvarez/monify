@@ -29,6 +29,12 @@ async function signOut() {
       </RouterLink>
 
       <div class="flex items-center gap-1">
+        <RouterLink :to="{ name: ROUTE_NAMES.profile }"
+          class="flex h-9 w-9 items-center justify-center rounded-full text-content-muted hover:bg-surface-muted transition-colors"
+          aria-label="Ajustes de cuenta" title="Ajustes de cuenta">
+          <AppIcon name="solar:settings-bold" :size="20" />
+        </RouterLink>
+
         <button class="flex h-9 w-9 items-center justify-center rounded-full text-content-muted hover:bg-surface-muted"
           :aria-label="ui.theme === 'dark' ? 'Modo claro' : 'Modo oscuro'" @click="ui.toggleTheme">
           <AppIcon :name="ui.theme === 'dark' ? 'solar:sun-bold' : 'solar:moon-bold'" :size="20" />

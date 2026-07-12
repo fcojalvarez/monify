@@ -9,8 +9,10 @@ import type {
 } from '@/types'
 import { transactionsService, type TransactionFilters } from '@/services/transactions.service'
 import { useCategoriesStore } from './categories'
+import { useUiStore } from './ui'
 import { env } from '@/config/env'
 import { monthRange } from '@/utils/format'
+import { supabase } from '@/lib/supabase'
 
 export const useTransactionsStore = defineStore('transactions', () => {
   const items = ref<TransactionWithRelations[]>([])
@@ -24,12 +26,15 @@ export const useTransactionsStore = defineStore('transactions', () => {
     items.value.filter((t) => t.kind === 'expense').reduce((sum, t) => sum + t.amount, 0),
   )
 
-  const summary = computed<PeriodSummary>(() => ({
-    income: totalIncome.value,
-    expense: totalExpense.value,
-    balance: totalIncome.value - totalExpense.value,
-    currency: env.defaultCurrency,
-  }))
+  const summary = computed<PeriodSummary>(() => {
+    const ui = useUiStore()
+    return {
+      income: totalIncome.value,
+      expense: totalExpense.value,
+      balance: totalIncome.value - totalExpense.value,
+      currency: ui.currency,
+    }
+  })
 
   /** Gasto/ingreso acumulado por categoría frente a su límite (para las barras del dashboard). */
   const usageByCategory = computed<CategoryUsage[]>(() => {
@@ -56,7 +61,7 @@ export const useTransactionsStore = defineStore('transactions', () => {
     income: 0,
     expense: 0,
     balance: 0,
-    currency: env.defaultCurrency,
+    currency: 'EUR',
   })
 
   async function fetchAnnual() {
@@ -71,11 +76,12 @@ export const useTransactionsStore = defineStore('transactions', () => {
       })
       const income = list.filter((t) => t.kind === 'income').reduce((sum, t) => sum + t.amount, 0)
       const expense = list.filter((t) => t.kind === 'expense').reduce((sum, t) => sum + t.amount, 0)
+      const ui = useUiStore()
       annualSummary.value = {
         income,
         expense,
         balance: income - expense,
-        currency: env.defaultCurrency,
+        currency: ui.currency,
       }
     } catch (e) {
       console.error('Error fetching annual summary', e)
@@ -114,6 +120,13 @@ export const useTransactionsStore = defineStore('transactions', () => {
     await fetchAnnual()
   }
 
+  async function clearAll() {
+    const { error } = await supabase.from('transactions').delete().neq('id', '00000000-0000-0000-0000-000000000000')
+    if (error) throw error
+    items.value = []
+    await fetchAnnual()
+  }
+
   return {
     items,
     loading,
@@ -127,5 +140,6 @@ export const useTransactionsStore = defineStore('transactions', () => {
     create,
     update,
     remove,
+    clearAll,
   }
 })

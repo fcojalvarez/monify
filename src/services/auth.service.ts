@@ -38,6 +38,14 @@ export const authService = {
     if (error) throw error
   },
 
+  async updateProfile(displayName: string): Promise<User> {
+    const { data, error } = await supabase.auth.updateUser({
+      data: { display_name: displayName },
+    })
+    if (error) throw error
+    return data.user
+  },
+
   async signOut(): Promise<void> {
     const { error } = await supabase.auth.signOut()
     if (error) throw error

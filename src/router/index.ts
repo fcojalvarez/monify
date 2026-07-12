@@ -52,6 +52,18 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
+      path: '/profile',
+      name: ROUTE_NAMES.profile,
+      component: () => import('@/views/dashboard/ProfileView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/savings',
+      name: ROUTE_NAMES.savings,
+      component: () => import('@/views/dashboard/SavingsView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/:pathMatch(.*)*',
       redirect: { name: ROUTE_NAMES.dashboard },
     },

@@ -37,3 +37,30 @@ export interface PeriodSummary {
   balance: number
   currency: string
 }
+
+/** Cuenta o meta de ahorro. */
+export interface Savings {
+  id: string
+  owner_id: string
+  name: string
+  balance: number
+  target: number | null
+  color: string
+  created_at: string
+}
+
+/** Movimiento de la cuenta de ahorros. */
+export interface SavingsTransaction {
+  id: string
+  owner_id: string
+  savings_id: string
+  amount: number
+  note: string | null
+  occurred_on: string
+  created_at: string
+}
+
+/** Movimiento de ahorro con su cuenta asociada (opcional). */
+export interface SavingsTransactionWithRelations extends SavingsTransaction {
+  savings?: Savings | null
+}
