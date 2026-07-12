@@ -5,6 +5,7 @@ import { ROUTE_NAMES } from '@/constants'
 import type { TransactionWithRelations } from '@/types'
 import { useAuthStore } from '@/stores/auth'
 import { useTransactionsStore } from '@/stores/transactions'
+import { useSavingsStore } from '@/stores/savings'
 import { useCategoriesStore } from '@/stores/categories'
 import { useFamilyStore } from '@/stores/family'
 import { monthRange } from '@/utils/format'
@@ -18,15 +19,16 @@ import FamilyManager from '@/components/family/FamilyManager.vue'
 import BaseCard from '@/components/ui/BaseCard.vue'
 import BaseSheet from '@/components/ui/BaseSheet.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
-import BaseDialog from '@/components/ui/BaseDialog.vue'
 import { useUiStore } from '@/stores/ui'
 
 const auth = useAuthStore()
 const categories = useCategoriesStore()
 const family = useFamilyStore()
 const transactions = useTransactionsStore()
+const savingsStore = useSavingsStore()
 
 const { summary, annualSummary, usageByCategory, items, loading } = storeToRefs(transactions)
+const { items: savings } = storeToRefs(savingsStore)
 
 const activeMember = ref<string | null>(null)
 const limitedUsage = computed(() =>
@@ -76,8 +78,12 @@ function dismissSavingsPrompt() {
 }
 
 onMounted(async () => {
-  await Promise.all([categories.fetchAll(), family.fetchAll()])
-  await transactions.fetch(monthRange())
+  await Promise.all([
+    categories.fetchAll(),
+    family.fetchAll(),
+    savingsStore.fetchAll(),
+    transactions.fetch(monthRange()),
+  ])
 
   if (!ui.savingsEnabled && !ui.savingsPromptDismissed) {
     setTimeout(() => {
@@ -122,10 +128,11 @@ onMounted(async () => {
       </div>
 
       <!-- Banner discreto de invitación a ahorros -->
-      <div v-if="showSavingsPrompt" 
+      <div v-if="showSavingsPrompt"
         class="relative flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-card border border-violet-100 bg-violet-50/50 text-violet-950 dark:border-violet-900/30 dark:bg-violet-950/20 dark:text-violet-200">
         <div class="flex gap-3">
-          <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-violet-100/80 text-violet-600 dark:bg-violet-900/50 dark:text-violet-400">
+          <span
+            class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-violet-100/80 text-violet-600 dark:bg-violet-900/50 dark:text-violet-400">
             <AppIcon name="solar:safe-2-bold-duotone" :size="22" />
           </span>
           <div>
@@ -136,14 +143,12 @@ onMounted(async () => {
           </div>
         </div>
         <div class="flex items-center gap-2 self-end sm:self-center shrink-0">
-          <button 
-            type="button"
+          <button type="button"
             class="text-xs font-semibold px-3 py-1.5 rounded-field text-content hover:bg-surface-muted transition-colors"
             @click="dismissSavingsPrompt">
             No, gracias
           </button>
-          <button 
-            type="button"
+          <button type="button"
             class="text-xs font-semibold px-3 py-1.5 rounded-field bg-primary-500 text-white hover:bg-primary-600 transition-colors shadow-sm"
             @click="activateSavings">
             Activar ahorros
@@ -151,7 +156,7 @@ onMounted(async () => {
         </div>
       </div>
 
-      <BalanceSummary :monthly-summary="summary" :annual-summary="annualSummary" />
+      <BalanceSummary :monthly-summary="summary" :annual-summary="annualSummary" :savings="savings" />
 
       <!-- Filtro por miembro de la familia -->
       <div v-if="family.items.length > 1" class="flex gap-2 overflow-x-auto pb-1">

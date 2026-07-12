@@ -1,14 +1,18 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import type { PeriodSummary } from '@/types'
+import type { PeriodSummary, Savings } from '@/types'
 import { formatCurrency } from '@/utils/format'
 import AppIcon from '@/components/ui/AppIcon.vue'
 import { usePlatform } from '@/composables/usePlatform'
+import SavingsSummaryCard from '@/components/dashboard/CardSavingsSummary.vue'
+import { useRouter } from 'vue-router'
 
+const router = useRouter()
 
 defineProps<{
   monthlySummary: PeriodSummary
   annualSummary: PeriodSummary
+  savings: Savings[]
 }>()
 
 const activeIndex = ref(0)
@@ -57,7 +61,7 @@ function previousCard() {
           <AppIcon name="solar:alt-arrow-right-bold" class="opacity-50 ml-3" :size="20" />
         </button>
 
-        <section class="md:w-11/12 m-auto">
+        <section class="md:w-11/12 m-auto cursor-pointer" @click="router.push('/history')">
           <p class="text-sm text-white/70">Balance del mes</p>
 
           <p class="mt-1 text-3xl font-bold tracking-tight">
@@ -90,7 +94,25 @@ function previousCard() {
         </section>
       </div>
 
-      <!-- Card 2: Balance del año -->
+      <!-- Card 2: Balance de ahorros -->
+      <div
+        class="relative w-full shrink-0 snap-center rounded-card bg-gradient-to-br from-secondary-700 to-secondary-900 p-6 text-white shadow-raised cursor-pointer">
+        <button v-if="isDesktop"
+          class="absolute right-0 top-1/2 h-full w-10 -translate-y-1/2 items-center justify-center rounded-full blur-fade-left transition"
+          aria-label="Ver balance anual" @click="nextCard">
+          <AppIcon name="solar:alt-arrow-right-bold" class="opacity-50 ml-3" :size="20" />
+        </button>
+
+        <SavingsSummaryCard @click="router.push('/savings')" :savings="savings" :currency="monthlySummary.currency" />
+
+        <button v-if="isDesktop"
+          class="absolute left-0 top-1/2 h-full w-10 -translate-y-1/2 items-center justify-center rounded-full blur-fade-right transition"
+          aria-label="Ver balance mensual" @click="previousCard">
+          <AppIcon name="solar:alt-arrow-left-bold" class="opacity-50 ml-1" :size="20" />
+        </button>
+      </div>
+
+      <!-- Card 3: Balance del año -->
       <div
         class="relative w-full shrink-0 snap-center rounded-card bg-gradient-to-br from-primary-700 to-primary-900 p-6 text-white shadow-raised animate-fade-in">
         <button v-if="isDesktop"
@@ -99,7 +121,7 @@ function previousCard() {
           <AppIcon name="solar:alt-arrow-left-bold" class="opacity-50 ml-1" :size="20" />
         </button>
 
-        <section class="md:w-11/12 m-auto">
+        <section class="md:w-11/12 m-auto cursor-pointer" @click="router.push('/history')">
           <p class="text-sm text-white/70">Balance del año</p>
 
           <p class="mt-1 text-3xl font-bold tracking-tight">
@@ -138,6 +160,8 @@ function previousCard() {
         :class="activeIndex === 0 ? 'bg-primary-500 w-4' : 'bg-line-strong w-2'" />
       <span class="h-2 rounded-full transition-all duration-200"
         :class="activeIndex === 1 ? 'bg-primary-500 w-4' : 'bg-line-strong w-2'" />
+      <span class="h-2 rounded-full transition-all duration-200"
+        :class="activeIndex === 2 ? 'bg-primary-500 w-4' : 'bg-line-strong w-2'" />
     </div>
   </div>
 </template>
