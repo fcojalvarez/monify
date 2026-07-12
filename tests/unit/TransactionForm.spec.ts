@@ -1,7 +1,9 @@
 import { describe, it, expect, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
+import { nextTick } from 'vue'
 import TransactionForm from '@/components/transactions/TransactionForm.vue'
+import BaseDialog from '@/components/ui/BaseDialog.vue'
 import { useTransactionsStore } from '@/stores/transactions'
 import type { Category, FamilyMember } from '@/types'
 
@@ -13,6 +15,7 @@ const category: Partial<Category> = {
   kind: 'expense',
   monthly_limit: null,
 }
+
 const member: Partial<FamilyMember> = {
   id: 'mem-1',
   name: 'Yo',
@@ -35,12 +38,14 @@ function mountForm() {
       ],
     },
   })
+
   return { wrapper, store: useTransactionsStore() }
 }
 
 describe('TransactionForm', () => {
   it('no crea el movimiento si falta el importe', async () => {
     const { wrapper, store } = mountForm()
+
     await wrapper.find('form').trigger('submit.prevent')
 
     expect(wrapper.text()).toContain('Introduce un importe mayor que 0')
@@ -54,6 +59,7 @@ describe('TransactionForm', () => {
     await wrapper.find('input[type="number"]').setValue('42.5')
     await wrapper.find('select').setValue('cat-1')
     await wrapper.find('form').trigger('submit.prevent')
+
     await vi.waitFor(() => expect(store.create).toHaveBeenCalledTimes(1))
 
     expect(store.create).toHaveBeenCalledWith(
@@ -64,6 +70,7 @@ describe('TransactionForm', () => {
         family_member_id: 'mem-1',
       }),
     )
+
     expect(wrapper.emitted('saved')).toBeTruthy()
   })
 
@@ -93,23 +100,29 @@ describe('TransactionForm', () => {
         ],
       },
     })
+
     const store = useTransactionsStore()
     ;(store.remove as ReturnType<typeof vi.fn>).mockResolvedValue({})
 
-    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true)
-
-    // Busca el botón con variante danger (que en BaseButton mapea a bg-expense)
     const deleteBtn = wrapper.find('button[class*="bg-expense"]')
+
     expect(deleteBtn.exists()).toBe(true)
     expect(deleteBtn.text()).toContain('Eliminar movimiento')
 
+    // Abre el diálogo
     await deleteBtn.trigger('click')
+    await nextTick()
 
-    expect(confirmSpy).toHaveBeenCalled()
-    expect(store.remove).toHaveBeenCalledWith('tx-123')
+    // Simula que el usuario confirma en BaseDialog
+    const dialog = wrapper.findComponent(BaseDialog)
+    expect(dialog.exists()).toBe(true)
+
+    dialog.vm.$emit('confirm')
+    await nextTick()
+
+    await vi.waitFor(() => expect(store.remove).toHaveBeenCalledWith('tx-123'))
+
     expect(wrapper.emitted('saved')).toBeTruthy()
-
-    confirmSpy.mockRestore()
   })
 
   it('usa la fecha de inicio del filtro como valor por defecto si hoy no está en el mes activo', async () => {
@@ -134,8 +147,7 @@ describe('TransactionForm', () => {
     })
 
     const dateInput = wrapper.find('input[type="date"]')
-    // Como hoy es Julio de 2026 (por la fecha del sistema en el prompt),
-    // hoy no cae en mayo de 2026, por lo que debe tomar el 2026-05-01 como valor por defecto
+
     expect((dateInput.element as HTMLInputElement).value).toBe('2026-05-01')
   })
 })

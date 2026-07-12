@@ -9,6 +9,7 @@ import { todayISO } from '@/utils/format'
 import BaseInput from '@/components/ui/BaseInput.vue'
 import BaseSelect from '@/components/ui/BaseSelect.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
+import BaseDialog from '@/components/ui/BaseDialog.vue'
 import SegmentedControl from '@/components/ui/SegmentedControl.vue'
 
 const props = defineProps<{ transaction?: TransactionWithRelations }>()
@@ -97,10 +98,11 @@ async function onSubmit() {
 }
 
 const deleting = ref(false)
+const showDeleteConfirm = ref(false)
 
-async function onDelete() {
+async function onDeleteConfirm() {
   if (!props.transaction) return
-  if (!confirm('¿Estás seguro de que deseas eliminar este movimiento?')) return
+  showDeleteConfirm.value = false
   deleting.value = true
   try {
     await transactions.remove(props.transaction.id)
@@ -172,9 +174,24 @@ defineExpose({
         {{ isEdit ? 'Guardar' : 'Añadir' }}
       </BaseButton>
 
-      <BaseButton v-if="isEdit" type="button" variant="danger" block :loading="deleting" @click="onDelete">
+      <BaseButton v-if="isEdit" type="button" variant="danger" block :loading="deleting" @click="showDeleteConfirm = true">
         Eliminar movimiento
       </BaseButton>
     </div>
   </form>
+
+  <BaseDialog
+    v-slot:default
+    v-model="showDeleteConfirm"
+    variant="danger"
+    title="Eliminar movimiento"
+    confirm-text="Eliminar"
+    cancel-text="Cancelar"
+    show-cancel
+    @confirm="onDeleteConfirm"
+  >
+    <p class="text-content">
+      ¿Estás seguro de que deseas eliminar este movimiento? Esta acción no se puede deshacer.
+    </p>
+  </BaseDialog>
 </template>

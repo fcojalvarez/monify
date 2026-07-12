@@ -14,3 +14,31 @@ Object.defineProperty(window, 'matchMedia', {
     dispatchEvent: vi.fn(),
   }),
 })
+
+// Polyfill para HTMLDialogElement (JSDOM no implementa showModal/show/close)
+if (!HTMLDialogElement.prototype.showModal) {
+  Object.defineProperty(HTMLDialogElement.prototype, 'showModal', {
+    configurable: true,
+    value: vi.fn(function (this: HTMLDialogElement) {
+      this.open = true
+    }),
+  })
+}
+
+if (!HTMLDialogElement.prototype.show) {
+  Object.defineProperty(HTMLDialogElement.prototype, 'show', {
+    configurable: true,
+    value: vi.fn(function (this: HTMLDialogElement) {
+      this.open = true
+    }),
+  })
+}
+
+if (!HTMLDialogElement.prototype.close) {
+  Object.defineProperty(HTMLDialogElement.prototype, 'close', {
+    configurable: true,
+    value: vi.fn(function (this: HTMLDialogElement) {
+      this.open = false
+    }),
+  })
+}

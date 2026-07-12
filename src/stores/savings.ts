@@ -12,6 +12,7 @@ export interface TransferPayload {
   isDeposit: boolean // true = de principal a ahorros (ingreso en ahorro), false = de ahorro a principal (retirada de ahorro)
   note?: string
   familyMemberId: string
+  shouldCreateMainTransaction?: boolean
 }
 
 export const useSavingsStore = defineStore('savings', () => {
@@ -28,6 +29,17 @@ export const useSavingsStore = defineStore('savings', () => {
       ])
       items.value = savingsList
       transactions.value = transactionsList
+
+      // Garantizar que la cuenta de ahorro general siempre exista
+      let general = savingsList.find((s) => s.name === 'general')
+      if (!general) {
+        general = await savingsService.create({
+          name: 'general',
+          target: null,
+          color: '#8b5cf6',
+        })
+        items.value.push(general)
+      }
     } catch (error) {
       console.error('Error fetching savings data:', error)
     } finally {
@@ -41,7 +53,10 @@ export const useSavingsStore = defineStore('savings', () => {
     return created
   }
 
-  async function update(id: string, payload: Partial<Omit<Savings, 'id' | 'owner_id' | 'created_at'>>) {
+  async function update(
+    id: string,
+    payload: Partial<Omit<Savings, 'id' | 'owner_id' | 'created_at'>>,
+  ) {
     const updated = await savingsService.update(id, payload)
     const index = items.value.findIndex((s) => s.id === id)
     if (index !== -1) items.value[index] = updated
@@ -54,47 +69,72 @@ export const useSavingsStore = defineStore('savings', () => {
     transactions.value = transactions.value.filter((t) => t.savings_id !== id)
   }
 
-
   async function transfer(payload: TransferPayload) {
-    const { savingsId, amount, isDeposit, note = '', familyMemberId } = payload
-    
+    const {
+      savingsId,
+      amount,
+      isDeposit,
+      note = '',
+      familyMemberId,
+      shouldCreateMainTransaction = true,
+    } = payload
+
     const categoriesStore = useCategoriesStore()
     const transactionsStore = useTransactionsStore()
 
     const mainTxKind = isDeposit ? 'expense' : 'income'
     const savingsAmount = isDeposit ? amount : -amount
 
-    // 1. Encontrar o crear la categoría de 'Ahorro' en la cuenta principal
-    let category = categoriesStore.items.find(
-      (c) => c.name.toLowerCase() === 'ahorros' && c.kind === mainTxKind,
-    )
+    const savingsAccount = items.value.find((s) => s.id === savingsId)
+    const isGeneral = savingsAccount?.name === 'general'
+    const accountName = savingsAccount
+      ? isGeneral
+        ? 'Ahorro general'
+        : savingsAccount.name
+      : 'Ahorro'
 
-    if (!category) {
-      category = await categoriesStore.create({
-        name: 'Ahorros',
-        icon: 'solar:safe-2-linear',
-        color: '#8b5cf6',
+    // 1. Crear movimiento en la cuenta principal si se solicita
+    if (shouldCreateMainTransaction) {
+      // Cargar las categorías si no están cargadas para evitar duplicación
+      await categoriesStore.fetchAll()
+
+      let category = categoriesStore.items.find(
+        (c) => c.name.toLowerCase() === 'ahorros' && c.kind === mainTxKind,
+      )
+
+      if (!category) {
+        category = await categoriesStore.create({
+          name: 'Ahorros',
+          icon: 'solar:safe-2-linear',
+          color: '#8b5cf6',
+          kind: mainTxKind,
+        })
+      }
+
+      const defaultNote = isDeposit
+        ? isGeneral
+          ? 'Aportación a Ahorros'
+          : `Aportación a ${accountName}`
+        : isGeneral
+          ? 'Retirada de Ahorros'
+          : `Retirada de ${accountName}`
+
+      await transactionsStore.create({
         kind: mainTxKind,
+        amount,
+        gross: null,
+        category_id: category.id,
+        family_member_id: familyMemberId,
+        occurred_on: todayISO(),
+        note: note.trim()
+          ? isGeneral
+            ? note.trim()
+            : `${note.trim()} (${isDeposit ? 'Para' : 'Desde'} ${accountName})`
+          : defaultNote,
       })
     }
 
-    const savingsAccount = items.value.find((s) => s.id === savingsId)
-    const accountName = savingsAccount ? savingsAccount.name : 'Ahorro'
-
-    // 2. Crear movimiento en la cuenta principal
-    await transactionsStore.create({
-      kind: mainTxKind,
-      amount,
-      gross: null,
-      category_id: category.id,
-      family_member_id: familyMemberId,
-      occurred_on: todayISO(),
-      note: note.trim() 
-        ? `${note.trim()} (${isDeposit ? 'Para' : 'Desde'} ${accountName})` 
-        : `${isDeposit ? 'Aportación a' : 'Retirada de'} ${accountName}`,
-    })
-
-    // 3. Crear el movimiento en la cuenta de ahorros
+    // 2. Crear el movimiento en la cuenta de ahorros
     const savingsTx = await savingsService.createTransaction({
       savings_id: savingsId,
       amount: savingsAmount,
@@ -104,11 +144,12 @@ export const useSavingsStore = defineStore('savings', () => {
 
     transactions.value.unshift(savingsTx)
 
-    // 4. Recargar datos para tener los balances actualizados
-    await Promise.all([
-      fetchAll(),
-      transactionsStore.fetch(),
-    ])
+    // 3. Recargar datos para tener los balances actualizados
+    const promises: Promise<any>[] = [fetchAll()]
+    if (shouldCreateMainTransaction) {
+      promises.push(transactionsStore.fetch())
+    }
+    await Promise.all(promises)
   }
 
   return {

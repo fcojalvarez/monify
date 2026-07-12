@@ -13,7 +13,6 @@ import BaseDialog from '@/components/ui/BaseDialog.vue'
 import BaseSelect from '@/components/ui/BaseSelect.vue'
 import ColorPicker from '@/components/ui/ColorPicker.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
-import SegmentedControl from '@/components/ui/SegmentedControl.vue'
 import type { Savings } from '@/types'
 
 const savingsStore = useSavingsStore()
@@ -23,11 +22,6 @@ const ui = useUiStore()
 // State
 const showAddGoalDialog = ref(false)
 const showAddDropdown = ref(false)
-const savingsType = ref<'goal' | 'simple'>('goal')
-const savingsTypeOptions = [
-  { value: 'simple', label: 'Ahorro simple' },
-  { value: 'goal', label: 'Meta de ahorro' },
-] as const
 
 const editingGoal = ref<Savings | null>(null)
 const goalForm = ref({
@@ -44,12 +38,12 @@ const transferForm = ref({
   isDeposit: true, // true = ingresar, false = retirar
   note: '',
   familyMemberId: '',
+  createMainTx: false,
 })
 
 // Dialogs Control
 function openAddGoal() {
   editingGoal.value = null
-  savingsType.value = 'goal'
   goalForm.value = {
     name: '',
     target: '',
@@ -58,20 +52,15 @@ function openAddGoal() {
   showAddGoalDialog.value = true
 }
 
-function openAddSimpleSavings() {
-  editingGoal.value = null
-  savingsType.value = 'simple'
-  goalForm.value = {
-    name: '',
-    target: '',
-    color: '#8b5cf6',
+function openAddSimpleSavings(isDeposit: boolean) {
+  const general = savingsStore.items.find((s) => s.name === 'general')
+  if (general) {
+    openTransfer(general, isDeposit)
   }
-  showAddGoalDialog.value = true
 }
 
 function openEditGoal(goal: Savings) {
   editingGoal.value = goal
-  savingsType.value = goal.target !== null ? 'goal' : 'simple'
   goalForm.value = {
     name: goal.name,
     target: goal.target ? String(goal.target) : '',
@@ -84,17 +73,9 @@ async function saveGoal() {
   const nameTrimmed = goalForm.value.name.trim()
   if (!nameTrimmed) return
 
-  let targetVal: number | null = null
-  if (savingsType.value === 'goal') {
-    targetVal = parseFloat(goalForm.value.target)
-    if (isNaN(targetVal) || targetVal <= 0) {
-      return
-    }
-  }
-
   const payload = {
     name: nameTrimmed,
-    target: targetVal,
+    target: goalForm.value.target ? parseFloat(goalForm.value.target) : null,
     color: goalForm.value.color,
   }
 
@@ -130,6 +111,7 @@ function openTransfer(goal: Savings, isDeposit: boolean) {
     isDeposit,
     note: '',
     familyMemberId: familyStore.self?.id || '',
+    createMainTx: false,
   }
   showTransferDialog.value = true
 }
@@ -163,6 +145,7 @@ async function executeTransfer() {
       isDeposit: transferForm.value.isDeposit,
       note: transferForm.value.note,
       familyMemberId: transferForm.value.familyMemberId,
+      shouldCreateMainTransaction: transferForm.value.createMainTx,
     })
     showTransferDialog.value = false
   } catch (error) {
@@ -177,10 +160,17 @@ const totalSavingsBalance = computed(() => {
   return savingsStore.items.reduce((sum, s) => sum + s.balance, 0)
 })
 
+const displayGoals = computed(() => {
+  return savingsStore.items.filter((s) => s.name !== 'general')
+})
+
 // Helper to look up account name by id
 function getAccountName(id: string) {
   const s = savingsStore.items.find((x) => x.id === id)
-  return s ? s.name : 'Ahorro'
+  if (s) {
+    return s.name === 'general' ? 'Ahorro general' : s.name
+  }
+  return 'Ahorro'
 }
 
 function getAccountColor(id: string) {
@@ -219,27 +209,32 @@ onMounted(async () => {
           <button
             class="flex h-10 items-center gap-2 rounded-pill bg-primary-500 px-4 text-sm font-semibold text-white transition-colors hover:bg-primary-600 relative z-20"
             @click="showAddDropdown = !showAddDropdown">
-            <AppIcon name="solar:add-circle-bold" :size="18" />
-            Añadir
+            <AppIcon name="solar:settings-bold" :size="18" />
+            Gestionar
           </button>
-          
-          <div v-if="showAddDropdown" 
-            class="fixed inset-0 z-10" 
-            @click="showAddDropdown = false" />
 
-          <div v-if="showAddDropdown" 
+          <div v-if="showAddDropdown" class="fixed inset-0 z-10" @click="showAddDropdown = false" />
+
+          <div v-if="showAddDropdown"
             class="absolute right-0 mt-2 w-48 rounded-card border border-line bg-surface-raised p-2 shadow-raised z-20 space-y-1">
             <button
               class="flex w-full items-center gap-2 rounded-field px-3 py-2 text-left text-sm font-medium text-content hover:bg-surface-muted transition-colors"
-              @click="openAddSimpleSavings(); showAddDropdown = false">
-              <AppIcon name="solar:wallet-bold" :size="16" class="text-violet-500" />
-              Añadir ahorro
+              @click="openAddSimpleSavings(true); showAddDropdown = false">
+              <AppIcon name="solar:arrow-right-up-linear" :size="16" class="text-income" />
+              Aportar ahorro
             </button>
+            <button
+              class="flex w-full items-center gap-2 rounded-field px-3 py-2 text-left text-sm font-medium text-content hover:bg-surface-muted transition-colors"
+              @click="openAddSimpleSavings(false); showAddDropdown = false">
+              <AppIcon name="solar:arrow-right-up-linear" :size="16" class="rotate-180 text-expense" />
+              Retirar ahorro
+            </button>
+            <div class="h-[1px] bg-line my-1" />
             <button
               class="flex w-full items-center gap-2 rounded-field px-3 py-2 text-left text-sm font-medium text-content hover:bg-surface-muted transition-colors"
               @click="openAddGoal(); showAddDropdown = false">
               <AppIcon name="solar:target-bold" :size="16" class="text-indigo-500" />
-              Añadir meta
+              Crear meta
             </button>
           </div>
         </div>
@@ -257,20 +252,18 @@ onMounted(async () => {
       </div>
 
       <!-- Lista de metas de ahorro -->
-      <div v-if="savingsStore.loading && !savingsStore.items.length"
-        class="py-12 text-center text-sm text-content-subtle">
+      <div v-if="savingsStore.loading && !displayGoals.length" class="py-12 text-center text-sm text-content-subtle">
         Cargando ahorros…
       </div>
 
-      <div v-else-if="!savingsStore.items.length"
-        class="py-12 text-center border border-dashed border-line rounded-card bg-surface-raised">
-        <AppIcon name="solar:piggy-bank-bold-duotone" :size="48" class="mx-auto text-content-subtle" />
-        <p class="mt-2 text-sm font-medium text-content-muted">Aún no has creado ninguna meta o cuenta de ahorro.</p>
-        <p class="text-xs text-content-subtle mt-1">¡Crea tu primer ahorro arriba!</p>
+      <div v-else-if="!displayGoals.length"
+        class="py-4 text-center border border-dashed border-line rounded-card bg-surface-raised">
+        <p class="mt-2 text-sm font-medium text-content-muted">Aún no has creado ninguna meta de ahorro.</p>
+        <p class="text-xs text-content-subtle mt-1">¡Crea tu primera meta arriba!</p>
       </div>
 
       <div v-else class="grid grid-cols-1 gap-4">
-        <BaseCard v-for="goal in savingsStore.items" :key="goal.id" class="p-5 flex flex-col justify-between space-y-4">
+        <BaseCard v-for="goal in displayGoals" :key="goal.id" class="p-5 flex flex-col justify-between space-y-4">
           <div>
             <!-- Cabecera de la meta -->
             <div class="flex items-start justify-between">
@@ -376,19 +369,14 @@ onMounted(async () => {
 
     <!-- Diálogo: Crear/Editar Meta -->
     <BaseDialog v-slot:default v-model="showAddGoalDialog" variant="confirm"
-      :title="editingGoal ? (savingsType === 'goal' ? 'Editar Meta de Ahorro' : 'Editar Ahorro Simple') : (savingsType === 'goal' ? 'Crear Meta de Ahorro' : 'Crear Ahorro Simple')" confirm-text="Guardar"
+      :title="editingGoal ? 'Editar Meta de Ahorro' : 'Crear Meta de Ahorro'" confirm-text="Guardar"
       cancel-text="Cancelar" show-cancel @confirm="saveGoal">
       <form class="space-y-4" @submit.prevent>
-        <div class="space-y-1.5">
-          <span class="field-label block text-xs font-semibold text-content-muted uppercase tracking-wider">Tipo de ahorro</span>
-          <SegmentedControl v-model="savingsType" :options="savingsTypeOptions" />
-        </div>
-
-        <BaseInput v-model="goalForm.name" label="Nombre del ahorro" icon="solar:tag-bold"
+        <BaseInput v-model="goalForm.name" label="Nombre de la meta" icon="solar:tag-bold"
           placeholder="p.ej. Coche nuevo, Fondo de emergencia…" required />
 
-        <BaseInput v-if="savingsType === 'goal'" v-model="goalForm.target" type="number" label="Importe meta" icon="solar:tag-price-bold"
-          placeholder="p.ej. 2500" required />
+        <BaseInput v-model="goalForm.target" type="number" label="Importe meta (opcional)" icon="solar:tag-price-bold"
+          placeholder="p.ej. 2500" />
 
         <div>
           <span class="field-label">Color identificativo</span>
@@ -398,32 +386,62 @@ onMounted(async () => {
     </BaseDialog>
 
     <!-- Diálogo: Eliminar Meta -->
-    <BaseDialog v-slot:default v-model="showDeleteDialog" variant="danger" :title="goalToDelete?.target !== null ? 'Eliminar Meta de Ahorro' : 'Eliminar Ahorro'"
+    <BaseDialog v-slot:default v-model="showDeleteDialog" variant="danger" title="Eliminar Meta de Ahorro"
       confirm-text="Eliminar" cancel-text="Cancelar" show-cancel @confirm="confirmDeleteGoal">
       <p class="text-content">
-        ¿Estás seguro de que quieres eliminar {{ goalToDelete?.target !== null ? 'la meta de ahorro' : 'el ahorro' }} <strong>{{ goalToDelete?.name }}</strong>?
+        ¿Estás seguro de que quieres eliminar la meta de ahorro <strong>{{ goalToDelete?.name }}</strong>?
       </p>
       <p class="mt-2 text-sm text-content-subtle">
-        Esta acción eliminará el registro y su historial local. El balance acumulado en este ahorro
+        Esta acción eliminará el registro de la meta de ahorro y su historial local. El balance acumulado en este ahorro
         dejará de computarse.
       </p>
     </BaseDialog>
 
     <!-- Diálogo: Transferencia de Fondos -->
     <BaseDialog v-slot:default v-model="showTransferDialog" variant="confirm"
-      :title="transferForm.isDeposit ? `Aportar a ${transferAccount?.name}` : `Retirar de ${transferAccount?.name}`"
+      :title="transferAccount?.name === 'general' ? (transferForm.isDeposit ? 'Aportar Ahorro' : 'Retirar Ahorro') : (transferForm.isDeposit ? `Aportar a ${transferAccount?.name}` : `Retirar de ${transferAccount?.name}`)"
       confirm-text="Confirmar" cancel-text="Cancelar" show-cancel :loading="transferring" @confirm="executeTransfer">
       <form class="space-y-4" @submit.prevent>
         <p class="text-xs text-content-subtle">
           {{
             transferForm.isDeposit
-              ? 'Se restará este importe de tu cuenta principal y se sumará a tus ahorros.'
-              : 'Se restará este importe de tus ahorros y se sumará como ingreso a tu cuenta principal.'
+              ? (transferForm.createMainTx
+                ? 'Se restará este importe de tu cuenta principal y se sumará a tus ahorros.'
+                : 'Se sumará este importe a tus ahorros (no afecta a tu cuenta principal).')
+              : (transferForm.createMainTx
+                ? 'Se restará este importe de tus ahorros y se sumará como ingreso a tu cuenta principal.'
+                : 'Se restará este importe de tus ahorros (no afecta a tu cuenta principal).')
           }}
         </p>
 
         <BaseInput v-model="transferForm.amount" type="number" label="Importe" icon="solar:tag-price-bold"
           placeholder="0,00" required />
+
+        <!-- Toggle: Crear transacción en cuenta principal -->
+        <div class="border-t border-b border-line py-4 my-2">
+          <label class="flex cursor-pointer items-center justify-between">
+            <div>
+              <span class="text-sm font-semibold text-content">
+                {{ transferForm.isDeposit ? '¿Restar de la cuenta principal?' : '¿Ingresar en la cuenta principal?' }}
+              </span>
+              <p class="text-xs text-content-subtle mt-0.5">
+                {{
+                  transferForm.isDeposit
+                    ? 'Registra automáticamente un gasto en la cuenta principal con esta cantidad.'
+                    : 'Registra automáticamente un ingreso en la cuenta principal con esta cantidad.'
+                }}
+              </p>
+            </div>
+            <div class="relative shrink-0 ml-4">
+              <input v-model="transferForm.createMainTx" type="checkbox" class="sr-only" />
+              <span class="relative block h-6 w-11 rounded-pill transition-colors"
+                :class="transferForm.createMainTx ? 'bg-primary-500' : 'bg-line'">
+                <span class="absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white transition-transform"
+                  :class="transferForm.createMainTx ? 'translate-x-5' : 'translate-x-0'" />
+              </span>
+            </div>
+          </label>
+        </div>
 
         <BaseSelect v-model="transferForm.familyMemberId" label="¿Quién realiza el movimiento?"
           placeholder="Selecciona miembro de la familia" :options="memberOptions" required />
