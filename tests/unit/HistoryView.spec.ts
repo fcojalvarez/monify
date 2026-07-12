@@ -110,6 +110,9 @@ describe('HistoryView', () => {
     const wrapper = mountView()
     await vi.waitFor(() => expect(transactionsService.list).toHaveBeenCalled())
 
+    // Abrimos los filtros
+    await wrapper.find('.cursor-pointer').trigger('click')
+
     // Obtenemos los selects e identificamos el de tipo de flujo
     const selects = wrapper.findAll('select')
     const kindSelect = selects.find(
@@ -130,6 +133,9 @@ describe('HistoryView', () => {
     const wrapper = mountView()
     await vi.waitFor(() => expect(transactionsService.list).toHaveBeenCalled())
 
+    // Abrimos los filtros
+    await wrapper.find('.cursor-pointer').trigger('click')
+
     const selects = wrapper.findAll('select')
     const memberSelect = selects[0]
     await memberSelect.setValue('mem-1')
@@ -139,9 +145,9 @@ describe('HistoryView', () => {
     expect((memberSelect.element as HTMLSelectElement).value).toBe('mem-1')
 
     // Hacemos clic en el botón de limpiar filtros
-    const clearBtn = wrapper.find('button[type="button"]')
-    expect(clearBtn.text()).toContain('Limpiar filtros')
-    await clearBtn.trigger('click')
+    const clearBtn = wrapper.findAll('button').find((el) => el.text().includes('Limpiar filtros'))
+    expect(clearBtn).toBeDefined()
+    await clearBtn!.trigger('click')
     await wrapper.vm.$nextTick()
 
     // Comprobamos que el valor volvió a ser vacío ("Todos")

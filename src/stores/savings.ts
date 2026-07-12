@@ -6,6 +6,14 @@ import { useTransactionsStore } from './transactions'
 import { useCategoriesStore } from './categories'
 import { todayISO } from '@/utils/format'
 
+export interface TransferPayload {
+  savingsId: string
+  amount: number
+  isDeposit: boolean // true = de principal a ahorros (ingreso en ahorro), false = de ahorro a principal (retirada de ahorro)
+  note?: string
+  familyMemberId: string
+}
+
 export const useSavingsStore = defineStore('savings', () => {
   const items = ref<Savings[]>([])
   const transactions = ref<SavingsTransaction[]>([])
@@ -46,13 +54,6 @@ export const useSavingsStore = defineStore('savings', () => {
     transactions.value = transactions.value.filter((t) => t.savings_id !== id)
   }
 
-  interface TransferPayload {
-    savingsId: string
-    amount: number
-    isDeposit: boolean // true = de principal a ahorros (ingreso en ahorro), false = de ahorro a principal (retirada de ahorro)
-    note?: string
-    familyMemberId: string
-  }
 
   async function transfer(payload: TransferPayload) {
     const { savingsId, amount, isDeposit, note = '', familyMemberId } = payload

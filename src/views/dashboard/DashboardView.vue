@@ -121,6 +121,36 @@ onMounted(async () => {
         </div>
       </div>
 
+      <!-- Banner discreto de invitación a ahorros -->
+      <div v-if="showSavingsPrompt" 
+        class="relative flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-card border border-violet-100 bg-violet-50/50 text-violet-950 dark:border-violet-900/30 dark:bg-violet-950/20 dark:text-violet-200">
+        <div class="flex gap-3">
+          <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-violet-100/80 text-violet-600 dark:bg-violet-900/50 dark:text-violet-400">
+            <AppIcon name="solar:safe-2-bold-duotone" :size="22" />
+          </span>
+          <div>
+            <h3 class="font-bold text-sm leading-snug text-content">¡Nueva función de ahorros!</h3>
+            <p class="text-xs mt-0.5 text-content-muted leading-normal">
+              Organiza tus ahorros, fija metas y aparta dinero de tu cuenta principal de forma muy sencilla.
+            </p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2 self-end sm:self-center shrink-0">
+          <button 
+            type="button"
+            class="text-xs font-semibold px-3 py-1.5 rounded-field text-content hover:bg-surface-muted transition-colors"
+            @click="dismissSavingsPrompt">
+            No, gracias
+          </button>
+          <button 
+            type="button"
+            class="text-xs font-semibold px-3 py-1.5 rounded-field bg-primary-500 text-white hover:bg-primary-600 transition-colors shadow-sm"
+            @click="activateSavings">
+            Activar ahorros
+          </button>
+        </div>
+      </div>
+
       <BalanceSummary :monthly-summary="summary" :annual-summary="annualSummary" />
 
       <!-- Filtro por miembro de la familia -->
@@ -203,18 +233,5 @@ onMounted(async () => {
       <FamilyManager ref="familyManagerRef" />
     </BaseSheet>
 
-    <!-- Modal discreto para invitar a gestionar ahorros -->
-    <BaseDialog v-slot:default v-model="showSavingsPrompt" variant="confirm" title="¿Quieres gestionar tus ahorros?"
-      confirm-text="Activar ahorros" cancel-text="No, gracias" show-cancel @confirm="activateSavings"
-      @cancel="dismissSavingsPrompt" @close="dismissSavingsPrompt">
-      <p class="text-content">
-        Monify ahora incluye un módulo para ayudarte a organizar tus metas de ahorro y separar dinero de tu cuenta
-        principal.
-      </p>
-      <p class="mt-2 text-sm text-content-subtle">
-        Si decides no activarlo ahora, podrás hacerlo más adelante desde la sección de <strong>Ajustes de
-          cuenta</strong>.
-      </p>
-    </BaseDialog>
   </div>
 </template>

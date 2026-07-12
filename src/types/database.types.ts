@@ -172,6 +172,89 @@ export type Database = {
           },
         ]
       }
+      savings: {
+        Row: {
+          balance: number
+          color: string
+          created_at: string
+          id: string
+          name: string
+          owner_id: string
+          target: number | null
+        }
+        Insert: {
+          balance?: number
+          color?: string
+          created_at?: string
+          id?: string
+          name: string
+          owner_id?: string
+          target?: number | null
+        }
+        Update: {
+          balance?: number
+          color?: string
+          created_at?: string
+          id?: string
+          name?: string
+          owner_id?: string
+          target?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'savings_owner_id_fkey'
+            columns: ['owner_id']
+            isOneToOne: false
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
+          }
+        ]
+      }
+      savings_transactions: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          note: string | null
+          occurred_on: string
+          owner_id: string
+          savings_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          note?: string | null
+          occurred_on?: string
+          owner_id?: string
+          savings_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          note?: string | null
+          occurred_on?: string
+          owner_id?: string
+          savings_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'savings_transactions_owner_id_fkey'
+            columns: ['owner_id']
+            isOneToOne: false
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'savings_transactions_savings_id_fkey'
+            columns: ['savings_id']
+            isOneToOne: false
+            referencedRelation: 'savings'
+            referencedColumns: ['id']
+          }
+        ]
+      }
     }
     Views: {
       [_ in never]: never

@@ -13,6 +13,7 @@ import BaseDialog from '@/components/ui/BaseDialog.vue'
 import BaseSelect from '@/components/ui/BaseSelect.vue'
 import ColorPicker from '@/components/ui/ColorPicker.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
+import SegmentedControl from '@/components/ui/SegmentedControl.vue'
 import type { Savings } from '@/types'
 
 const savingsStore = useSavingsStore()
@@ -21,6 +22,13 @@ const ui = useUiStore()
 
 // State
 const showAddGoalDialog = ref(false)
+const showAddDropdown = ref(false)
+const savingsType = ref<'goal' | 'simple'>('goal')
+const savingsTypeOptions = [
+  { value: 'simple', label: 'Ahorro simple' },
+  { value: 'goal', label: 'Meta de ahorro' },
+] as const
+
 const editingGoal = ref<Savings | null>(null)
 const goalForm = ref({
   name: '',
@@ -41,6 +49,18 @@ const transferForm = ref({
 // Dialogs Control
 function openAddGoal() {
   editingGoal.value = null
+  savingsType.value = 'goal'
+  goalForm.value = {
+    name: '',
+    target: '',
+    color: '#8b5cf6',
+  }
+  showAddGoalDialog.value = true
+}
+
+function openAddSimpleSavings() {
+  editingGoal.value = null
+  savingsType.value = 'simple'
   goalForm.value = {
     name: '',
     target: '',
@@ -51,6 +71,7 @@ function openAddGoal() {
 
 function openEditGoal(goal: Savings) {
   editingGoal.value = goal
+  savingsType.value = goal.target !== null ? 'goal' : 'simple'
   goalForm.value = {
     name: goal.name,
     target: goal.target ? String(goal.target) : '',
@@ -60,9 +81,20 @@ function openEditGoal(goal: Savings) {
 }
 
 async function saveGoal() {
+  const nameTrimmed = goalForm.value.name.trim()
+  if (!nameTrimmed) return
+
+  let targetVal: number | null = null
+  if (savingsType.value === 'goal') {
+    targetVal = parseFloat(goalForm.value.target)
+    if (isNaN(targetVal) || targetVal <= 0) {
+      return
+    }
+  }
+
   const payload = {
-    name: goalForm.value.name.trim(),
-    target: goalForm.value.target ? parseFloat(goalForm.value.target) : null,
+    name: nameTrimmed,
+    target: targetVal,
     color: goalForm.value.color,
   }
 
@@ -183,12 +215,34 @@ onMounted(async () => {
           </div>
         </div>
 
-        <button
-          class="flex h-10 items-center gap-2 rounded-pill bg-primary-500 px-4 text-sm font-semibold text-white transition-colors hover:bg-primary-600"
-          @click="openAddGoal">
-          <AppIcon name="solar:add-circle-bold" :size="18" />
-          Añadir
-        </button>
+        <div class="relative">
+          <button
+            class="flex h-10 items-center gap-2 rounded-pill bg-primary-500 px-4 text-sm font-semibold text-white transition-colors hover:bg-primary-600 relative z-20"
+            @click="showAddDropdown = !showAddDropdown">
+            <AppIcon name="solar:add-circle-bold" :size="18" />
+            Añadir
+          </button>
+          
+          <div v-if="showAddDropdown" 
+            class="fixed inset-0 z-10" 
+            @click="showAddDropdown = false" />
+
+          <div v-if="showAddDropdown" 
+            class="absolute right-0 mt-2 w-48 rounded-card border border-line bg-surface-raised p-2 shadow-raised z-20 space-y-1">
+            <button
+              class="flex w-full items-center gap-2 rounded-field px-3 py-2 text-left text-sm font-medium text-content hover:bg-surface-muted transition-colors"
+              @click="openAddSimpleSavings(); showAddDropdown = false">
+              <AppIcon name="solar:wallet-bold" :size="16" class="text-violet-500" />
+              Añadir ahorro
+            </button>
+            <button
+              class="flex w-full items-center gap-2 rounded-field px-3 py-2 text-left text-sm font-medium text-content hover:bg-surface-muted transition-colors"
+              @click="openAddGoal(); showAddDropdown = false">
+              <AppIcon name="solar:target-bold" :size="16" class="text-indigo-500" />
+              Añadir meta
+            </button>
+          </div>
+        </div>
       </div>
 
       <!-- Resumen global de ahorros -->
@@ -205,14 +259,14 @@ onMounted(async () => {
       <!-- Lista de metas de ahorro -->
       <div v-if="savingsStore.loading && !savingsStore.items.length"
         class="py-12 text-center text-sm text-content-subtle">
-        Cargando metas de ahorro…
+        Cargando ahorros…
       </div>
 
       <div v-else-if="!savingsStore.items.length"
         class="py-12 text-center border border-dashed border-line rounded-card bg-surface-raised">
         <AppIcon name="solar:piggy-bank-bold-duotone" :size="48" class="mx-auto text-content-subtle" />
-        <p class="mt-2 text-sm font-medium text-content-muted">Aún no has creado ninguna meta de ahorro.</p>
-        <p class="text-xs text-content-subtle mt-1">¡Crea tu primera hucha de ahorros arriba!</p>
+        <p class="mt-2 text-sm font-medium text-content-muted">Aún no has creado ninguna meta o cuenta de ahorro.</p>
+        <p class="text-xs text-content-subtle mt-1">¡Crea tu primer ahorro arriba!</p>
       </div>
 
       <div v-else class="grid grid-cols-1 gap-4">
@@ -228,7 +282,7 @@ onMounted(async () => {
                 <div>
                   <h3 class="text-base font-bold text-content leading-tight">{{ goal.name }}</h3>
                   <p class="text-xs text-content-subtle mt-0.5">
-                    Meta: {{ goal.target ? formatCurrency(goal.target) : 'Sin límite' }}
+                    {{ goal.target !== null ? `Meta: ${formatCurrency(goal.target)}` : 'Ahorro simple' }}
                   </p>
                 </div>
               </div>
@@ -237,31 +291,35 @@ onMounted(async () => {
               <div class="flex gap-1">
                 <button
                   class="flex h-8 w-8 items-center justify-center rounded-full text-content-muted hover:bg-surface-muted transition-colors"
-                  title="Editar meta" @click="openEditGoal(goal)">
+                  :title="goal.target !== null ? 'Editar meta' : 'Editar ahorro'" @click="openEditGoal(goal)">
                   <AppIcon name="solar:pen-2-linear" :size="16" />
                 </button>
                 <button
                   class="flex h-8 w-8 items-center justify-center rounded-full text-expense hover:bg-expense-light transition-colors"
-                  title="Eliminar meta" @click="openDeleteGoal(goal)">
+                  :title="goal.target !== null ? 'Eliminar meta' : 'Eliminar ahorro'" @click="openDeleteGoal(goal)">
                   <AppIcon name="solar:trash-bin-trash-linear" :size="16" />
                 </button>
               </div>
             </div>
 
-            <!-- Progreso de la meta -->
-            <div class="mt-4 space-y-1.5">
+            <!-- Progreso de la meta o Balance acumulado -->
+            <div v-if="goal.target !== null" class="mt-4 space-y-1.5">
               <div class="flex justify-between text-xs">
                 <span class="font-bold text-content">{{ formatCurrency(goal.balance) }}</span>
-                <span v-if="goal.target" class="text-content-subtle">
+                <span class="text-content-subtle">
                   {{ Math.round((goal.balance / goal.target) * 100) }}% completado
                 </span>
               </div>
               <div class="h-2 w-full overflow-hidden rounded-full bg-line">
                 <div class="h-full rounded-full transition-all duration-500" :style="{
-                  width: goal.target ? `${Math.min(100, Math.round((goal.balance / goal.target) * 100))}%` : '100%',
+                  width: `${Math.min(100, Math.round((goal.balance / goal.target) * 100))}%`,
                   backgroundColor: goal.color
                 }" />
               </div>
+            </div>
+            <div v-else class="mt-4 flex justify-between items-baseline">
+              <span class="text-xs text-content-subtle font-medium">Balance acumulado</span>
+              <span class="text-lg font-bold text-content">{{ formatCurrency(goal.balance) }}</span>
             </div>
           </div>
 
@@ -318,14 +376,19 @@ onMounted(async () => {
 
     <!-- Diálogo: Crear/Editar Meta -->
     <BaseDialog v-slot:default v-model="showAddGoalDialog" variant="confirm"
-      :title="editingGoal ? 'Editar Meta de Ahorro' : 'Crear Meta de Ahorro'" confirm-text="Guardar"
+      :title="editingGoal ? (savingsType === 'goal' ? 'Editar Meta de Ahorro' : 'Editar Ahorro Simple') : (savingsType === 'goal' ? 'Crear Meta de Ahorro' : 'Crear Ahorro Simple')" confirm-text="Guardar"
       cancel-text="Cancelar" show-cancel @confirm="saveGoal">
       <form class="space-y-4" @submit.prevent>
-        <BaseInput v-model="goalForm.name" label="Nombre de la meta" icon="solar:tag-bold"
+        <div class="space-y-1.5">
+          <span class="field-label block text-xs font-semibold text-content-muted uppercase tracking-wider">Tipo de ahorro</span>
+          <SegmentedControl v-model="savingsType" :options="savingsTypeOptions" />
+        </div>
+
+        <BaseInput v-model="goalForm.name" label="Nombre del ahorro" icon="solar:tag-bold"
           placeholder="p.ej. Coche nuevo, Fondo de emergencia…" required />
 
-        <BaseInput v-model="goalForm.target" type="number" label="Importe meta (opcional)" icon="solar:tag-price-bold"
-          placeholder="p.ej. 2500" />
+        <BaseInput v-if="savingsType === 'goal'" v-model="goalForm.target" type="number" label="Importe meta" icon="solar:tag-price-bold"
+          placeholder="p.ej. 2500" required />
 
         <div>
           <span class="field-label">Color identificativo</span>
@@ -335,13 +398,13 @@ onMounted(async () => {
     </BaseDialog>
 
     <!-- Diálogo: Eliminar Meta -->
-    <BaseDialog v-slot:default v-model="showDeleteDialog" variant="danger" title="Eliminar Meta de Ahorro"
+    <BaseDialog v-slot:default v-model="showDeleteDialog" variant="danger" :title="goalToDelete?.target !== null ? 'Eliminar Meta de Ahorro' : 'Eliminar Ahorro'"
       confirm-text="Eliminar" cancel-text="Cancelar" show-cancel @confirm="confirmDeleteGoal">
       <p class="text-content">
-        ¿Estás seguro de que quieres eliminar la meta de ahorro <strong>{{ goalToDelete?.name }}</strong>?
+        ¿Estás seguro de que quieres eliminar {{ goalToDelete?.target !== null ? 'la meta de ahorro' : 'el ahorro' }} <strong>{{ goalToDelete?.name }}</strong>?
       </p>
       <p class="mt-2 text-sm text-content-subtle">
-        Esta acción eliminará el registro de la meta de ahorro y su historial local. El balance acumulado en este ahorro
+        Esta acción eliminará el registro y su historial local. El balance acumulado en este ahorro
         dejará de computarse.
       </p>
     </BaseDialog>

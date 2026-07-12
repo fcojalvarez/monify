@@ -159,7 +159,7 @@ onMounted(async () => {
           </div>
           <button v-if="isShowFilters" type="button"
             class="text-xs font-semibold text-primary-500 hover:text-primary-600 transition-colors"
-            @click="clearFilters">
+            @click.stop="clearFilters">
             Limpiar filtros
           </button>
         </div>
