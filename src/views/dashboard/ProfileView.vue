@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useUiStore } from '@/stores/ui'
 import { useTransactionsStore } from '@/stores/transactions'
@@ -84,17 +84,6 @@ async function changePassword() {
   }
 }
 
-// Preferencias
-function toggleSavings(event: Event) {
-  const enabled = (event.target as HTMLInputElement).checked
-
-  ui.savingsEnabled = enabled
-
-  if (!enabled) {
-    savingsStore.$reset() // o savingsStore.clear()
-  }
-}
-
 // Export Data
 const exporting = ref(false)
 
@@ -175,6 +164,13 @@ const joinedDate = computed(() => {
   if (!auth.user?.created_at) return ''
 
   return formatDate(auth.user.created_at.slice(0, 10))
+})
+
+watch(() => ui.savingsEnabled, (newValue) => {
+  if (!newValue) {
+    savingsStore.$reset()
+    console.log('ha limpiado...');
+  }
 })
 </script>
 
@@ -283,25 +279,21 @@ const joinedDate = computed(() => {
             ]" @update:model-value="(val) => { if (val !== ui.theme) ui.toggleTheme() }" />
           </div>
 
-          <div class="border-t border-line pt-4">
-            <label class="flex cursor-pointer items-center justify-between">
-              <span class="text-sm font-medium text-content">
-                ¿Quieres gestionar ahorros?
+          <label class="flex cursor-pointer items-center justify-between">
+            <span class="text-sm font-medium text-content">
+              ¿Quieres gestionar ahorros?
+            </span>
+
+            <div class="relative shrink-0 ml-4">
+              <input v-model="ui.savingsEnabled" type="checkbox" class="sr-only" />
+
+              <span class="relative block h-6 w-11 rounded-pill transition-colors"
+                :class="ui.savingsEnabled ? 'bg-primary-500' : 'bg-line'">
+                <span class="absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white transition-transform duration-200"
+                  :class="ui.savingsEnabled ? 'translate-x-5' : 'translate-x-0'" />
               </span>
-
-              <!-- CAMBIO -->
-              <input :checked="ui.savingsEnabled" type="checkbox" class="peer sr-only" @change="toggleSavings" />
-
-              <span class="relative h-6 w-11 rounded-pill bg-line transition-colors peer-checked:bg-primary-500">
-                <span
-                  class="absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white transition-transform peer-checked:translate-x-5" />
-              </span>
-            </label>
-
-            <p class="mt-1 text-xs text-content-subtle">
-              Activa una pestaña adicional para fijar metas y guardar dinero.
-            </p>
-          </div>
+            </div>
+          </label>
         </div>
       </BaseCard>
 

@@ -104,30 +104,20 @@ defineExpose({
   <form class="space-y-5" novalidate @submit.prevent="onSubmit">
     <!-- Vista previa -->
     <div class="flex items-center gap-3">
-      <span
-        class="flex h-12 w-12 items-center justify-center rounded-full text-white"
-        :style="{ backgroundColor: form.color }"
-      >
+      <span class="flex h-12 w-12 items-center justify-center rounded-full text-white"
+        :style="{ backgroundColor: form.color }">
         <AppIcon :name="form.icon" :size="24" />
       </span>
       <span class="text-sm text-content-muted">Así se verá tu categoría</span>
     </div>
 
-    <SegmentedControl
-      v-model="form.kind"
-      :options="[
-        { value: 'expense', label: 'Gasto' },
-        { value: 'income', label: 'Ingreso' },
-      ]"
-    />
+    <SegmentedControl v-model="form.kind" :options="[
+      { value: 'expense', label: 'Gasto' },
+      { value: 'income', label: 'Ingreso' },
+    ]" />
 
-    <BaseInput
-      v-model="form.name"
-      label="Nombre"
-      icon="solar:tag-bold"
-      placeholder="p.ej. Ocio, Nómina…"
-      :error="errors.name"
-    />
+    <BaseInput v-model="form.name" label="Nombre" icon="solar:tag-bold" placeholder="p.ej. Ocio, Nómina…"
+      :error="errors.name" />
 
     <div>
       <span class="field-label">Icono</span>
@@ -143,23 +133,21 @@ defineExpose({
     <div>
       <label class="flex cursor-pointer items-center justify-between">
         <span class="text-sm font-medium text-content">Límite mensual</span>
-        <input v-model="form.hasLimit" type="checkbox" class="peer sr-only" />
-        <span
-          class="relative h-6 w-11 rounded-pill bg-line transition-colors peer-checked:bg-primary-500"
-        >
-          <span
-            class="absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white transition-transform peer-checked:translate-x-5"
-          />
-        </span>
+
+        <div class="relative shrink-0 ml-4">
+          <input v-model="form.hasLimit" type="checkbox" class="sr-only" />
+
+          <span class="relative block h-6 w-11 rounded-pill transition-colors duration-200"
+            :class="form.hasLimit ? 'bg-primary-500' : 'bg-line'">
+            <span class="absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white transition-transform duration-200"
+              :class="form.hasLimit ? 'translate-x-5' : 'translate-x-0'" />
+          </span>
+        </div>
       </label>
+
       <div v-if="form.hasLimit" class="mt-3">
-        <BaseInput
-          v-model="form.limit"
-          type="number"
-          icon="solar:tag-price-bold"
-          placeholder="0,00"
-          :error="errors.limit"
-        />
+        <BaseInput v-model="form.limit" type="number" icon="solar:tag-price-bold" placeholder="0,00"
+          :error="errors.limit" />
       </div>
     </div>
 
@@ -175,16 +163,8 @@ defineExpose({
     </div>
   </form>
 
-  <BaseDialog
-    v-slot:default
-    v-model="showConfirmDialog"
-    variant="danger"
-    title="Cambios sin guardar"
-    confirm-text="Descartar"
-    cancel-text="Seguir editando"
-    show-cancel
-    @confirm="emit('cancel')"
-  >
+  <BaseDialog v-slot:default v-model="showConfirmDialog" variant="danger" title="Cambios sin guardar"
+    confirm-text="Descartar" cancel-text="Seguir editando" show-cancel @confirm="emit('cancel')">
     <p class="text-content">
       Tienes cambios sin guardar. ¿Seguro que quieres salir? Se perderán los datos introducidos.
     </p>
