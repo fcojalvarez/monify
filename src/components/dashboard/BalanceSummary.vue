@@ -3,6 +3,8 @@ import { ref } from 'vue'
 import type { PeriodSummary } from '@/types'
 import { formatCurrency } from '@/utils/format'
 import AppIcon from '@/components/ui/AppIcon.vue'
+import { usePlatform } from '@/composables/usePlatform'
+
 
 defineProps<{
   monthlySummary: PeriodSummary
@@ -11,6 +13,7 @@ defineProps<{
 
 const activeIndex = ref(0)
 const carouselRef = ref<HTMLElement>()
+const { isDesktop } = usePlatform()
 
 function onScroll(event: Event) {
   const container = event.target as HTMLElement
@@ -48,10 +51,10 @@ function previousCard() {
       <!-- Card 1: Balance del mes -->
       <div
         class="relative w-full shrink-0 snap-center rounded-card bg-gradient-to-br from-secondary-700 to-secondary-900 p-6 text-white shadow-raised animate-fade-in">
-        <button
-          class="absolute right-0 top-1/2 hidden h-full w-10 -translate-y-1/2 items-center justify-center rounded-full  backdrop-blur transition md:flex"
+        <button v-if="isDesktop"
+          class="absolute right-0 top-1/2 h-full w-10 -translate-y-1/2 items-center justify-center rounded-full blur-fade-left transition"
           aria-label="Ver balance anual" @click="nextCard">
-          <AppIcon name="solar:alt-arrow-right-bold" class="opacity-50" :size="20" />
+          <AppIcon name="solar:alt-arrow-right-bold" class="opacity-50 ml-3" :size="20" />
         </button>
 
         <section class="md:w-11/12 m-auto">
@@ -90,10 +93,10 @@ function previousCard() {
       <!-- Card 2: Balance del año -->
       <div
         class="relative w-full shrink-0 snap-center rounded-card bg-gradient-to-br from-primary-700 to-primary-900 p-6 text-white shadow-raised animate-fade-in">
-        <button
-          class="absolute left-0 top-1/2 hidden h-full w-10 -translate-y-1/2 items-center justify-center rounded-full  backdrop-blur transition md:flex"
+        <button v-if="isDesktop"
+          class="absolute left-0 top-1/2 h-full w-10 -translate-y-1/2 items-center justify-center rounded-full blur-fade-right transition"
           aria-label="Ver balance mensual" @click="previousCard">
-          <AppIcon name="solar:alt-arrow-left-bold" class="opacity-50" :size="20" />
+          <AppIcon name="solar:alt-arrow-left-bold" class="opacity-50 ml-1" :size="20" />
         </button>
 
         <section class="md:w-11/12 m-auto">
@@ -147,5 +150,21 @@ function previousCard() {
 .scrollbar-none {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+.blur-fade-right {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+
+  -webkit-mask-image: linear-gradient(to right, black 50%, transparent 100%);
+  mask-image: linear-gradient(to right, black 50%, transparent 100%);
+}
+
+.blur-fade-left {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+
+  -webkit-mask-image: linear-gradient(to left, black 50%, transparent 100%);
+  mask-image: linear-gradient(to left, black 50%, transparent 100%);
 }
 </style>

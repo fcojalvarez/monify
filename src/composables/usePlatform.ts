@@ -1,28 +1,50 @@
 /**
  * Abstracción de plataforma pensada para el salto futuro a Capacitor.
  *
- * Hoy solo distingue web / móvil por el user-agent. Cuando se añada Capacitor,
- * bastará con sustituir el cuerpo por `Capacitor.getPlatform()` sin tocar el
- * resto de la app, que ya consume este composable.
+ * Hoy distingue el tipo de dispositivo mediante las APIs del navegador.
+ * Cuando se añada Capacitor, bastará con sustituir `detectPlatform()`
+ * por `Capacitor.getPlatform()` sin tocar el resto de la aplicación.
  */
+
 export type Platform = 'web' | 'ios' | 'android'
 
-export function usePlatform() {
-  const detect = (): Platform => {
-    if (typeof navigator === 'undefined') return 'web'
-    const ua = navigator.userAgent.toLowerCase()
-    if (/iphone|ipad|ipod/.test(ua)) return 'ios'
-    if (/android/.test(ua)) return 'android'
+function detectPlatform(): Platform {
+  if (typeof navigator === 'undefined') {
     return 'web'
   }
 
-  const platform = detect()
+  const ua = navigator.userAgent.toLowerCase()
 
-  return {
-    platform,
-    isWeb: platform === 'web',
-    isNative: platform !== 'web',
-    isIOS: platform === 'ios',
-    isAndroid: platform === 'android',
+  // iPadOS 13+ puede identificarse como macOS.
+  const isIPad = navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1
+
+  if (isIPad || /iphone|ipad|ipod/.test(ua)) {
+    return 'ios'
   }
+
+  if (/android/.test(ua)) {
+    return 'android'
+  }
+
+  return 'web'
+}
+
+const platform = detectPlatform()
+
+const isMobile = platform === 'ios' || platform === 'android'
+
+const state = {
+  platform,
+  isWeb: platform === 'web',
+  isNative: platform !== 'web',
+
+  isDesktop: !isMobile,
+  isMobile,
+
+  isIOS: platform === 'ios',
+  isAndroid: platform === 'android',
+}
+
+export function usePlatform() {
+  return state
 }
