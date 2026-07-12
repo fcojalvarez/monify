@@ -43,6 +43,7 @@ const loading = ref(false)
 // Sheets
 const showTransaction = ref(false)
 const editingTransaction = ref<TransactionWithRelations | undefined>()
+const transactionFormRef = ref<InstanceType<typeof TransactionForm> | null>(null)
 
 const filteredCategories = computed(() => {
   if (activeKind.value === 'all') {
@@ -264,8 +265,8 @@ onMounted(async () => {
     </main>
 
     <!-- BaseSheet para Editar Transacción -->
-    <BaseSheet v-model="showTransaction" title="Editar movimiento">
-      <TransactionForm :transaction="editingTransaction" @saved="onTransactionSaved"
+    <BaseSheet v-model="showTransaction" title="Editar movimiento" :has-changes="transactionFormRef?.hasChanges">
+      <TransactionForm ref="transactionFormRef" :transaction="editingTransaction" @saved="onTransactionSaved"
         @cancel="showTransaction = false" />
     </BaseSheet>
   </div>

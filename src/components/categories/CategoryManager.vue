@@ -34,7 +34,13 @@ async function confirmDelete() {
   categoryToDelete.value = undefined
 }
 
+const categoryFormRef = ref<InstanceType<typeof CategoryForm> | null>(null)
+
 const view = computed(() => mode.value.view)
+
+const hasChanges = computed(() => {
+  return mode.value.view === 'form' && (categoryFormRef.value?.hasChanges ?? false)
+})
 
 function openForm(category?: Category) {
   mode.value = { view: 'form', category }
@@ -43,12 +49,13 @@ function openForm(category?: Category) {
 defineExpose({
   view,
   openForm,
+  hasChanges,
 })
 </script>
 
 <template>
   <div v-if="mode.view === 'form'">
-    <CategoryForm :category="mode.category" @saved="mode = { view: 'list' }" @cancel="mode = { view: 'list' }" />
+    <CategoryForm ref="categoryFormRef" :category="mode.category" @saved="mode = { view: 'list' }" @cancel="mode = { view: 'list' }" />
   </div>
 
   <div v-else class="space-y-5">

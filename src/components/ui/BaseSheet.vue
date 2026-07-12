@@ -1,15 +1,39 @@
 <script setup lang="ts">
-import { watch, onBeforeUnmount } from 'vue'
+import { ref, watch, onBeforeUnmount } from 'vue'
+import BaseDialog from './BaseDialog.vue'
 
-const props = defineProps<{ modelValue: boolean; title?: string }>()
+const props = withDefaults(
+  defineProps<{
+    modelValue: boolean
+    title?: string
+    hasChanges?: boolean
+  }>(),
+  {
+    hasChanges: false,
+  }
+)
 const emit = defineEmits<{ 'update:modelValue': [value: boolean] }>()
 
+const showConfirmDialog = ref(false)
+
 function close() {
+  if (props.hasChanges) {
+    showConfirmDialog.value = true
+  } else {
+    emit('update:modelValue', false)
+  }
+}
+
+function forceClose() {
+  showConfirmDialog.value = false
   emit('update:modelValue', false)
 }
 
 function onKeydown(event: KeyboardEvent) {
-  if (event.key === 'Escape') close()
+  if (event.key === 'Escape') {
+    if (showConfirmDialog.value) return
+    close()
+  }
 }
 
 // Bloquea el scroll del fondo mientras el sheet está abierto
@@ -19,7 +43,10 @@ watch(
     if (typeof document === 'undefined') return
     document.body.style.overflow = open ? 'hidden' : ''
     if (open) window.addEventListener('keydown', onKeydown)
-    else window.removeEventListener('keydown', onKeydown)
+    else {
+      window.removeEventListener('keydown', onKeydown)
+      showConfirmDialog.value = false
+    }
   },
 )
 
@@ -65,6 +92,21 @@ onBeforeUnmount(() => {
         </div>
       </div>
     </Transition>
+
+    <BaseDialog
+      v-slot:default
+      v-model="showConfirmDialog"
+      variant="danger"
+      title="Cambios sin guardar"
+      confirm-text="Descartar"
+      cancel-text="Seguir editando"
+      show-cancel
+      @confirm="forceClose"
+    >
+      <p class="text-content">
+        Tienes cambios sin guardar. ¿Seguro que quieres salir? Se perderán los datos introducidos.
+      </p>
+    </BaseDialog>
   </Teleport>
 </template>
 

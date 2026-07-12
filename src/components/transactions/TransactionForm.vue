@@ -111,6 +111,32 @@ async function onDelete() {
     deleting.value = false
   }
 }
+
+const initialForm = {
+  kind: form.kind,
+  gross: form.gross,
+  amount: form.amount,
+  categoryId: form.categoryId,
+  familyMemberId: form.familyMemberId,
+  occurredOn: form.occurredOn,
+  note: form.note,
+}
+
+const hasChanges = computed(() => {
+  return (
+    form.kind !== initialForm.kind ||
+    form.gross !== initialForm.gross ||
+    form.amount !== initialForm.amount ||
+    form.categoryId !== initialForm.categoryId ||
+    form.familyMemberId !== initialForm.familyMemberId ||
+    form.occurredOn !== initialForm.occurredOn ||
+    form.note !== initialForm.note
+  )
+})
+
+defineExpose({
+  hasChanges,
+})
 </script>
 
 <template>

@@ -38,6 +38,7 @@ const showCategories = ref(false)
 const showFamily = ref(false)
 const categoryManagerRef = ref<InstanceType<typeof CategoryManager> | null>(null)
 const familyManagerRef = ref<InstanceType<typeof FamilyManager> | null>(null)
+const transactionFormRef = ref<InstanceType<typeof TransactionForm> | null>(null)
 
 function openNewTransaction() {
   editingTransaction.value = undefined
@@ -144,12 +145,12 @@ onMounted(async () => {
     </button>
 
     <!-- Sheets -->
-    <BaseSheet v-model="showTransaction" :title="editingTransaction ? 'Editar movimiento' : 'Nuevo movimiento'">
-      <TransactionForm :transaction="editingTransaction" @saved="onTransactionSaved"
+    <BaseSheet v-model="showTransaction" :title="editingTransaction ? 'Editar movimiento' : 'Nuevo movimiento'" :has-changes="transactionFormRef?.hasChanges">
+      <TransactionForm ref="transactionFormRef" :transaction="editingTransaction" @saved="onTransactionSaved"
         @cancel="showTransaction = false" />
     </BaseSheet>
 
-    <BaseSheet v-model="showCategories" title="Categorías">
+    <BaseSheet v-model="showCategories" title="Categorías" :has-changes="categoryManagerRef?.hasChanges">
       <template #actions>
         <button v-if="categoryManagerRef?.view === 'list'" type="button"
           class="inline-flex h-7 items-center gap-2 rounded-full px-3 text-sm font-medium text-content-muted transition-colors hover:bg-surface-muted border border-primary-500"
@@ -161,7 +162,7 @@ onMounted(async () => {
       <CategoryManager ref="categoryManagerRef" />
     </BaseSheet>
 
-    <BaseSheet v-model="showFamily" title="Familia">
+    <BaseSheet v-model="showFamily" title="Familia" :has-changes="familyManagerRef?.hasChanges">
       <template #actions>
         <button v-if="familyManagerRef?.view === 'list'"
           class="inline-flex h-7 items-center gap-2 rounded-full px-3 text-sm font-medium text-content-muted transition-colors hover:bg-surface-muted border border-primary-500"

@@ -30,7 +30,13 @@ async function confirmDelete() {
   memberToDelete.value = undefined
 }
 
+const familyFormRef = ref<InstanceType<typeof FamilyForm> | null>(null)
+
 const view = computed(() => mode.value.view)
+
+const hasChanges = computed(() => {
+  return mode.value.view === 'form' && (familyFormRef.value?.hasChanges ?? false)
+})
 
 function openForm(member?: FamilyMember) {
   mode.value = { view: 'form', member }
@@ -39,12 +45,13 @@ function openForm(member?: FamilyMember) {
 defineExpose({
   view,
   openForm,
+  hasChanges,
 })
 </script>
 
 <template>
   <div v-if="mode.view === 'form'">
-    <FamilyForm :member="mode.member" @saved="mode = { view: 'list' }" @cancel="mode = { view: 'list' }" />
+    <FamilyForm ref="familyFormRef" :member="mode.member" @saved="mode = { view: 'list' }" @cancel="mode = { view: 'list' }" />
   </div>
 
   <div v-else class="space-y-4">

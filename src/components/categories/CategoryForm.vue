@@ -10,6 +10,7 @@ import SegmentedControl from '@/components/ui/SegmentedControl.vue'
 import IconPicker from '@/components/ui/IconPicker.vue'
 import ColorPicker from '@/components/ui/ColorPicker.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
+import BaseDialog from '@/components/ui/BaseDialog.vue'
 
 const props = defineProps<{ category?: Category }>()
 const emit = defineEmits<{ saved: []; cancel: [] }>()
@@ -63,6 +64,40 @@ async function onSubmit() {
     saving.value = false
   }
 }
+
+const initialForm = {
+  name: form.name,
+  kind: form.kind,
+  icon: form.icon,
+  color: form.color,
+  hasLimit: form.hasLimit,
+  limit: form.limit,
+}
+
+const hasChanges = computed(() => {
+  return (
+    form.name !== initialForm.name ||
+    form.kind !== initialForm.kind ||
+    form.icon !== initialForm.icon ||
+    form.color !== initialForm.color ||
+    form.hasLimit !== initialForm.hasLimit ||
+    form.limit !== initialForm.limit
+  )
+})
+
+const showConfirmDialog = ref(false)
+
+function onCancelClick() {
+  if (hasChanges.value) {
+    showConfirmDialog.value = true
+  } else {
+    emit('cancel')
+  }
+}
+
+defineExpose({
+  hasChanges,
+})
 </script>
 
 <template>
@@ -131,7 +166,7 @@ async function onSubmit() {
     <p v-if="serverError" class="text-sm font-medium text-expense">{{ serverError }}</p>
 
     <div class="flex gap-3 pt-1">
-      <BaseButton type="button" variant="secondary" block @click="emit('cancel')">
+      <BaseButton type="button" variant="secondary" block @click="onCancelClick">
         Cancelar
       </BaseButton>
       <BaseButton type="submit" block :loading="saving">
@@ -139,4 +174,19 @@ async function onSubmit() {
       </BaseButton>
     </div>
   </form>
+
+  <BaseDialog
+    v-slot:default
+    v-model="showConfirmDialog"
+    variant="danger"
+    title="Cambios sin guardar"
+    confirm-text="Descartar"
+    cancel-text="Seguir editando"
+    show-cancel
+    @confirm="emit('cancel')"
+  >
+    <p class="text-content">
+      Tienes cambios sin guardar. ¿Seguro que quieres salir? Se perderán los datos introducidos.
+    </p>
+  </BaseDialog>
 </template>
