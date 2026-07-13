@@ -10,7 +10,8 @@ const custom = ref('')
 const showCustom = ref(false)
 
 function pick(icon: string) {
-  emit('update:modelValue', `solar:${icon}`)
+  const iconName = icon.includes('set:') ? `solar:${icon.split('set:')[1]}` : icon;
+  emit('update:modelValue', iconName)
 }
 
 function applyCustom() {
