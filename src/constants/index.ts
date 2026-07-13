@@ -32,7 +32,7 @@ export const PALETTE = [
 export const SUGGESTED_ICONS = [
   'solar:cart-large-2-bold',
   'solar:home-2-bold',
-  'solar:dish-bold',
+  'solar:chef-hat-minimalistic-bold',
   'solar:bus-bold',
   'solar:health-bold',
   'solar:gamepad-bold',
