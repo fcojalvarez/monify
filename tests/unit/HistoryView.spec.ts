@@ -47,6 +47,7 @@ const mockTransactions: Partial<TransactionWithRelations>[] = [
     kind: 'expense',
     amount: 12.5,
     gross: null,
+    description: 'Comida',
     category_id: 'cat-1',
     family_member_id: 'mem-1',
     occurred_on: '2026-07-05',
@@ -58,6 +59,7 @@ const mockTransactions: Partial<TransactionWithRelations>[] = [
     kind: 'income',
     amount: 1500,
     gross: null,
+    description: 'Nómina',
     category_id: 'cat-2',
     family_member_id: 'mem-1',
     occurred_on: '2026-07-01',
@@ -85,8 +87,26 @@ describe('HistoryView', () => {
     return mount(HistoryView, {
       global: {
         stubs: {
-          RouterLink: { template: '<a><slot /></a>' },
+          RouterLink: {
+            template: '<a><slot /></a>',
+          },
+
+          TransactionItem: {
+            name: 'TransactionItem',
+            props: ['transaction'],
+            template: `
+              <li class="transaction-item">
+                {{ transaction.description }}
+              </li>
+            `,
+          },
+
+          TransactionForm: true,
+          BaseSheet: true,
+          AppHeader: true,
+          AppIcon: true,
         },
+
         plugins: [
           createTestingPinia({
             createSpy: vi.fn,
@@ -112,7 +132,7 @@ describe('HistoryView', () => {
   it('renderiza correctamente los filtros y totales', async () => {
     const wrapper = mountView()
 
-    await vi.waitFor(() => expect(transactionsService.list).toHaveBeenCalled())
+    await vi.waitFor(() => expect(transactionsService.list).toHaveBeenCalledTimes(1))
 
     expect(wrapper.text()).toContain('Histórico de movimientos')
 
@@ -127,7 +147,7 @@ describe('HistoryView', () => {
   it('filtra por tipo de flujo en memoria', async () => {
     const wrapper = mountView()
 
-    await vi.waitFor(() => expect(transactionsService.list).toHaveBeenCalled())
+    await vi.waitFor(() => expect(transactionsService.list).toHaveBeenCalledTimes(1))
 
     await wrapper.find('.cursor-pointer').trigger('click')
 
@@ -135,17 +155,29 @@ describe('HistoryView', () => {
 
     expect(selects).toHaveLength(3)
 
-    await selects[1].vm.$emit('update:modelValue', 'expense')
-    await wrapper.vm.$nextTick()
+    // Abrir el BaseSelect de tipo de flujo
+    await selects[1].find('button').trigger('click')
 
-    expect(wrapper.text()).toContain('Comida')
-    expect(wrapper.text()).not.toContain('Nómina')
+    // Seleccionar "Gasto"
+    const expenseOption = wrapper.findAll('button').find((button) => button.text() === 'Gasto')
+
+    expect(expenseOption).toBeDefined()
+
+    await expenseOption!.trigger('click')
+
+    await vi.waitFor(() => expect(transactionsService.list).toHaveBeenCalledTimes(2))
+
+    const items = wrapper.findAll('.transaction-item')
+
+    expect(items).toHaveLength(1)
+    expect(items[0].text()).toContain('Comida')
+    expect(items[0].text()).not.toContain('Nómina')
   })
 
   it('permite limpiar todos los filtros a sus valores por defecto', async () => {
     const wrapper = mountView()
 
-    await vi.waitFor(() => expect(transactionsService.list).toHaveBeenCalled())
+    await vi.waitFor(() => expect(transactionsService.list).toHaveBeenCalledTimes(1))
 
     await wrapper.find('.cursor-pointer').trigger('click')
 

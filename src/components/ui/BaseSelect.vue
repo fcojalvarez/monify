@@ -1,117 +1,138 @@
 <script setup lang="ts" generic="T extends string">
-import { computed, ref, useId, watch } from 'vue'
+import { computed, ref } from 'vue'
 import AppIcon from './AppIcon.vue'
 
-const props = defineProps<{
-  modelValue: T | ''
-  label?: string
-  placeholder?: string
-  options: ReadonlyArray<{
-    value: T | ''
-    label: string
-  }>
-  error?: string | null
-}>()
+type Option<T extends string> = { value: T | '', label: string }
 
-const emit = defineEmits<{
-  'update:modelValue': [value: T | '']
-}>()
+const props = withDefaults(
+  defineProps<{
+    modelValue: T | ''
+    label?: string
+    placeholder?: string
+    options: ReadonlyArray<{ value: T; label: string }>
+    error?: string | null
+    showAllOption?: boolean
+    allLabel?: string
+    teleport?: boolean // Nueva prop para controlar el montaje
+  }>(),
+  {
+    showAllOption: false,
+    allLabel: 'Todos',
+    teleport: true
+  }
+)
 
-const id = useId()
+const emit = defineEmits<{ 'update:modelValue': [value: T | ''] }>()
 
 const open = ref(false)
 const search = ref('')
-const dialog = ref<HTMLDialogElement>()
 
-watch(open, value => {
-  if (!dialog.value) return
-
-  if (value && !dialog.value.open) {
-    dialog.value.showModal()
-  }
-
-  if (!value && dialog.value.open) {
-    dialog.value.close()
-  }
+const allOptions = computed<Option<T>[]>(() => {
+  const options: Option<T>[] = [...props.options]
+  if (props.showAllOption) options.unshift({ value: '', label: props.allLabel })
+  return options
 })
 
+const showSearch = computed(() => allOptions.value.length > 8)
 const filteredOptions = computed(() => {
-  const query = search.value.toLowerCase().trim()
-
-  if (!query) return props.options
-
-  return props.options.filter(option =>
-    option.label.toLowerCase().includes(query),
-  )
+  const query = search.value.trim().toLowerCase()
+  return query ? allOptions.value.filter(o => o.label.toLowerCase().includes(query)) : allOptions.value
 })
+const selectedLabel = computed(() => allOptions.value.find(o => o.value === props.modelValue)?.label)
 
-const selectedLabel = computed(() => {
-  return props.options.find(o => o.value === props.modelValue)?.label
-})
+// Lógica swipe
+const startY = ref(0)
+const translateY = ref(0)
+const dragging = ref(false)
+
+function onTouchStart(e: TouchEvent) {
+  if (!props.teleport) return
+  dragging.value = true
+  startY.value = e.touches[0].clientY
+}
+
+function onTouchMove(e: TouchEvent) {
+  if (!dragging.value || !props.teleport) return
+  const delta = e.touches[0].clientY - startY.value
+  translateY.value = Math.max(delta, 0)
+}
+
+function onTouchEnd() {
+  if (!props.teleport) return
+  dragging.value = false
+  if (translateY.value > 120) close()
+  startY.value = 0
+  translateY.value = 0
+}
 
 function close() {
   open.value = false
   search.value = ''
+  translateY.value = 0
 }
 
 function select(value: T | '') {
   emit('update:modelValue', value)
   close()
 }
-
-function onCancel(event: Event) {
-  event.preventDefault()
-  close()
-}
-
-function onBackdrop(event: MouseEvent) {
-  if (event.target === dialog.value) {
-    close()
-  }
-}
 </script>
 
 <template>
-  <div>
-    <label v-if="label" :for="id" class="field-label">
-      {{ label }}
-    </label>
+  <div class="relative">
+    <label v-if="label" class="field-label">{{ label }}</label>
 
-    <button :id="id" type="button"
+    <button type="button"
       class="h-12 w-full rounded-field border border-transparent bg-surface-muted px-4 text-left text-content transition-colors focus:border-primary-400 focus:bg-surface-raised focus:outline-none focus:shadow-focus"
       @click="open = true">
       {{ selectedLabel ?? placeholder ?? 'Selecciona…' }}
     </button>
 
-    <dialog ref="dialog"
-      class="w-full max-w-md rounded-card border border-line bg-surface-raised p-0 text-content shadow-raised backdrop:bg-secondary-950/50 backdrop:backdrop-blur-sm"
-      @cancel="onCancel" @click="onBackdrop">
-      <div class="p-4">
-        <input v-model="search" type="text" placeholder="Buscar..."
-          class="mb-4 h-11 w-full rounded-field border border-line bg-surface px-3 text-content placeholder:text-content-subtle focus:border-primary-400 focus:outline-none focus:shadow-focus">
+    <component :is="teleport ? 'Teleport' : 'div'" :to="teleport ? 'body' : undefined">
+      <Transition enter-active-class="transition-opacity duration-200"
+        leave-active-class="transition-opacity duration-150" enter-from-class="opacity-0" leave-to-class="opacity-0">
+        <div v-if="open" @click.self="close" :class="[
+          teleport
+            ? 'fixed inset-0 z-[999999] flex items-end justify-center bg-secondary-950/50 backdrop-blur-sm md:items-center'
+            : 'absolute left-0 top-full z-[100] mt-2 w-full'
+        ]">
 
-        <div class="max-h-80 overflow-y-auto">
-          <button v-for="option in filteredOptions" :key="option.value" type="button" :class="[
-            'flex w-full items-center justify-between rounded-field px-4 py-3 text-left transition-colors',
-            option.value === modelValue
-              ? 'bg-primary-500/10 text-content'
-              : 'text-content hover:bg-surface',
-          ]" @click="select(option.value)">
-            <span>{{ option.label }}</span>
+          <Transition enter-active-class="transition duration-300 ease-out"
+            leave-active-class="transition duration-200 ease-in"
+            enter-from-class="translate-y-full md:translate-y-0 md:scale-95 md:opacity-0"
+            leave-to-class="translate-y-full md:translate-y-0 md:scale-95 md:opacity-0">
 
-            <AppIcon v-if="option.value === modelValue" name="solar:check-circle-bold" :size="18"
-              class="text-primary-500" />
-          </button>
+            <div v-if="open"
+              class="flex flex-col bg-surface-raised shadow-raised w-full max-h-[70dvh] border-line border-t md:border"
+              :class="[
+                teleport ? 'md:max-w-md' : '',
+                showSearch ? 'rounded-t-2xl' : 'rounded-2xl',
+                'md:rounded-2xl'
+              ]" :style="teleport ? { transform: `translateY(${translateY}px)` } : {}" @touchstart="onTouchStart"
+              @touchmove="onTouchMove" @touchend="onTouchEnd">
 
-          <p v-if="filteredOptions.length === 0" class="py-6 text-center text-sm text-content-subtle">
-            Sin resultados
-          </p>
+              <div class="flex justify-center py-3 md:hidden">
+                <div class="h-1.5 w-12 rounded-full bg-line" />
+              </div>
+
+              <div v-if="showSearch" class="border-b border-line px-4 py-3">
+                <input v-model="search" type="text" placeholder="Buscar..." autofocus
+                  class="h-10 w-full rounded-field border border-line bg-surface px-3 text-sm text-content placeholder:text-content-subtle focus:border-primary-400 focus:outline-none focus:shadow-focus">
+              </div>
+
+              <div class="flex-1 overflow-y-auto px-2 p-2">
+                <button v-for="option in filteredOptions" :key="String(option.value)" type="button"
+                  class="flex w-full items-center justify-between px-3 py-3.5 text-left text-sm transition-all duration-200 rounded-lg"
+                  :class="option.value === modelValue ? 'bg-primary-500/10 text-content' : 'text-content hover:bg-surface'"
+                  @click="select(option.value)">
+                  <span>{{ option.label }}</span>
+                  <AppIcon v-if="option.value === modelValue" name="solar:check-circle-bold" :size="16"
+                    class="text-primary-500" />
+                </button>
+              </div>
+            </div>
+          </Transition>
         </div>
-      </div>
-    </dialog>
-
-    <p v-if="error" class="mt-1.5 text-xs text-expense">
-      {{ error }}
-    </p>
+      </Transition>
+    </component>
   </div>
 </template>
