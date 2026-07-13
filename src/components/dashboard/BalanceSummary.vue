@@ -125,7 +125,7 @@ const startScrollLeft = ref(0)
 const dragging = ref(false)
 
 function onTouchStart(event: TouchEvent) {
-  if (isDesktop.value || !carouselRef.value) return
+  if (isDesktop || !carouselRef.value) return
 
   dragging.value = true
   startX.value = event.touches[0].clientX
