@@ -50,10 +50,18 @@ function onBackdrop(event: MouseEvent) {
 
 <template>
     <dialog ref="dialog"
-        class="m-0 h-full w-full max-w-none bg-transparent p-0 backdrop:bg-secondary-950/50 backdrop:backdrop-blur-sm"
+        class="m-0 h-dvh w-full max-w-none bg-transparent p-0 backdrop:bg-secondary-950/50 backdrop:backdrop-blur-sm"
         @cancel="onCancel" @click="onBackdrop">
-        <div class="flex h-full items-end">
-            <div class="w-full rounded-t-card bg-surface-raised shadow-raised">
+        <div class="flex items-end">
+            <div class="
+    flex
+    max-h-[85dvh]
+    w-full
+    flex-col
+    rounded-t-card
+    bg-surface-raised
+    shadow-raised
+  ">
                 <slot />
             </div>
         </div>
