@@ -174,22 +174,15 @@ defineExpose({
         {{ isEdit ? 'Guardar' : 'Añadir' }}
       </BaseButton>
 
-      <BaseButton v-if="isEdit" type="button" variant="danger" block :loading="deleting" @click="showDeleteConfirm = true">
+      <BaseButton v-if="isEdit" type="button" variant="danger" block :loading="deleting"
+        @click="showDeleteConfirm = true">
         Eliminar movimiento
       </BaseButton>
     </div>
   </form>
 
-  <BaseDialog
-    v-slot:default
-    v-model="showDeleteConfirm"
-    variant="danger"
-    title="Eliminar movimiento"
-    confirm-text="Eliminar"
-    cancel-text="Cancelar"
-    show-cancel
-    @confirm="onDeleteConfirm"
-  >
+  <BaseDialog v-slot:default v-model="showDeleteConfirm" variant="danger" title="Eliminar movimiento"
+    confirm-text="Eliminar" cancel-text="Cancelar" show-cancel @confirm="onDeleteConfirm">
     <p class="text-content">
       ¿Estás seguro de que deseas eliminar este movimiento? Esta acción no se puede deshacer.
     </p>

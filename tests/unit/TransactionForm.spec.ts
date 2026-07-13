@@ -27,6 +27,26 @@ const member: Partial<FamilyMember> = {
 function mountForm() {
   const wrapper = mount(TransactionForm, {
     global: {
+      stubs: {
+        BaseSelect: {
+          props: ['modelValue', 'options'],
+          emits: ['update:modelValue'],
+          template: `
+        <select
+          :value="modelValue"
+          @change="$emit('update:modelValue', $event.target.value)"
+        >
+          <option
+            v-for="option in options"
+            :key="option.value"
+            :value="option.value"
+          >
+            {{ option.label }}
+          </option>
+        </select>
+      `,
+        },
+      },
       plugins: [
         createTestingPinia({
           createSpy: vi.fn,
