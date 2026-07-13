@@ -157,10 +157,9 @@ function select(value: T | '') {
                 border-line
                 border-t
                 md:border
+                rounded-t-2xl
               " :class="[
                 teleport ? 'md:max-w-md' : '',
-                showSearch ? 'rounded-t-2xl' : 'rounded-2xl',
-                'md:rounded-2xl'
               ]" :style="teleport
                 ? {
                   transform: `
@@ -218,8 +217,8 @@ function select(value: T | '') {
                     transition-all
                     duration-200
                   " :class="option.value === modelValue
-                      ? 'bg-primary-500/10 text-content'
-                      : 'text-content hover:bg-surface'
+                    ? 'bg-primary-500/10 text-content'
+                    : 'text-content hover:bg-surface'
                     " @click="select(option.value)">
                   <span>{{ option.label }}</span>
 
