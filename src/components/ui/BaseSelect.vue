@@ -7,14 +7,14 @@ const props = defineProps<{
   label?: string
   placeholder?: string
   options: ReadonlyArray<{
-    value: T
+    value: T | ''
     label: string
   }>
   error?: string | null
 }>()
 
 const emit = defineEmits<{
-  'update:modelValue': [value: T]
+  'update:modelValue': [value: T | '']
 }>()
 
 const id = useId()
@@ -54,7 +54,7 @@ function close() {
   search.value = ''
 }
 
-function select(value: T) {
+function select(value: T | '') {
   emit('update:modelValue', value)
   close()
 }

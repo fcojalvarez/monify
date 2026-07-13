@@ -6,11 +6,14 @@ import { transactionsService, type TransactionFilters } from '@/services/transac
 import { useFamilyStore } from '@/stores/family'
 import { useCategoriesStore } from '@/stores/categories'
 import { formatCurrency } from '@/utils/format'
+
 import AppHeader from '@/components/layout/AppHeader.vue'
 import TransactionItem from '@/components/transactions/TransactionItem.vue'
 import TransactionForm from '@/components/transactions/TransactionForm.vue'
+
 import BaseCard from '@/components/ui/BaseCard.vue'
 import BaseSheet from '@/components/ui/BaseSheet.vue'
+import BaseSelect from '@/components/ui/BaseSelect.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
 
 const family = useFamilyStore()
@@ -20,8 +23,11 @@ const categories = useCategoriesStore()
 const initDates = () => {
   const today = new Date()
   const fromDate = new Date(today.getFullYear(), today.getMonth() - 2, 1)
+
   const pad = (n: number) => String(n).padStart(2, '0')
-  const formatDate = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+
+  const formatDate = (d: Date) =>
+    `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
 
   return {
     from: formatDate(fromDate),
@@ -30,11 +36,14 @@ const initDates = () => {
 }
 
 const dates = initDates()
+
 const filterFrom = ref(dates.from)
 const filterTo = ref(dates.to)
+
 const activeMemberId = ref('')
 const activeKind = ref<'all' | 'expense' | 'income'>('all')
 const activeCategoryId = ref('')
+
 const isShowFilters = ref(false)
 
 const historyItems = ref<TransactionWithRelations[]>([])
@@ -42,20 +51,70 @@ const loading = ref(false)
 
 // Sheets
 const showTransaction = ref(false)
-const editingTransaction = ref<TransactionWithRelations | undefined>()
+const editingTransaction = ref<TransactionWithRelations>()
 const transactionFormRef = ref<InstanceType<typeof TransactionForm> | null>(null)
 
 const filteredCategories = computed(() => {
   if (activeKind.value === 'all') {
     return categories.items
   }
-  return categories.items.filter((c) => c.kind === activeKind.value)
+
+  return categories.items.filter(
+    category => category.kind === activeKind.value,
+  )
 })
+
+/**
+ * Opciones para los BaseSelect
+ */
+const memberOptions = computed(() => [
+  {
+    value: '',
+    label: 'Todos',
+  },
+  ...family.items.map(member => ({
+    value: member.id,
+    label: member.name,
+  })),
+])
+
+const kindOptions = [
+  {
+    value: 'all',
+    label: 'Todos',
+  },
+  {
+    value: 'expense',
+    label: 'Gasto',
+  },
+  {
+    value: 'income',
+    label: 'Ingreso',
+  },
+] as const
+
+const categoryOptions = computed(() => [
+  {
+    value: '',
+    label: 'Todas',
+  },
+  ...filteredCategories.value.map(category => ({
+    value: category.id,
+    label: category.name,
+  })),
+])
 
 const summary = computed(() => {
   const list = historyItems.value
-  const income = list.filter((t) => t.kind === 'income').reduce((sum, t) => sum + t.amount, 0)
-  const expense = list.filter((t) => t.kind === 'expense').reduce((sum, t) => sum + t.amount, 0)
+
+  const income = list
+    .filter(transaction => transaction.kind === 'income')
+    .reduce((sum, transaction) => sum + transaction.amount, 0)
+
+  const expense = list
+    .filter(transaction => transaction.kind === 'expense')
+    .reduce((sum, transaction) => sum + transaction.amount, 0)
+
   return {
     income,
     expense,
@@ -65,6 +124,7 @@ const summary = computed(() => {
 
 async function fetchHistory() {
   loading.value = true
+
   try {
     const filters: TransactionFilters = {
       from: filterFrom.value || undefined,
@@ -75,9 +135,8 @@ async function fetchHistory() {
 
     let data = await transactionsService.list(filters)
 
-    // Filter by kind (income/expense) in memory as it's not supported directly in the database filters list
     if (activeKind.value !== 'all') {
-      data = data.filter((t) => t.kind === activeKind.value)
+      data = data.filter(transaction => transaction.kind === activeKind.value)
     }
 
     historyItems.value = data
@@ -88,21 +147,30 @@ async function fetchHistory() {
   }
 }
 
-// Watch filters
 watch(
-  [filterFrom, filterTo, activeMemberId, activeKind, activeCategoryId],
-  () => {
-    fetchHistory()
-  },
+  [
+    filterFrom,
+    filterTo,
+    activeMemberId,
+    activeKind,
+    activeCategoryId,
+  ],
+  fetchHistory,
 )
 
-// Clear category filter if the selected category is no longer valid for the selected kind
-watch(activeKind, (newKind) => {
-  if (activeCategoryId.value) {
-    const selectedCat = categories.items.find((c) => c.id === activeCategoryId.value)
-    if (selectedCat && newKind !== 'all' && selectedCat.kind !== newKind) {
-      activeCategoryId.value = ''
-    }
+watch(activeKind, newKind => {
+  if (!activeCategoryId.value) return
+
+  const selectedCategory = categories.items.find(
+    category => category.id === activeCategoryId.value,
+  )
+
+  if (
+    selectedCategory &&
+    newKind !== 'all' &&
+    selectedCategory.kind !== newKind
+  ) {
+    activeCategoryId.value = ''
   }
 })
 
@@ -118,15 +186,21 @@ async function onTransactionSaved() {
 
 function clearFilters() {
   const defaultDates = initDates()
+
   filterFrom.value = defaultDates.from
   filterTo.value = defaultDates.to
+
   activeMemberId.value = ''
   activeKind.value = 'all'
   activeCategoryId.value = ''
 }
 
 onMounted(async () => {
-  await Promise.all([categories.fetchAll(), family.fetchAll()])
+  await Promise.all([
+    categories.fetchAll(),
+    family.fetchAll(),
+  ])
+
   await fetchHistory()
 })
 </script>
@@ -138,27 +212,35 @@ onMounted(async () => {
     <main class="mx-auto max-w-2xl space-y-6 px-4 py-6">
       <div class="flex items-center gap-3">
         <RouterLink :to="{ name: ROUTE_NAMES.dashboard }"
-          class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-muted text-content-muted hover:bg-line transition-colors"
+          class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-muted text-content-muted transition-colors hover:bg-line"
           title="Volver al Dashboard">
           <AppIcon name="solar:arrow-left-bold" :size="20" />
         </RouterLink>
+
         <div>
-          <h1 class="text-2xl font-bold text-content">Histórico de movimientos</h1>
-          <p class="text-xs text-content-muted">Consulta y filtra tus registros sin límites de tiempo</p>
+          <h1 class="text-2xl font-bold text-content">
+            Histórico de movimientos
+          </h1>
+
+          <p class="text-xs text-content-muted">
+            Consulta y filtra tus registros sin límites de tiempo
+          </p>
         </div>
       </div>
 
-      <BaseCard class="p-5 space-y-4">
-        <div class="flex items-center justify-between cursor-pointer" @click="isShowFilters = !isShowFilters">
-          <div class="flex">
+      <BaseCard class="space-y-4 p-5">
+        <div class="flex cursor-pointer items-center justify-between" @click="isShowFilters = !isShowFilters">
+          <div class="flex items-center">
             <AppIcon :name="`solar:alt-arrow-${isShowFilters ? 'up' : 'down'}-linear`" :size="18"
-              class="text-content-secondary mr-2" />
+              class="mr-2 text-content-muted" />
+
             <span class="text-sm font-semibold text-content">
               Filtros
             </span>
           </div>
+
           <button v-if="isShowFilters" type="button"
-            class="text-xs font-semibold text-primary-500 hover:text-primary-600 transition-colors"
+            class="text-xs font-semibold text-primary-500 transition-colors hover:text-primary-600"
             @click.stop="clearFilters">
             Limpiar filtros
           </button>
@@ -167,104 +249,93 @@ onMounted(async () => {
         <section v-if="isShowFilters" class="space-y-3">
           <div class="grid grid-cols-2 gap-3 border-t border-line pt-4">
             <div>
-              <label class="field-label">Desde</label>
-              <input type="date" v-model="filterFrom"
-                class="w-full h-10 px-3 rounded-field border border-line bg-surface text-content text-sm focus-visible:ring-primary-500" />
+              <label class="field-label">
+                Desde
+              </label>
+
+              <input v-model="filterFrom" type="date"
+                class="h-10 w-full rounded-field border border-line bg-surface px-3 text-sm text-content focus-visible:ring-primary-500">
             </div>
+
             <div>
-              <label class="field-label">Hasta</label>
-              <input type="date" v-model="filterTo"
-                class="w-full h-10 px-3 rounded-field border border-line bg-surface text-content text-sm focus-visible:ring-primary-500" />
+              <label class="field-label">
+                Hasta
+              </label>
+
+              <input v-model="filterTo" type="date"
+                class="h-10 w-full rounded-field border border-line bg-surface px-3 text-sm text-content focus-visible:ring-primary-500">
             </div>
           </div>
 
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <!-- Miembro -->
-            <div class="relative">
-              <label class="field-label">Persona</label>
-              <select v-model="activeMemberId"
-                class="w-full h-10 px-3 rounded-field border border-line bg-surface text-content text-sm focus-visible:ring-primary-500 appearance-none">
-                <option value="">Todos</option>
-                <option v-for="member in family.items" :key="member.id" :value="member.id">
-                  {{ member.name }}
-                </option>
-              </select>
-              <AppIcon name="solar:alt-arrow-down-linear" :size="18"
-                class="pointer-events-none absolute right-3 bottom-3 text-content-secondary" />
-            </div>
+          <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <BaseSelect v-model="activeMemberId" label="Persona" :options="memberOptions" />
 
-            <!-- Tipo -->
-            <div class="relative">
-              <label class="field-label">Tipo de flujo</label>
-              <select v-model="activeKind"
-                class="w-full h-10 pl-3 pr-10 rounded-field border border-line bg-surface text-content text-sm appearance-none focus-visible:ring-primary-500">
-                <option value="all">Todos</option>
-                <option value="expense">Gasto</option>
-                <option value="income">Ingreso</option>
-              </select>
-              <AppIcon name="solar:alt-arrow-down-linear" :size="18"
-                class="pointer-events-none absolute right-3 bottom-3 text-content-secondary" />
-            </div>
+            <BaseSelect v-model="activeKind" label="Tipo de flujo" :options="kindOptions" />
 
-            <!-- Categoría -->
-            <div class="relative">
-              <label class="field-label">Categoría</label>
-              <select v-model="activeCategoryId"
-                class="w-full h-10 pl-3 pr-10 rounded-field border border-line bg-surface text-content text-sm appearance-none focus-visible:ring-primary-500">
-                <option value="">Todas</option>
-                <option v-for="cat in filteredCategories" :key="cat.id" :value="cat.id">
-                  {{ cat.name }}
-                </option>
-              </select>
-              <AppIcon name="solar:alt-arrow-down-linear" :size="18"
-                class="pointer-events-none absolute right-3 bottom-3 text-content-secondary" />
-            </div>
+            <BaseSelect v-model="activeCategoryId" label="Categoría" :options="categoryOptions" />
           </div>
         </section>
       </BaseCard>
 
-      <!-- Totales del Periodo -->
       <div class="flex gap-3">
         <BaseCard v-if="['income', 'all'].includes(activeKind)"
-          class="flex-1 p-4 text-center bg-surface-raised border border-line">
-          <p class="text-xs font-semibold text-content-muted">Ingresos</p>
-          <p class="text-lg font-bold text-income mt-1">{{ formatCurrency(summary.income) }}</p>
+          class="flex-1 border border-line bg-surface-raised p-4 text-center">
+          <p class="text-xs font-semibold text-content-muted">
+            Ingresos
+          </p>
+
+          <p class="mt-1 text-lg font-bold text-income">
+            {{ formatCurrency(summary.income) }}
+          </p>
         </BaseCard>
 
         <BaseCard v-if="['expense', 'all'].includes(activeKind)"
-          class="flex-1 p-4 text-center bg-surface-raised border border-line">
-          <p class="text-xs font-semibold text-content-muted">Gastos</p>
-          <p class="text-lg font-bold text-expense mt-1">{{ formatCurrency(summary.expense) }}</p>
+          class="flex-1 border border-line bg-surface-raised p-4 text-center">
+          <p class="text-xs font-semibold text-content-muted">
+            Gastos
+          </p>
+
+          <p class="mt-1 text-lg font-bold text-expense">
+            {{ formatCurrency(summary.expense) }}
+          </p>
         </BaseCard>
 
-        <BaseCard class="flex-1 p-4 text-center bg-surface-raised border border-line">
-          <p class="text-xs font-semibold text-content-muted">Balance neto</p>
-          <p class="text-lg font-bold mt-1" :class="summary.balance >= 0 ? 'text-income' : 'text-expense'">
+        <BaseCard class="flex-1 border border-line bg-surface-raised p-4 text-center">
+          <p class="text-xs font-semibold text-content-muted">
+            Balance neto
+          </p>
+
+          <p class="mt-1 text-lg font-bold" :class="summary.balance >= 0 ? 'text-income' : 'text-expense'">
             {{ formatCurrency(summary.balance) }}
           </p>
         </BaseCard>
       </div>
 
-      <!-- Listado de Movimientos -->
       <BaseCard as="section" class="p-4">
-        <h2 class="mb-4 text-sm font-semibold text-content-muted">Resultados del histórico</h2>
+        <h2 class="mb-4 text-sm font-semibold text-content-muted">
+          Resultados del histórico
+        </h2>
 
-        <div v-if="loading" class="py-12 text-center text-sm text-content-subtle">Cargando…</div>
+        <div v-if="loading" class="py-12 text-center text-sm text-content-subtle">
+          Cargando…
+        </div>
 
         <div v-else-if="!historyItems.length" class="py-12 text-center">
           <AppIcon name="solar:wallet-money-bold-duotone" :size="40" class="mx-auto text-content-subtle" />
-          <p class="mt-2 text-sm text-content-muted">No se encontraron movimientos con los filtros aplicados.</p>
+
+          <p class="mt-2 text-sm text-content-muted">
+            No se encontraron movimientos con los filtros aplicados.
+          </p>
         </div>
 
         <ul v-else class="divide-y divide-line">
           <TransactionItem v-for="transaction in historyItems" :key="transaction.id" :transaction="transaction"
-            class="cursor-pointer hover:bg-surface-muted/30 px-2 rounded-field transition-colors"
+            class="cursor-pointer rounded-field px-2 transition-colors hover:bg-surface-muted/30"
             @click="openEditTransaction(transaction)" />
         </ul>
       </BaseCard>
     </main>
 
-    <!-- BaseSheet para Editar Transacción -->
     <BaseSheet v-model="showTransaction" title="Editar movimiento" :has-changes="transactionFormRef?.hasChanges">
       <TransactionForm ref="transactionFormRef" :transaction="editingTransaction" @saved="onTransactionSaved"
         @cancel="showTransaction = false" />
