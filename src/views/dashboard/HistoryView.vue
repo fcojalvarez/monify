@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { ROUTE_NAMES } from '@/constants'
 import type { TransactionWithRelations } from '@/types'
 import { transactionsService, type TransactionFilters } from '@/services/transactions.service'
@@ -19,7 +19,6 @@ import AppIcon from '@/components/ui/AppIcon.vue'
 const family = useFamilyStore()
 const categories = useCategoriesStore()
 
-// Initialize dates: defaults to last 3 months
 const initDates = () => {
   const today = new Date()
   const fromDate = new Date(today.getFullYear(), today.getMonth() - 2, 1)
@@ -49,6 +48,22 @@ const isShowFilters = ref(false)
 const historyItems = ref<TransactionWithRelations[]>([])
 const loading = ref(false)
 
+/**
+ * Scroll top
+ */
+const showScrollTop = ref(false)
+
+function handleScroll() {
+  showScrollTop.value = window.scrollY > 500
+}
+
+function scrollToTop() {
+  window.scrollTo({
+    top: 0,
+    behavior: 'smooth',
+  })
+}
+
 // Sheets
 const showTransaction = ref(false)
 const editingTransaction = ref<TransactionWithRelations>()
@@ -64,9 +79,6 @@ const filteredCategories = computed(() => {
   )
 })
 
-/**
- * Opciones para los BaseSelect
- */
 const memberOptions = computed(() => [
   {
     value: '',
@@ -196,12 +208,18 @@ function clearFilters() {
 }
 
 onMounted(async () => {
+  window.addEventListener('scroll', handleScroll)
+
   await Promise.all([
     categories.fetchAll(),
     family.fetchAll(),
   ])
 
   await fetchHistory()
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('scroll', handleScroll)
 })
 </script>
 
@@ -340,5 +358,16 @@ onMounted(async () => {
       <TransactionForm ref="transactionFormRef" :transaction="editingTransaction" @saved="onTransactionSaved"
         @cancel="showTransaction = false" />
     </BaseSheet>
+
+    <!-- Botón volver arriba -->
+    <Transition enter-active-class="transition duration-200 ease-out"
+      leave-active-class="transition duration-150 ease-in" enter-from-class="translate-y-4 opacity-0"
+      leave-to-class="translate-y-4 opacity-0">
+      <button v-if="showScrollTop" type="button"
+        class="fixed bottom-10 right-8 z-40 flex h-12 w-12 items-center justify-center rounded-full bg-primary-500 text-white shadow-lg transition hover:bg-primary-600 active:scale-95"
+        aria-label="Volver arriba" title="Volver arriba" @click="scrollToTop">
+        <AppIcon name="solar:alt-arrow-up-bold" :size="22" />
+      </button>
+    </Transition>
   </div>
 </template>
