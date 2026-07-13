@@ -12,10 +12,46 @@ const props = withDefaults(
     hasChanges: false,
   }
 )
+
 const emit = defineEmits<{ 'update:modelValue': [value: boolean] }>()
 
 const showConfirmDialog = ref(false)
 
+/**
+ * Swipe
+ */
+const startY = ref(0)
+const translateY = ref(0)
+const dragging = ref(false)
+
+function onTouchStart(e: TouchEvent) {
+  dragging.value = true
+  startY.value = e.touches[0].clientY
+}
+
+function onTouchMove(e: TouchEvent) {
+  if (!dragging.value) return
+
+  const delta = e.touches[0].clientY - startY.value
+
+  translateY.value = Math.max(delta, 0)
+}
+
+function onTouchEnd() {
+  dragging.value = false
+
+  if (translateY.value > 120) {
+    forceClose()
+  }
+
+  startY.value = 0
+  translateY.value = 0
+}
+
+
+/**
+ * Close handling
+ */
 function close() {
   if (props.hasChanges) {
     showConfirmDialog.value = true
@@ -26,9 +62,14 @@ function close() {
 
 function forceClose() {
   showConfirmDialog.value = false
+  translateY.value = 0
   emit('update:modelValue', false)
 }
 
+
+/**
+ * Keyboard
+ */
 function onKeydown(event: KeyboardEvent) {
   if (event.key === 'Escape') {
     if (showConfirmDialog.value) return
@@ -36,16 +77,24 @@ function onKeydown(event: KeyboardEvent) {
   }
 }
 
-// Bloquea el scroll del fondo mientras el sheet está abierto
+
+/**
+ * Body scroll lock
+ */
 watch(
   () => props.modelValue,
   (open) => {
     if (typeof document === 'undefined') return
+
     document.body.style.overflow = open ? 'hidden' : ''
-    if (open) window.addEventListener('keydown', onKeydown)
-    else {
+
+    if (open) {
+      translateY.value = 0
+      window.addEventListener('keydown', onKeydown)
+    } else {
       window.removeEventListener('keydown', onKeydown)
       showConfirmDialog.value = false
+      translateY.value = 0
     }
   },
 )
@@ -67,14 +116,20 @@ onBeforeUnmount(() => {
         <!-- Panel -->
         <div
           class="sheet-panel relative w-full max-w-md rounded-t-[1.75rem] bg-surface-raised shadow-raised sm:rounded-card"
-          :style="{ paddingBottom: 'env(safe-area-inset-bottom)' }">
+          :style="{
+            transform: `translateY(${translateY}px)`
+          }">
           <!-- Asa (grabber) -->
-          <div class="flex justify-center pt-3 sm:hidden">
+          <div class="flex justify-center pt-3 sm:hidden" @touchstart="onTouchStart" @touchmove="onTouchMove"
+            @touchend="onTouchEnd">
             <span class="h-1.5 w-10 rounded-pill bg-line-strong" />
           </div>
 
           <header class="flex items-center justify-between px-5 pb-3 pt-4 gap-3">
-            <h2 class="text-lg font-bold text-content">{{ title }}</h2>
+            <h2 class="text-lg font-bold text-content">
+              {{ title }}
+            </h2>
+
             <div class="flex gap-2">
               <slot name="actions" />
 
@@ -93,16 +148,8 @@ onBeforeUnmount(() => {
       </div>
     </Transition>
 
-    <BaseDialog
-      v-slot:default
-      v-model="showConfirmDialog"
-      variant="danger"
-      title="Cambios sin guardar"
-      confirm-text="Descartar"
-      cancel-text="Seguir editando"
-      show-cancel
-      @confirm="forceClose"
-    >
+    <BaseDialog v-model="showConfirmDialog" variant="danger" title="Cambios sin guardar" confirm-text="Descartar"
+      cancel-text="Seguir editando" show-cancel @confirm="forceClose">
       <p class="text-content">
         Tienes cambios sin guardar. ¿Seguro que quieres salir? Se perderán los datos introducidos.
       </p>
