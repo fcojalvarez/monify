@@ -1,5 +1,5 @@
 <script setup lang="ts" generic="T extends string">
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref, nextTick } from 'vue'
 import AppIcon from './AppIcon.vue'
 
 type Option<T extends string> = { value: T | '', label: string }
@@ -26,6 +26,7 @@ const emit = defineEmits<{ 'update:modelValue': [value: T | ''] }>()
 
 const open = ref(false)
 const search = ref('')
+const searchInput = ref<HTMLInputElement | null>(null)
 
 const allOptions = computed<Option<T>[]>(() => {
   const options: Option<T>[] = [...props.options]
@@ -107,6 +108,17 @@ function onTouchEnd() {
   translateY.value = 0
 }
 
+function onOpenHandle() {
+  open.value = true
+  search.value = ''
+  if (showSearch.value) {
+    nextTick(() => {
+      searchInput.value?.focus()
+    })
+  }
+  translateY.value = 0
+  keyboardOffset.value = 0
+}
 
 function close() {
   open.value = false
@@ -129,7 +141,7 @@ function select(value: T | '') {
 
     <button type="button"
       class="h-12 w-full rounded-field border border-transparent bg-surface-muted px-4 text-left text-content transition-colors focus:border-primary-400 focus:bg-surface-raised focus:outline-none focus:shadow-focus"
-      @click="open = true">
+      @click="onOpenHandle">
       {{ selectedLabel ?? placeholder ?? 'Selecciona…' }}
     </button>
 
@@ -163,7 +175,7 @@ function select(value: T | '') {
               ]" :style="teleport
                 ? {
                   bottom: `${-keyboardOffset}px`,
-      transform: `translateY(${translateY}px)`
+                  transform: `translateY(${translateY}px)`
                 }
                 : {}
                 ">
@@ -176,7 +188,7 @@ function select(value: T | '') {
 
 
               <div v-if="showSearch" class="border-b border-line px-4 py-3">
-                <input v-model="search" type="text" placeholder="Buscar..." class="
+                <input v-model="search" ref="searchInput" type="text" placeholder="Buscar..." class="
                     h-10
                     w-full
                     rounded-field
