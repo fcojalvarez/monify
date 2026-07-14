@@ -138,7 +138,7 @@ function select(value: T | '') {
         leave-active-class="transition-opacity duration-150" enter-from-class="opacity-0" leave-to-class="opacity-0">
         <div v-if="open" @pointerdown.self="close" :class="[
           teleport
-            ? 'fixed inset-0 h-dvh z-[999999] flex items-end justify-center bg-secondary-950/50 backdrop-blur-sm md:items-center'
+            ? 'fixed inset-0 z-[999999] flex items-end justify-center bg-secondary-950/50 backdrop-blur-sm md:items-center'
             : 'absolute left-0 top-full z-[100] mt-2 w-full'
         ]">
 
