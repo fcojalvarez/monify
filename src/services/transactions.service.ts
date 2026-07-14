@@ -19,7 +19,7 @@ export const transactionsService = {
     let query = supabase
       .from('transactions')
       .select(SELECT_WITH_RELATIONS)
-      .order('occurred_on', { ascending: true })
+      .order('occurred_on', { ascending: false })
 
     if (filters.from) query = query.gte('occurred_on', filters.from)
     if (filters.to) query = query.lte('occurred_on', filters.to)
