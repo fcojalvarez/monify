@@ -31,15 +31,15 @@ export const PALETTE = [
 /** Iconos por defecto (nombres de Iconify) para arrancar rápido el picker. */
 export const SUGGESTED_ICONS = [
   'solar:cart-large-2-bold',
-  'solar:home-2-bold',
+  'solar:home-bold',
   'solar:chef-hat-minimalistic-bold',
   'solar:bus-bold',
-  'solar:health-bold',
+  'solar:syringe-bold',
   'solar:gamepad-bold',
   'solar:t-shirt-bold',
   'solar:wallet-money-bold',
   'solar:hand-money-bold',
-  'solar:graph-up-bold',
+  'solar:gift-bold',
 ] as const
 
 export const DEFAULT_CATEGORY_ICON = 'solar:tag-bold'
