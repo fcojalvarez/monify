@@ -141,7 +141,7 @@ onBeforeUnmount(() => {
             </div>
           </header>
 
-          <div class="max-h-[75dvh] overflow-y-auto px-5 pb-6">
+          <div class="px-5 pb-6">
             <slot />
           </div>
         </div>
