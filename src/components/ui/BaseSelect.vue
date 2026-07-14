@@ -162,11 +162,8 @@ function select(value: T | '') {
                 teleport ? 'md:max-w-md' : '',
               ]" :style="teleport
                 ? {
-                  transform: `
-                      translateY(
-                        ${translateY - keyboardOffset}px
-                      )
-                    `
+                  bottom: `${-keyboardOffset}px`,
+      transform: `translateY(${translateY}px)`
                 }
                 : {}
                 ">
