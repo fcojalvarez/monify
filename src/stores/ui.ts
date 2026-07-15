@@ -6,7 +6,6 @@ type Currency = 'EUR' | 'USD'
 
 const THEME_KEY = 'monify:theme'
 const CURRENCY_KEY = 'monify:currency'
-const SAVINGS_ENABLED_KEY = 'monify:savings_enabled'
 const SAVINGS_PROMPT_KEY = 'monify:savings_prompt_dismissed'
 
 function initialTheme(): Theme {
@@ -22,11 +21,6 @@ function initialCurrency(): Currency {
   return stored || 'EUR'
 }
 
-function initialSavingsEnabled(): boolean {
-  if (typeof window === 'undefined') return false
-  return localStorage.getItem(SAVINGS_ENABLED_KEY) === 'true'
-}
-
 function initialSavingsPromptDismissed(): boolean {
   if (typeof window === 'undefined') return false
   return localStorage.getItem(SAVINGS_PROMPT_KEY) === 'true'
@@ -35,7 +29,6 @@ function initialSavingsPromptDismissed(): boolean {
 export const useUiStore = defineStore('ui', () => {
   const theme = ref<Theme>(initialTheme())
   const currency = ref<Currency>(initialCurrency())
-  const savingsEnabled = ref<boolean>(initialSavingsEnabled())
   const savingsPromptDismissed = ref<boolean>(initialSavingsPromptDismissed())
 
   const locale = computed(() => {
@@ -54,10 +47,6 @@ export const useUiStore = defineStore('ui', () => {
     currency.value = value
   }
 
-  function setSavingsEnabled(value: boolean) {
-    savingsEnabled.value = value
-  }
-
   function setSavingsPromptDismissed(value: boolean) {
     savingsPromptDismissed.value = value
   }
@@ -71,26 +60,13 @@ export const useUiStore = defineStore('ui', () => {
     { immediate: true },
   )
 
-  watch(
-    currency,
-    (value) => {
-      if (typeof window !== 'undefined') localStorage.setItem(CURRENCY_KEY, value)
-    },
-  )
+  watch(currency, (value) => {
+    if (typeof window !== 'undefined') localStorage.setItem(CURRENCY_KEY, value)
+  })
 
-  watch(
-    savingsEnabled,
-    (value) => {
-      if (typeof window !== 'undefined') localStorage.setItem(SAVINGS_ENABLED_KEY, String(value))
-    },
-  )
-
-  watch(
-    savingsPromptDismissed,
-    (value) => {
-      if (typeof window !== 'undefined') localStorage.setItem(SAVINGS_PROMPT_KEY, String(value))
-    },
-  )
+  watch(savingsPromptDismissed, (value) => {
+    if (typeof window !== 'undefined') localStorage.setItem(SAVINGS_PROMPT_KEY, String(value))
+  })
 
   return {
     theme,
@@ -98,9 +74,7 @@ export const useUiStore = defineStore('ui', () => {
     currency,
     locale,
     setCurrency,
-    savingsEnabled,
     savingsPromptDismissed,
-    setSavingsEnabled,
     setSavingsPromptDismissed,
   }
 })

@@ -4,6 +4,7 @@ import { storeToRefs } from 'pinia'
 import { ROUTE_NAMES } from '@/constants'
 import type { TransactionWithRelations } from '@/types'
 import { useAuthStore } from '@/stores/auth'
+import { useProfileStore } from '@/stores/profile'
 import { useTransactionsStore } from '@/stores/transactions'
 import { useSavingsStore } from '@/stores/savings'
 import { useCategoriesStore } from '@/stores/categories'
@@ -23,6 +24,7 @@ import AppIcon from '@/components/ui/AppIcon.vue'
 import { useUiStore } from '@/stores/ui'
 
 const auth = useAuthStore()
+const profile = useProfileStore()
 const categories = useCategoriesStore()
 const family = useFamilyStore()
 const transactions = useTransactionsStore()
@@ -75,10 +77,12 @@ async function selectMember(memberId: string | null) {
 
 const showSavingsPrompt = ref(false)
 
-function activateSavings() {
-  ui.setSavingsEnabled(true)
+async function activateSavings() {
+  await profile.updateSavingsEnabled(true)
   ui.setSavingsPromptDismissed(true)
   showSavingsPrompt.value = false
+
+  await savingsStore.fetchAll()
 }
 
 function dismissSavingsPrompt() {
@@ -87,26 +91,19 @@ function dismissSavingsPrompt() {
 }
 
 onMounted(async () => {
-  if (ui.savingsEnabled) {
-    await Promise.all([
-      categories.fetchAll(),
-      family.fetchAll(),
-      savingsStore.fetchAll(),
-      transactions.fetch(monthRange()),
-    ])
+  await Promise.all([
+    categories.fetchAll(),
+    family.fetchAll(),
+    transactions.fetch(monthRange()),
+  ])
 
-    savingsLoaded.value = true
-  } else {
-    await Promise.all([
-      categories.fetchAll(),
-      family.fetchAll(),
-      transactions.fetch(monthRange()),
-    ])
-
-    savingsLoaded.value = true
+  if (profile.savingsEnabled) {
+    await savingsStore.fetchAll()
   }
 
-  if (!ui.savingsEnabled && !ui.savingsPromptDismissed) {
+  savingsLoaded.value = true
+
+  if (!profile.savingsEnabled && !ui.savingsPromptDismissed) {
     setTimeout(() => {
       showSavingsPrompt.value = true
     }, 1000)
@@ -131,7 +128,7 @@ onMounted(async () => {
         </div>
 
         <div class="flex gap-1">
-          <RouterLink v-if="ui.savingsEnabled" :to="{ name: ROUTE_NAMES.savings }"
+          <RouterLink v-if="profile.savingsEnabled" :to="{ name: ROUTE_NAMES.savings }"
             class="flex h-10 w-10 items-center justify-center rounded-full bg-surface-muted text-content-muted hover:bg-line hover:text-content transition-colors mr-1"
             title="Ver ahorros" aria-label="Ver ahorros">
             <AppIcon name="solar:safe-square-bold" :size="20" />

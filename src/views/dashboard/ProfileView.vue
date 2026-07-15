@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useUiStore } from '@/stores/ui'
+import { useProfileStore } from '@/stores/profile'
 import { useTransactionsStore } from '@/stores/transactions'
 import { useSavingsStore } from '@/stores/savings'
 import { ROUTE_NAMES } from '@/constants'
@@ -16,6 +17,7 @@ import SegmentedControl from '@/components/ui/SegmentedControl.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
 
 const auth = useAuthStore()
+const profile = useProfileStore()
 const ui = useUiStore()
 const transactions = useTransactionsStore()
 const savingsStore = useSavingsStore()
@@ -166,12 +168,23 @@ const joinedDate = computed(() => {
   return formatDate(auth.user.created_at.slice(0, 10))
 })
 
-watch(() => ui.savingsEnabled, (newValue) => {
-  if (!newValue) {
-    savingsStore.$reset()
-    console.log('ha limpiado...');
-  }
+const savingsEnabled = computed({
+  get: () => profile.savingsEnabled,
+
+  set: async (enabled: boolean) => {
+    try {
+      await profile.updateSavingsEnabled(enabled)
+
+      if (!enabled) {
+        savingsStore.$reset()
+      }
+    } catch (error) {
+      console.error(error)
+    }
+  },
 })
+
+
 </script>
 
 <template>
@@ -285,12 +298,12 @@ watch(() => ui.savingsEnabled, (newValue) => {
             </span>
 
             <div class="relative shrink-0 ml-4">
-              <input v-model="ui.savingsEnabled" type="checkbox" class="sr-only" />
+              <input v-model="savingsEnabled" type="checkbox" class="sr-only" />
 
               <span class="relative block h-6 w-11 rounded-pill transition-colors"
-                :class="ui.savingsEnabled ? 'bg-primary-500' : 'bg-line'">
+                :class="savingsEnabled ? 'bg-primary-500' : 'bg-line'">
                 <span class="absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white transition-transform duration-200"
-                  :class="ui.savingsEnabled ? 'translate-x-5' : 'translate-x-0'" />
+                  :class="savingsEnabled ? 'translate-x-5' : 'translate-x-0'" />
               </span>
             </div>
           </label>

@@ -94,6 +94,7 @@ export type Database = {
           display_name: string
           id: string
           locale: string
+          savings_enabled: boolean
         }
         Insert: {
           created_at?: string
@@ -101,6 +102,7 @@ export type Database = {
           display_name?: string
           id: string
           locale?: string
+          savings_enabled?: boolean
         }
         Update: {
           created_at?: string
@@ -108,6 +110,7 @@ export type Database = {
           display_name?: string
           id?: string
           locale?: string
+          savings_enabled?: boolean
         }
         Relationships: []
       }
@@ -207,7 +210,7 @@ export type Database = {
             isOneToOne: false
             referencedRelation: 'profiles'
             referencedColumns: ['id']
-          }
+          },
         ]
       }
       savings_transactions: {
@@ -252,7 +255,7 @@ export type Database = {
             isOneToOne: false
             referencedRelation: 'savings'
             referencedColumns: ['id']
-          }
+          },
         ]
       }
     }
@@ -391,4 +394,3 @@ export const Constants = {
 } as const
 
 export type CategoryKind = Enums<'category_kind'>
-

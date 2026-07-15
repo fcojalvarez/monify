@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useProfileStore } from '@/stores/profile'
 import { useUiStore } from '@/stores/ui'
 import { ROUTE_NAMES } from '@/constants'
 import AppLogo from '@/components/ui/AppLogo.vue'
@@ -9,6 +10,7 @@ import AppIcon from '@/components/ui/AppIcon.vue'
 import BaseDialog from '@/components/ui/BaseDialog.vue'
 
 const auth = useAuthStore()
+const profile = useProfileStore()
 const ui = useUiStore()
 const router = useRouter()
 
@@ -16,6 +18,7 @@ const showLogoutDialog = ref(false)
 
 async function signOut() {
   await auth.signOut()
+  profile.reset()
   showLogoutDialog.value = false
   router.push({ name: ROUTE_NAMES.login })
 }
