@@ -8,6 +8,7 @@ export const useProfileStore = defineStore('profile', () => {
   const loading = ref(false)
 
   const savingsEnabled = computed(() => profile.value?.savings_enabled ?? false)
+  const cashEnabled = computed(() => profile.value?.cash_enabled ?? false)
 
   const currency = computed(() => profile.value?.currency ?? 'EUR')
 
@@ -37,18 +38,19 @@ export const useProfileStore = defineStore('profile', () => {
     }
   }
 
-  async function updateSavingsEnabled(enabled: boolean) {
+  async function updatePreference<K extends keyof Profile>(key: K, value: Profile[K]) {
     if (!profile.value) return
 
-    const previous = profile.value.savings_enabled
-    profile.value.savings_enabled = enabled
+    const previous = profile.value[key]
+
+    profile.value[key] = value
 
     try {
-      await profileService.update({
-        savings_enabled: enabled,
-      })
+      profile.value = await profileService.update({
+        [key]: value,
+      } as Partial<Profile>)
     } catch (error) {
-      profile.value.savings_enabled = previous
+      profile.value[key] = previous
       throw error
     }
   }
@@ -63,10 +65,11 @@ export const useProfileStore = defineStore('profile', () => {
     savingsEnabled,
     currency,
     locale,
+    cashEnabled,
+    updatePreference,
     load,
     refresh,
     update,
-    updateSavingsEnabled,
     reset,
   }
 })

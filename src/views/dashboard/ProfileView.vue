@@ -173,7 +173,7 @@ const savingsEnabled = computed({
 
   set: async (enabled: boolean) => {
     try {
-      await profile.updateSavingsEnabled(enabled)
+      await profile.updatePreference('savings_enabled', enabled)
 
       if (!enabled) {
         savingsStore.$reset()
@@ -184,6 +184,17 @@ const savingsEnabled = computed({
   },
 })
 
+const cashEnabled = computed({
+  get: () => profile.cashEnabled,
+
+  set: async (enabled: boolean) => {
+    try {
+      await profile.updatePreference('cash_enabled', enabled)
+    } catch (error) {
+      console.error(error)
+    }
+  },
+})
 
 </script>
 
@@ -304,6 +315,22 @@ const savingsEnabled = computed({
                 :class="savingsEnabled ? 'bg-primary-500' : 'bg-line'">
                 <span class="absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white transition-transform duration-200"
                   :class="savingsEnabled ? 'translate-x-5' : 'translate-x-0'" />
+              </span>
+            </div>
+          </label>
+
+          <label class="flex cursor-pointer items-center justify-between">
+            <span class="text-sm font-medium text-content">
+              ¿Quieres gestionar tu efectivo?
+            </span>
+
+            <div class="relative shrink-0 ml-4">
+              <input v-model="cashEnabled" type="checkbox" class="sr-only" />
+
+              <span class="relative block h-6 w-11 rounded-pill transition-colors"
+                :class="profile.cashEnabled ? 'bg-primary-500' : 'bg-line'">
+                <span class="absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white transition-transform duration-200"
+                  :class="profile.cashEnabled ? 'translate-x-5' : 'translate-x-0'" />
               </span>
             </div>
           </label>

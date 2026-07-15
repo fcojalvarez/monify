@@ -78,7 +78,8 @@ async function selectMember(memberId: string | null) {
 const showSavingsPrompt = ref(false)
 
 async function activateSavings() {
-  await profile.updateSavingsEnabled(true)
+  await profile.updatePreference('savings_enabled', true)
+
   ui.setSavingsPromptDismissed(true)
   showSavingsPrompt.value = false
 

@@ -89,6 +89,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          cash_enabled: boolean
           created_at: string
           currency: string
           display_name: string
@@ -97,6 +98,7 @@ export type Database = {
           savings_enabled: boolean
         }
         Insert: {
+          cash_enabled?: boolean
           created_at?: string
           currency?: string
           display_name?: string
@@ -105,6 +107,7 @@ export type Database = {
           savings_enabled?: boolean
         }
         Update: {
+          cash_enabled?: boolean
           created_at?: string
           currency?: string
           display_name?: string
