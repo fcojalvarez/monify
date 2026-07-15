@@ -117,6 +117,73 @@ export type Database = {
         }
         Relationships: []
       }
+      savings: {
+        Row: {
+          balance: number
+          color: string
+          created_at: string
+          id: string
+          name: string
+          owner_id: string
+          target: number | null
+        }
+        Insert: {
+          balance?: number
+          color?: string
+          created_at?: string
+          id?: string
+          name: string
+          owner_id?: string
+          target?: number | null
+        }
+        Update: {
+          balance?: number
+          color?: string
+          created_at?: string
+          id?: string
+          name?: string
+          owner_id?: string
+          target?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'savings_owner_id_fkey'
+            columns: ['owner_id']
+            isOneToOne: false
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      cash: {
+        Row: {
+          balance: number
+          created_at: string
+          id: string
+          owner_id: string
+        }
+        Insert: {
+          balance?: number
+          created_at?: string
+          id?: string
+          owner_id?: string
+        }
+        Update: {
+          balance?: number
+          created_at?: string
+          id?: string
+          owner_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'cash_owner_id_fkey'
+            columns: ['owner_id']
+            isOneToOne: false
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       transactions: {
         Row: {
           amount: number
@@ -178,44 +245,6 @@ export type Database = {
           },
         ]
       }
-      savings: {
-        Row: {
-          balance: number
-          color: string
-          created_at: string
-          id: string
-          name: string
-          owner_id: string
-          target: number | null
-        }
-        Insert: {
-          balance?: number
-          color?: string
-          created_at?: string
-          id?: string
-          name: string
-          owner_id?: string
-          target?: number | null
-        }
-        Update: {
-          balance?: number
-          color?: string
-          created_at?: string
-          id?: string
-          name?: string
-          owner_id?: string
-          target?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: 'savings_owner_id_fkey'
-            columns: ['owner_id']
-            isOneToOne: false
-            referencedRelation: 'profiles'
-            referencedColumns: ['id']
-          },
-        ]
-      }
       savings_transactions: {
         Row: {
           amount: number
@@ -257,6 +286,51 @@ export type Database = {
             columns: ['savings_id']
             isOneToOne: false
             referencedRelation: 'savings'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      cash_transactions: {
+        Row: {
+          amount: number
+          cash_id: string
+          created_at: string
+          id: string
+          note: string | null
+          occurred_on: string
+          owner_id: string
+        }
+        Insert: {
+          amount: number
+          cash_id: string
+          created_at?: string
+          id?: string
+          note?: string | null
+          occurred_on?: string
+          owner_id?: string
+        }
+        Update: {
+          amount?: number
+          cash_id?: string
+          created_at?: string
+          id?: string
+          note?: string | null
+          occurred_on?: string
+          owner_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'cash_transactions_owner_id_fkey'
+            columns: ['owner_id']
+            isOneToOne: false
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'cash_transactions_cash_id_fkey'
+            columns: ['cash_id']
+            isOneToOne: false
+            referencedRelation: 'cash'
             referencedColumns: ['id']
           },
         ]

@@ -64,6 +64,12 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
+      path: '/cash',
+      name: ROUTE_NAMES.cash,
+      component: () => import('@/views/dashboard/CashView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/:pathMatch(.*)*',
       redirect: { name: ROUTE_NAMES.dashboard },
     },

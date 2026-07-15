@@ -33,6 +33,8 @@ const ui = useUiStore()
 
 const { summary, annualSummary, usageByCategory, items, loading } = storeToRefs(transactions)
 const { items: savings } = storeToRefs(savingsStore)
+const { cashEnabled } = storeToRefs(profile)
+const cash = 0;
 
 const savingsLoaded = ref(false)
 
@@ -129,6 +131,12 @@ onMounted(async () => {
         </div>
 
         <div class="flex gap-1">
+          <RouterLink v-if="profile.cashEnabled" :to="{ name: ROUTE_NAMES.cash }"
+            class="flex h-10 w-10 items-center justify-center rounded-full bg-surface-muted text-content-muted hover:bg-line hover:text-content transition-colors mr-1"
+            title="Ver efectivo" aria-label="Ver efectivo">
+            <AppIcon :name="ui.currency === 'EUR' ? 'solar:euro-bold' : 'solar:dollar-bold'" :size="20" />
+          </RouterLink>
+
           <RouterLink v-if="profile.savingsEnabled" :to="{ name: ROUTE_NAMES.savings }"
             class="flex h-10 w-10 items-center justify-center rounded-full bg-surface-muted text-content-muted hover:bg-line hover:text-content transition-colors mr-1"
             title="Ver ahorros" aria-label="Ver ahorros">
@@ -190,8 +198,8 @@ onMounted(async () => {
         </div>
       </div>
 
-      <BalanceSummary :monthly-summary="summary" :annual-summary="annualSummary" :savings="savings"
-        :savings-loaded="savingsLoaded" />
+      <BalanceSummary :monthly-summary="summary" :annual-summary="annualSummary" :savings="savings" :cash="cash"
+        :savings-loaded="savingsLoaded" :cash-enabled="cashEnabled" />
 
       <!-- Filtro por miembro de la familia -->
       <div v-if="family.items.length > 1" class="flex gap-2 overflow-x-auto pb-1">

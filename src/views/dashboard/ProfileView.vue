@@ -5,6 +5,7 @@ import { useUiStore } from '@/stores/ui'
 import { useProfileStore } from '@/stores/profile'
 import { useTransactionsStore } from '@/stores/transactions'
 import { useSavingsStore } from '@/stores/savings'
+import { useCashStore } from '@/stores/cash'
 import { ROUTE_NAMES } from '@/constants'
 import { formatDate } from '@/utils/format'
 import { transactionsService } from '@/services/transactions.service'
@@ -21,6 +22,7 @@ const profile = useProfileStore()
 const ui = useUiStore()
 const transactions = useTransactionsStore()
 const savingsStore = useSavingsStore()
+const cashStore = useCashStore()
 
 // Profile Form
 const name = ref(auth.displayName)
@@ -190,6 +192,12 @@ const cashEnabled = computed({
   set: async (enabled: boolean) => {
     try {
       await profile.updatePreference('cash_enabled', enabled)
+
+      if (enabled) {
+        await cashStore.fetch()
+      } else {
+        cashStore.$reset()
+      }
     } catch (error) {
       console.error(error)
     }
@@ -328,9 +336,9 @@ const cashEnabled = computed({
               <input v-model="cashEnabled" type="checkbox" class="sr-only" />
 
               <span class="relative block h-6 w-11 rounded-pill transition-colors"
-                :class="profile.cashEnabled ? 'bg-primary-500' : 'bg-line'">
+                :class="cashEnabled ? 'bg-primary-500' : 'bg-line'">
                 <span class="absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white transition-transform duration-200"
-                  :class="profile.cashEnabled ? 'translate-x-5' : 'translate-x-0'" />
+                  :class="cashEnabled ? 'translate-x-5' : 'translate-x-0'" />
               </span>
             </div>
           </label>

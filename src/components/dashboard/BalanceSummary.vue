@@ -14,6 +14,8 @@ const props = defineProps<{
   annualSummary: PeriodSummary
   savings: Savings[]
   savingsLoaded: boolean
+  cash: number
+  cashEnabled: boolean
 }>()
 
 const { isDesktop } = usePlatform()
@@ -207,31 +209,45 @@ onMounted(() => {
           </button>
 
           <section class="m-auto cursor-pointer md:w-11/12" @click="router.push('/history')">
-            <p class="text-sm text-white/70">
-              Balance del mes
-            </p>
+            <p class="text-sm text-white/70">Balance del mes</p>
 
-            <p class="mt-1 text-3xl font-bold tracking-tight">
-              {{
-                formatCurrency(props.monthlySummary.balance, {
-                  currency: props.monthlySummary.currency,
-                })
-              }}
-            </p>
+            <div class="mt-1 flex items-end justify-between">
+              <!-- Balance Total principal -->
+              <p class="text-3xl font-bold tracking-tight">
+                {{
+                  formatCurrency(props.monthlySummary.balance + (props.cash || 0), {
+                    currency: props.monthlySummary.currency,
+                  })
+                }}
+              </p>
 
+
+
+              <div class="flex gap-4 pb-1 text-right" v-if="props.cashEnabled">
+                <div>
+                  <p class="text-[9px] uppercase text-white/60">Banco</p>
+                  <p class="text-sm font-semibold">
+                    {{ formatCurrency(props.monthlySummary.balance, { currency: props.monthlySummary.currency }) }}
+                  </p>
+                </div>
+                <div>
+                  <p class="text-[9px] uppercase text-white/60">Efectivo</p>
+                  <p class="text-sm font-semibold">
+                    {{ formatCurrency(props.cash, { currency: props.monthlySummary.currency }) }}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Ingresos y Gastos (igual que tenías antes) -->
             <div class="mt-5 grid grid-cols-2 gap-3">
               <div class="rounded-field bg-white/10 p-3">
                 <div class="flex items-center gap-2 text-white/70">
                   <AppIcon name="solar:arrow-down-bold" :size="16" class="text-primary-300" />
                   <span class="text-xs">Ingresos</span>
                 </div>
-
                 <p class="mt-1 font-semibold">
-                  {{
-                    formatCurrency(props.monthlySummary.income, {
-                      currency: props.monthlySummary.currency,
-                    })
-                  }}
+                  {{ formatCurrency(props.monthlySummary.income, { currency: props.monthlySummary.currency }) }}
                 </p>
               </div>
 
@@ -240,13 +256,8 @@ onMounted(() => {
                   <AppIcon name="solar:arrow-up-bold" :size="16" class="text-tertiary-300" />
                   <span class="text-xs">Gastos</span>
                 </div>
-
                 <p class="mt-1 font-semibold">
-                  {{
-                    formatCurrency(props.monthlySummary.expense, {
-                      currency: props.monthlySummary.currency,
-                    })
-                  }}
+                  {{ formatCurrency(props.monthlySummary.expense, { currency: props.monthlySummary.currency }) }}
                 </p>
               </div>
             </div>
