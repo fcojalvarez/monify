@@ -223,7 +223,7 @@ onMounted(() => {
 
 
 
-              <div class="flex gap-4 pb-1 text-right" v-if="props.cashEnabled">
+              <div class="flex gap-4 pb-1 text-right mr-2" v-if="props.cashEnabled">
                 <div>
                   <p class="text-[9px] uppercase text-white/60">Banco</p>
                   <p class="text-sm font-semibold">

@@ -131,17 +131,15 @@ export const useSavingsStore = defineStore('savings', () => {
           : `Retirada de ${accountName}`
 
       await transactionsStore.create({
-        kind: mainTxKind,
-        amount,
-        gross: null,
-        category_id: category.id,
-        family_member_id: familyMemberId,
-        occurred_on: todayISO(),
-        note: note.trim()
-          ? isGeneral
-            ? note.trim()
-            : `${note.trim()} (${isDeposit ? 'Para' : 'Desde'} ${accountName})`
-          : defaultNote,
+        transaction: {
+          amount: payload.amount,
+          kind: 'expense',
+          category_id: category.id,
+          note: payload.note || 'Traspaso a ahorros',
+          occurred_on: new Date().toISOString().split('T')[0],
+          family_member_id: payload.familyMemberId ?? '',
+        },
+        gross: 0,
       })
     }
 

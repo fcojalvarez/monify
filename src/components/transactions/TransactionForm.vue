@@ -88,7 +88,14 @@ async function onSubmit() {
       note: form.note.trim() || null,
     }
     if (props.transaction) await transactions.update(props.transaction.id, payload)
-    else await transactions.create(payload)
+    else {
+      const { gross, ...transactionData } = payload
+
+      await transactions.create({
+        transaction: transactionData,
+        gross: gross ?? 0
+      })
+    }
     emit('saved')
   } catch (error) {
     serverError.value = error instanceof Error ? error.message : 'No se pudo guardar.'

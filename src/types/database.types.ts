@@ -58,9 +58,11 @@ export type Database = {
           is_self: boolean
           name: string
           owner_id: string
+          cash_balance: number
         }
         Insert: {
           avatar_icon?: string
+          cash_balance?: number
           color?: string
           created_at?: string
           id?: string
@@ -70,6 +72,7 @@ export type Database = {
         }
         Update: {
           avatar_icon?: string
+          cash_balance?: number
           color?: string
           created_at?: string
           id?: string
@@ -159,22 +162,32 @@ export type Database = {
         Row: {
           balance: number
           created_at: string
+          family_member_id: string
           id: string
           owner_id: string
         }
         Insert: {
           balance?: number
           created_at?: string
+          family_member_id: string
           id?: string
           owner_id?: string
         }
         Update: {
           balance?: number
           created_at?: string
+          family_member_id?: string
           id?: string
           owner_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: 'cash_family_member_id_fkey'
+            columns: ['family_member_id']
+            isOneToOne: false
+            referencedRelation: 'family_members'
+            referencedColumns: ['id']
+          },
           {
             foreignKeyName: 'cash_owner_id_fkey'
             columns: ['owner_id']
@@ -196,6 +209,7 @@ export type Database = {
           note: string | null
           occurred_on: string
           owner_id: string
+          payment_method: Database['public']['Enums']['payment_method']
         }
         Insert: {
           amount: number
@@ -208,6 +222,7 @@ export type Database = {
           note?: string | null
           occurred_on?: string
           owner_id?: string
+          payment_method?: Database['public']['Enums']['payment_method']
         }
         Update: {
           amount?: number
@@ -220,6 +235,7 @@ export type Database = {
           note?: string | null
           occurred_on?: string
           owner_id?: string
+          payment_method?: Database['public']['Enums']['payment_method']
         }
         Relationships: [
           {
@@ -295,6 +311,7 @@ export type Database = {
           amount: number
           cash_id: string
           created_at: string
+          family_member_id: string
           id: string
           note: string | null
           occurred_on: string
@@ -304,6 +321,7 @@ export type Database = {
           amount: number
           cash_id: string
           created_at?: string
+          family_member_id: string
           id?: string
           note?: string | null
           occurred_on?: string
@@ -313,6 +331,7 @@ export type Database = {
           amount?: number
           cash_id?: string
           created_at?: string
+          family_member_id?: string
           id?: string
           note?: string | null
           occurred_on?: string
@@ -320,17 +339,24 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: 'cash_transactions_owner_id_fkey'
-            columns: ['owner_id']
-            isOneToOne: false
-            referencedRelation: 'profiles'
-            referencedColumns: ['id']
-          },
-          {
             foreignKeyName: 'cash_transactions_cash_id_fkey'
             columns: ['cash_id']
             isOneToOne: false
             referencedRelation: 'cash'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'cash_transactions_family_member_id_fkey'
+            columns: ['family_member_id']
+            isOneToOne: false
+            referencedRelation: 'family_members'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'cash_transactions_owner_id_fkey'
+            columns: ['owner_id']
+            isOneToOne: false
+            referencedRelation: 'profiles'
             referencedColumns: ['id']
           },
         ]
@@ -344,6 +370,7 @@ export type Database = {
     }
     Enums: {
       category_kind: 'income' | 'expense'
+      payment_method: 'bank' | 'cash'
     }
     CompositeTypes: {
       [_ in never]: never
@@ -466,8 +493,10 @@ export const Constants = {
   public: {
     Enums: {
       category_kind: ['income', 'expense'],
+      payment_method: ['bank', 'cash'],
     },
   },
 } as const
 
 export type CategoryKind = Enums<'category_kind'>
+export type PaymentMethod = Enums<'payment_method'>

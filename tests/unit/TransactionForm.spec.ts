@@ -84,10 +84,13 @@ describe('TransactionForm', () => {
 
     expect(store.create).toHaveBeenCalledWith(
       expect.objectContaining({
-        kind: 'expense',
-        amount: 42.5,
-        category_id: 'cat-1',
-        family_member_id: 'mem-1',
+        transaction: expect.objectContaining({
+          kind: 'expense',
+          amount: 42.5,
+          category_id: 'cat-1',
+          family_member_id: 'mem-1',
+        }),
+        gross: 0,
       }),
     )
 

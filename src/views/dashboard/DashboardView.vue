@@ -9,6 +9,8 @@ import { useTransactionsStore } from '@/stores/transactions'
 import { useSavingsStore } from '@/stores/savings'
 import { useCategoriesStore } from '@/stores/categories'
 import { useFamilyStore } from '@/stores/family'
+import { useCashStore } from '@/stores/cash' // 👈 Importado correctamente
+import { useUiStore } from '@/stores/ui'
 import { monthRange } from '@/utils/format'
 
 import AppHeader from '@/components/layout/AppHeader.vue'
@@ -21,7 +23,6 @@ import FamilyManager from '@/components/family/FamilyManager.vue'
 import BaseCard from '@/components/ui/BaseCard.vue'
 import BaseSheet from '@/components/ui/BaseSheet.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
-import { useUiStore } from '@/stores/ui'
 
 const auth = useAuthStore()
 const profile = useProfileStore()
@@ -29,15 +30,15 @@ const categories = useCategoriesStore()
 const family = useFamilyStore()
 const transactions = useTransactionsStore()
 const savingsStore = useSavingsStore()
+const cashStore = useCashStore() // 👈 Instanciado
 const ui = useUiStore()
 
 const { summary, annualSummary, usageByCategory, items, loading } = storeToRefs(transactions)
 const { items: savings } = storeToRefs(savingsStore)
 const { cashEnabled } = storeToRefs(profile)
-const cash = 0;
+const { balance: cash } = storeToRefs(cashStore) // 👈 Extraído reactivamente (balance mapea a cash)
 
 const savingsLoaded = ref(false)
-
 const activeMember = ref<string | null>(null)
 
 const limitedUsage = computed(() =>
@@ -67,6 +68,9 @@ function openEditTransaction(transaction: TransactionWithRelations) {
 async function onTransactionSaved() {
   showTransaction.value = false
   await transactions.fetch()
+  if (profile.cashEnabled) {
+    await cashStore.fetch() // 👈 Cambiado a fetch() para refrescar el saldo tras un cambio
+  }
 }
 
 async function selectMember(memberId: string | null) {
@@ -94,11 +98,17 @@ function dismissSavingsPrompt() {
 }
 
 onMounted(async () => {
-  await Promise.all([
+  const promises: Promise<any>[] = [
     categories.fetchAll(),
     family.fetchAll(),
     transactions.fetch(monthRange()),
-  ])
+  ]
+
+  if (profile.cashEnabled) {
+    promises.push(cashStore.fetch())
+  }
+
+  await Promise.all(promises)
 
   if (profile.savingsEnabled) {
     await savingsStore.fetchAll()
@@ -163,7 +173,6 @@ onMounted(async () => {
         </div>
       </div>
 
-      <!-- Banner discreto de invitación a ahorros -->
       <div v-if="showSavingsPrompt"
         class="relative flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-card border border-violet-100 bg-violet-50/50 text-violet-950 dark:border-violet-900/30 dark:bg-violet-950/20 dark:text-violet-200">
         <div class="flex gap-3">
@@ -201,7 +210,6 @@ onMounted(async () => {
       <BalanceSummary :monthly-summary="summary" :annual-summary="annualSummary" :savings="savings" :cash="cash"
         :savings-loaded="savingsLoaded" :cash-enabled="cashEnabled" />
 
-      <!-- Filtro por miembro de la familia -->
       <div v-if="family.items.length > 1" class="flex gap-2 overflow-x-auto pb-1">
         <button class="shrink-0 rounded-pill px-4 py-2 text-sm font-medium transition-colors"
           :class="activeMember === null ? 'bg-primary-500 text-white' : 'bg-surface-muted text-content-muted'"
@@ -217,7 +225,6 @@ onMounted(async () => {
         </button>
       </div>
 
-      <!-- Límites por categoría -->
       <BaseCard v-if="limitedUsage.length" as="section">
         <h2 class="mb-4 text-sm font-semibold text-content-muted">
           Límites por categoría
@@ -228,7 +235,6 @@ onMounted(async () => {
         </div>
       </BaseCard>
 
-      <!-- Movimientos recientes -->
       <BaseCard as="section">
         <h2 class="mb-1 text-sm font-semibold text-content-muted">
           Movimientos recientes
@@ -253,7 +259,6 @@ onMounted(async () => {
       </BaseCard>
     </main>
 
-    <!-- Botón flotante: nuevo movimiento -->
     <button
       class="fixed bottom-[calc(1.5rem+env(safe-area-inset-bottom))] right-4 md:right-[calc(50vw-20rem)] flex h-14 items-center gap-2 rounded-pill bg-primary-500 px-6 font-semibold text-white shadow-primary-glow transition-transform active:scale-95"
       aria-label="Añadir movimiento" @click="openNewTransaction">
@@ -261,7 +266,6 @@ onMounted(async () => {
       Añadir
     </button>
 
-    <!-- Sheets -->
     <BaseSheet v-model="showTransaction" :title="editingTransaction ? 'Editar movimiento' : 'Nuevo movimiento'"
       :has-changes="transactionFormRef?.hasChanges">
       <TransactionForm ref="transactionFormRef" :transaction="editingTransaction" @saved="onTransactionSaved"
