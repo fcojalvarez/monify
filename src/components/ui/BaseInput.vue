@@ -3,7 +3,7 @@ import { computed, ref, useId } from 'vue'
 import AppIcon from './AppIcon.vue'
 
 const props = defineProps<{
-  modelValue: string
+  modelValue: string | number | null
   label?: string
   type?: string
   placeholder?: string
@@ -61,8 +61,8 @@ function togglePassword() {
         class="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1 text-content-subtle transition-colors hover:text-content"
         :aria-label="showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'" @click="togglePassword">
         <AppIcon :name="showPassword
-            ? 'solar:eye-closed-bold'
-            : 'solar:eye-bold'
+          ? 'solar:eye-closed-bold'
+          : 'solar:eye-bold'
           " :size="18" />
       </button>
     </div>

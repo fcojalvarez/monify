@@ -47,6 +47,7 @@ export interface Savings {
   target: number | null
   color: string
   created_at: string
+  type: 'bank' | 'cash'
 }
 
 /** Movimiento de la cuenta de ahorros. */

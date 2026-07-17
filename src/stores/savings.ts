@@ -83,9 +83,7 @@ export const useSavingsStore = defineStore('savings', () => {
 
   async function create(payload: Omit<Savings, 'id' | 'owner_id' | 'created_at' | 'balance'>) {
     const created = await savingsService.create(payload)
-
     items.value.push(created)
-
     return created
   }
 
@@ -94,11 +92,10 @@ export const useSavingsStore = defineStore('savings', () => {
     payload: Partial<Omit<Savings, 'id' | 'owner_id' | 'created_at'>>,
   ) {
     const updated = await savingsService.update(id, payload)
-
     const index = items.value.findIndex((s) => s.id === id)
 
     if (index !== -1) {
-      items.value[index] = updated
+      items.value[index] = { ...items.value[index], ...updated }
     }
 
     return updated
@@ -106,7 +103,6 @@ export const useSavingsStore = defineStore('savings', () => {
 
   async function remove(id: string) {
     await savingsService.remove(id)
-
     items.value = items.value.filter((s) => s.id !== id)
     transactions.value = transactions.value.filter((t) => t.savings_id !== id)
   }
@@ -135,6 +131,7 @@ export const useSavingsStore = defineStore('savings', () => {
 
     const isGeneral = savingsAccount.name === 'general'
 
+    // Aquí usamos el tipo correctamente
     const accountName = isGeneral
       ? savingsAccount.type === 'cash'
         ? 'Ahorro en efectivo'
@@ -181,13 +178,11 @@ export const useSavingsStore = defineStore('savings', () => {
 
     transactions.value.unshift(savingsTx)
 
-    const promises: Promise<any>[] = [fetchAll()]
+    await fetchAll()
 
     if (shouldCreateMainTransaction) {
-      promises.push(transactionsStore.fetch())
+      await transactionsStore.fetch()
     }
-
-    await Promise.all(promises)
   }
 
   function $reset() {
@@ -200,21 +195,16 @@ export const useSavingsStore = defineStore('savings', () => {
     items,
     transactions,
     loading,
-
     bankSavings,
     cashSavings,
-
     bankBalance,
     cashBalance,
-
     fetchAll,
     create,
     update,
     remove,
     transfer,
-
     getByType,
-
     $reset,
   }
 })

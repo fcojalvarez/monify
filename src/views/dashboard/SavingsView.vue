@@ -375,19 +375,19 @@ const transferAccount = ref<Savings | null>(null)
 
 const goalForm = ref({
   name: '',
-  target: '' as string | number,
+  target: null as string | number | null,
   color: '#8b5cf6',
-  type: 'bank' as 'bank' | 'cash',
+  type: 'bank' as 'bank' | 'cash'
 })
 
 const transferForm = ref({
-  amount: '',
+  amount: '' as string | number | null,
   isDeposit: true,
-  isGlobal: true,
+  isGlobal: false,
   type: 'bank' as 'bank' | 'cash',
   note: '',
   familyMemberId: '',
-  createMainTx: false,
+  createMainTx: true
 })
 
 const transferError = ref<string | null>(null)
@@ -444,7 +444,9 @@ function openEditGoal(goal: Savings) {
 async function saveGoal() {
   const payload = {
     name: goalForm.value.name.trim(),
-    target: goalForm.value.target,
+    target: goalForm.value.target !== null && goalForm.value.target !== ''
+      ? Number(goalForm.value.target)
+      : null,
     color: goalForm.value.color,
     type: goalForm.value.type,
   }
@@ -524,12 +526,12 @@ async function executeTransfer() {
     targetSavingsId = transferAccount.value.id
   }
 
-  if (!transferForm.value.amount || transferForm.value.amount <= 0) {
+  const amount = Number(transferForm.value.amount)
+
+  if (!transferForm.value.amount || isNaN(amount) || amount <= 0) {
     transferError.value = 'Introduce un importe válido.'
     return
   }
-
-  const amount = Number(transferForm.value.amount)
 
   if (!transferForm.value.isDeposit) {
     const currentAccount = savingsStore.items.find((s) => s.id === targetSavingsId)
