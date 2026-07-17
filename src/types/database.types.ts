@@ -129,6 +129,7 @@ export type Database = {
           name: string
           owner_id: string
           target: number | null
+          type: Database['public']['Enums']['saving_type']
         }
         Insert: {
           balance?: number
@@ -138,6 +139,7 @@ export type Database = {
           name: string
           owner_id?: string
           target?: number | null
+          type?: Database['public']['Enums']['saving_type']
         }
         Update: {
           balance?: number
@@ -147,6 +149,7 @@ export type Database = {
           name?: string
           owner_id?: string
           target?: number | null
+          type?: Database['public']['Enums']['saving_type']
         }
         Relationships: [
           {
@@ -371,6 +374,7 @@ export type Database = {
     Enums: {
       category_kind: 'income' | 'expense'
       payment_method: 'bank' | 'cash'
+      saving_type: 'bank' | 'cash'
     }
     CompositeTypes: {
       [_ in never]: never
@@ -494,9 +498,11 @@ export const Constants = {
     Enums: {
       category_kind: ['income', 'expense'],
       payment_method: ['bank', 'cash'],
+      saving_type: ['bank', 'cash'],
     },
   },
 } as const
 
 export type CategoryKind = Enums<'category_kind'>
 export type PaymentMethod = Enums<'payment_method'>
+export type SavingType = Enums<'saving_type'>

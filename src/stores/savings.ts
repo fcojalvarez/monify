@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import type { Savings, SavingsTransaction } from '@/types'
 import { savingsService } from '@/services/savings.service'
 import { useTransactionsStore } from './transactions'
@@ -9,7 +9,7 @@ import { todayISO } from '@/utils/format'
 export interface TransferPayload {
   savingsId: string
   amount: number
-  isDeposit: boolean // true = de principal a ahorros (ingreso en ahorro), false = de ahorro a principal (retirada de ahorro)
+  isDeposit: boolean
   note?: string
   familyMemberId: string
   shouldCreateMainTransaction?: boolean
@@ -19,6 +19,21 @@ export const useSavingsStore = defineStore('savings', () => {
   const items = ref<Savings[]>([])
   const transactions = ref<SavingsTransaction[]>([])
   const loading = ref(false)
+
+  /**
+   * Computados
+   */
+  const bankSavings = computed(() => items.value.filter((s) => s.type === 'bank'))
+
+  const cashSavings = computed(() => items.value.filter((s) => s.type === 'cash'))
+
+  const bankBalance = computed(() => bankSavings.value.reduce((sum, s) => sum + s.balance, 0))
+
+  const cashBalance = computed(() => cashSavings.value.reduce((sum, s) => sum + s.balance, 0))
+
+  function getByType(type: 'bank' | 'cash') {
+    return items.value.filter((s) => s.type === type)
+  }
 
   async function fetchAll() {
     loading.value = true
@@ -32,17 +47,32 @@ export const useSavingsStore = defineStore('savings', () => {
       items.value = savingsList
       transactions.value = transactionsList
 
-      // Garantizar que la cuenta de ahorro general siempre exista
-      let general = savingsList.find((s) => s.name === 'general')
-
-      if (!general) {
-        general = await savingsService.create({
+      const defaults = [
+        {
           name: 'general',
-          target: null,
+          type: 'bank' as const,
           color: '#8b5cf6',
-        })
+        },
+        {
+          name: 'general',
+          type: 'cash' as const,
+          color: '#f59e0b',
+        },
+      ]
 
-        items.value.push(general)
+      for (const account of defaults) {
+        const exists = items.value.find((s) => s.name === account.name && s.type === account.type)
+
+        if (!exists) {
+          const created = await savingsService.create({
+            name: account.name,
+            target: null,
+            color: account.color,
+            type: account.type,
+          })
+
+          items.value.push(created)
+        }
       }
     } catch (error) {
       console.error('Error fetching savings data:', error)
@@ -53,6 +83,7 @@ export const useSavingsStore = defineStore('savings', () => {
 
   async function create(payload: Omit<Savings, 'id' | 'owner_id' | 'created_at' | 'balance'>) {
     const created = await savingsService.create(payload)
+
     items.value.push(created)
 
     return created
@@ -97,15 +128,19 @@ export const useSavingsStore = defineStore('savings', () => {
     const savingsAmount = isDeposit ? amount : -amount
 
     const savingsAccount = items.value.find((s) => s.id === savingsId)
-    const isGeneral = savingsAccount?.name === 'general'
 
-    const accountName = savingsAccount
-      ? isGeneral
-        ? 'Ahorro general'
-        : savingsAccount.name
-      : 'Ahorro'
+    if (!savingsAccount) {
+      throw new Error('No existe la cuenta de ahorro.')
+    }
 
-    // 1. Crear movimiento en la cuenta principal si se solicita
+    const isGeneral = savingsAccount.name === 'general'
+
+    const accountName = isGeneral
+      ? savingsAccount.type === 'cash'
+        ? 'Ahorro en efectivo'
+        : 'Ahorro bancario'
+      : savingsAccount.name
+
     if (shouldCreateMainTransaction) {
       await categoriesStore.fetchAll()
 
@@ -122,28 +157,21 @@ export const useSavingsStore = defineStore('savings', () => {
         })
       }
 
-      const defaultNote = isDeposit
-        ? isGeneral
-          ? 'Aportación a Ahorros'
-          : `Aportación a ${accountName}`
-        : isGeneral
-          ? 'Retirada de Ahorros'
-          : `Retirada de ${accountName}`
+      const defaultNote = isDeposit ? `Aportación a ${accountName}` : `Retirada de ${accountName}`
 
       await transactionsStore.create({
         transaction: {
-          amount: payload.amount,
-          kind: 'expense',
+          amount,
+          kind: mainTxKind,
           category_id: category.id,
-          note: payload.note || 'Traspaso a ahorros',
-          occurred_on: new Date().toISOString().split('T')[0],
-          family_member_id: payload.familyMemberId ?? '',
+          note: note || defaultNote,
+          occurred_on: todayISO(),
+          family_member_id: familyMemberId,
         },
         gross: 0,
       })
     }
 
-    // 2. Crear el movimiento en la cuenta de ahorros
     const savingsTx = await savingsService.createTransaction({
       savings_id: savingsId,
       amount: savingsAmount,
@@ -153,7 +181,6 @@ export const useSavingsStore = defineStore('savings', () => {
 
     transactions.value.unshift(savingsTx)
 
-    // 3. Recargar datos para tener los balances actualizados
     const promises: Promise<any>[] = [fetchAll()]
 
     if (shouldCreateMainTransaction) {
@@ -173,11 +200,21 @@ export const useSavingsStore = defineStore('savings', () => {
     items,
     transactions,
     loading,
+
+    bankSavings,
+    cashSavings,
+
+    bankBalance,
+    cashBalance,
+
     fetchAll,
     create,
     update,
     remove,
     transfer,
+
+    getByType,
+
     $reset,
   }
 })

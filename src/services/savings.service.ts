@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase'
-import type { Savings, SavingsTransaction } from '@/types'
+import type { Savings, SavingsTransaction, TablesInsert, TablesUpdate } from '@/types'
 
 export const savingsService = {
   async list(): Promise<Savings[]> {
@@ -9,21 +9,19 @@ export const savingsService = {
       .order('created_at', { ascending: true })
 
     if (error) throw error
+
     return data as Savings[]
   },
 
-  async create(payload: Omit<Savings, 'id' | 'owner_id' | 'created_at' | 'balance'>): Promise<Savings> {
-    const { data, error } = await supabase
-      .from('savings')
-      .insert(payload)
-      .select('*')
-      .single()
+  async create(payload: Omit<TablesInsert<'savings'>, 'owner_id'>): Promise<Savings> {
+    const { data, error } = await supabase.from('savings').insert(payload).select('*').single()
 
     if (error) throw error
+
     return data as Savings
   },
 
-  async update(id: string, payload: Partial<Omit<Savings, 'id' | 'owner_id' | 'created_at'>>): Promise<Savings> {
+  async update(id: string, payload: TablesUpdate<'savings'>): Promise<Savings> {
     const { data, error } = await supabase
       .from('savings')
       .update(payload)
@@ -32,14 +30,12 @@ export const savingsService = {
       .single()
 
     if (error) throw error
+
     return data as Savings
   },
 
   async remove(id: string): Promise<void> {
-    const { error } = await supabase
-      .from('savings')
-      .delete()
-      .eq('id', id)
+    const { error } = await supabase.from('savings').delete().eq('id', id)
 
     if (error) throw error
   },
@@ -56,11 +52,15 @@ export const savingsService = {
     }
 
     const { data, error } = await query
+
     if (error) throw error
+
     return data as SavingsTransaction[]
   },
 
-  async createTransaction(payload: Omit<SavingsTransaction, 'id' | 'owner_id' | 'created_at'>): Promise<SavingsTransaction> {
+  async createTransaction(
+    payload: Omit<TablesInsert<'savings_transactions'>, 'owner_id'>,
+  ): Promise<SavingsTransaction> {
     const { data, error } = await supabase
       .from('savings_transactions')
       .insert(payload)
@@ -68,6 +68,7 @@ export const savingsService = {
       .single()
 
     if (error) throw error
+
     return data as SavingsTransaction
   },
 }

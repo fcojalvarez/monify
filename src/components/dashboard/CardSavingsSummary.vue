@@ -12,6 +12,18 @@ const totalSavings = computed(() =>
     props.savings.reduce((sum, saving) => sum + saving.balance, 0)
 )
 
+const bankSavings = computed(() =>
+    props.savings
+        .filter(s => s.type === 'bank')
+        .reduce((sum, saving) => sum + saving.balance, 0)
+)
+
+const cashSavings = computed(() =>
+    props.savings
+        .filter(s => s.type === 'cash')
+        .reduce((sum, saving) => sum + saving.balance, 0)
+)
+
 const mainGoal = computed(() => {
     return props.savings
         .filter(s => s.target != null)
@@ -25,6 +37,8 @@ const mainGoalProgress = computed(() => {
         (mainGoal.value.balance / mainGoal.value.target) * 100
     )
 })
+
+const visualProgress = computed(() => Math.min(mainGoalProgress.value, 100))
 </script>
 
 <template>
@@ -33,9 +47,26 @@ const mainGoalProgress = computed(() => {
             Ahorros
         </p>
 
-        <p class="mt-1 text-3xl font-bold tracking-tight">
-            {{ formatCurrency(totalSavings, { currency }) }}
-        </p>
+        <div class="mt-1 flex items-end justify-between">
+            <p class="text-3xl font-bold tracking-tight">
+                {{ formatCurrency(totalSavings, { currency }) }}
+            </p>
+
+            <div class="flex gap-4 pb-1 text-right mr-2">
+                <div>
+                    <p class="text-[9px] uppercase text-white/60">Banco</p>
+                    <p class="text-sm font-semibold">
+                        {{ formatCurrency(bankSavings, { currency }) }}
+                    </p>
+                </div>
+                <div>
+                    <p class="text-[9px] uppercase text-white/60">Efectivo</p>
+                    <p class="text-sm font-semibold">
+                        {{ formatCurrency(cashSavings, { currency }) }}
+                    </p>
+                </div>
+            </div>
+        </div>
 
         <template v-if="mainGoal">
             <div class="mt-5">
@@ -46,7 +77,7 @@ const mainGoalProgress = computed(() => {
 
                 <div class="h-2 overflow-hidden rounded-full bg-white/10">
                     <div class="h-full rounded-full bg-primary-400 transition-all"
-                        :style="{ width: `${mainGoalProgress}%` }" />
+                        :style="{ width: `${visualProgress}%` }" />
                 </div>
 
                 <div class="mt-2 flex items-center justify-between text-sm">
