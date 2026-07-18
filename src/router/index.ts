@@ -70,6 +70,12 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
+      path: '/charts',
+      name: ROUTE_NAMES.charts,
+      component: () => import('@/views/dashboard/ChartsView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/:pathMatch(.*)*',
       redirect: { name: ROUTE_NAMES.dashboard },
     },

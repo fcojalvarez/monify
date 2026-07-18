@@ -141,6 +141,12 @@ onMounted(async () => {
         </div>
 
         <div class="flex gap-1">
+          <RouterLink :to="{ name: ROUTE_NAMES.charts }"
+            class="flex h-10 w-10 items-center justify-center rounded-full bg-surface-muted text-content-muted hover:bg-line hover:text-content transition-colors mr-1"
+            title="Ver gráficas" aria-label="Ver gráficas">
+            <AppIcon name="solar:chart-square-bold" :size="20" />
+          </RouterLink>
+
           <RouterLink v-if="profile.cashEnabled" :to="{ name: ROUTE_NAMES.cash }"
             class="flex h-10 w-10 items-center justify-center rounded-full bg-surface-muted text-content-muted hover:bg-line hover:text-content transition-colors mr-1"
             title="Ver efectivo" aria-label="Ver efectivo">

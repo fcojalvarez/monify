@@ -10,6 +10,7 @@ export const ROUTE_NAMES = {
   profile: 'profile',
   savings: 'savings',
   cash: 'cash',
+  charts: 'charts',
 } as const
 
 export const CATEGORY_KIND: Record<CategoryKind, CategoryKind> = {
