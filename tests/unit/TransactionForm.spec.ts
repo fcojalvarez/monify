@@ -173,4 +173,49 @@ describe('TransactionForm', () => {
 
     expect((dateInput.element as HTMLInputElement).value).toBe('2026-05-01')
   })
+
+  it('muestra error si el gasto en efectivo supera el saldo de la cartera', async () => {
+    const memberWithCash = { ...member, id: 'mem-cash-1', name: 'Alguien', cash_balance: 50 }
+    const wrapper = mount(TransactionForm, {
+      global: {
+        stubs: {
+          BaseSelect: {
+            props: ['modelValue', 'options'],
+            emits: ['update:modelValue'],
+            template: `
+              <select :value="modelValue" @change="$emit(\'update:modelValue\', $event.target.value)">
+                <option v-for="option in options" :key="option.value" :value="option.value">
+                  {{ option.label }}
+                </option>
+              </select>
+            `,
+          },
+        },
+        plugins: [
+          createTestingPinia({
+            createSpy: vi.fn,
+            initialState: {
+              categories: { items: [category], loaded: true },
+              family: { items: [memberWithCash], loaded: true },
+            },
+          }),
+        ],
+      },
+    })
+    
+    const store = useTransactionsStore()
+
+    // Buscamos el checkbox ¿Efectivo? y lo marcamos
+    const cashCheckbox = wrapper.find('input[type="checkbox"]')
+    await cashCheckbox.setValue(true)
+
+    // Introducimos un importe de 60 (mayor que los 50 de la cartera)
+    await wrapper.find('input[type="number"]').setValue('60')
+    await wrapper.find('select').setValue('cat-1') // Categoría de gasto
+    
+    await wrapper.find('form').trigger('submit.prevent')
+
+    expect(wrapper.text()).toContain('No hay esa cantidad en la cartera de Alguien')
+    expect(store.create).not.toHaveBeenCalled()
+  })
 })

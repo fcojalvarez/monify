@@ -42,6 +42,7 @@ const form = reactive({
   familyMemberId: props.transaction?.family_member_id ?? family.self?.id ?? '',
   occurredOn: props.transaction?.occurred_on ?? defaultDate(),
   note: props.transaction?.note ?? '',
+  isCash: props.transaction?.payment_method === 'cash',
 })
 
 const errors = reactive<Record<string, string | undefined>>({})
@@ -63,16 +64,50 @@ watch(
     if (!categoryOptions.value.some((o) => o.value === form.categoryId)) form.categoryId = ''
   },
 )
-
 function validate(): boolean {
   const amount = parseAmount(form.amount)
-  errors.gross = form.kind === 'income' && isPositiveAmount(parseAmount(form.gross)) ? undefined : 'Introduce un importe mayor que 0'
+  
+  if (form.kind === 'income') {
+    errors.gross = isPositiveAmount(parseAmount(form.gross)) ? undefined : 'Introduce un importe mayor que 0'
+  } else {
+    errors.gross = undefined
+  }
+  
   errors.amount = isPositiveAmount(amount) ? undefined : 'Introduce un importe mayor que 0'
   errors.categoryId = form.categoryId ? undefined : 'Elige una categoría'
-  errors.familyMemberId = form.familyMemberId ? undefined : 'Elige un miembro'
-  return !errors.amount && !errors.categoryId && !errors.familyMemberId
-}
+  errors.familyMemberId = (!form.isCash || form.familyMemberId) ? undefined : 'Elige un miembro'
+  
+  if (errors.amount || errors.categoryId || errors.familyMemberId || errors.gross) {
+    return false
+  }
 
+  if (form.isCash) {
+    const selectedMember = family.items.find((m) => m.id === form.familyMemberId)
+    let currentBalance = selectedMember?.cash_balance ?? 0
+
+    if (
+      props.transaction &&
+      props.transaction.payment_method === 'cash' &&
+      props.transaction.family_member_id === form.familyMemberId
+    ) {
+      const oldAmount = props.transaction.amount
+      if (props.transaction.kind === 'expense') {
+        currentBalance += oldAmount
+      } else {
+        currentBalance -= oldAmount
+      }
+    }
+
+    if (form.kind === 'expense' && currentBalance - amount < 0) {
+      const errMsg = `No hay esa cantidad en la cartera de ${selectedMember?.name ?? 'esta persona'}`
+      errors.familyMemberId = errMsg
+      serverError.value = errMsg
+      return false
+    }
+  }
+
+  return true
+}
 async function onSubmit() {
   serverError.value = null
   if (!validate()) return
@@ -83,9 +118,10 @@ async function onSubmit() {
       gross: form.kind === 'income' ? parseAmount(form.gross || form.amount) : null,
       amount: parseAmount(form.amount),
       category_id: form.categoryId,
-      family_member_id: form.familyMemberId,
+      family_member_id: form.familyMemberId || family.self?.id || '',
       occurred_on: form.occurredOn,
       note: form.note.trim() || null,
+      payment_method: (form.isCash ? 'cash' : 'bank') as 'cash' | 'bank',
     }
     if (props.transaction) await transactions.update(props.transaction.id, payload)
     else {
@@ -129,6 +165,7 @@ const initialForm = {
   familyMemberId: form.familyMemberId,
   occurredOn: form.occurredOn,
   note: form.note,
+  isCash: form.isCash,
 }
 
 const hasChanges = computed(() => {
@@ -139,7 +176,8 @@ const hasChanges = computed(() => {
     form.categoryId !== initialForm.categoryId ||
     form.familyMemberId !== initialForm.familyMemberId ||
     form.occurredOn !== initialForm.occurredOn ||
-    form.note !== initialForm.note
+    form.note !== initialForm.note ||
+    form.isCash !== initialForm.isCash
   )
 })
 
@@ -161,6 +199,19 @@ defineExpose({
     <BaseInput v-model="form.amount" label="Importe" type="number" icon="solar:tag-price-bold" placeholder="0,00"
       :error="errors.amount" />
 
+    <!-- Selector preguntando ¿Efectivo? -->
+    <div class="flex items-center justify-between py-1">
+      <span class="text-sm font-medium text-content">¿Efectivo?</span>
+      <label class="relative cursor-pointer shrink-0 ml-4">
+        <input v-model="form.isCash" type="checkbox" class="sr-only" />
+        <span class="relative block h-6 w-11 rounded-pill transition-colors duration-200"
+          :class="form.isCash ? 'bg-primary-500' : 'bg-line'">
+          <span class="absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white transition-transform duration-200"
+            :class="form.isCash ? 'translate-x-5' : 'translate-x-0'" />
+        </span>
+      </label>
+    </div>
+
     <BaseSelect v-if="categoryOptions.length" v-model="form.categoryId" label="Categoría"
       placeholder="Selecciona una categoría" :options="categoryOptions" :error="errors.categoryId"
       @click-add="emit('click-add')" />
@@ -168,7 +219,7 @@ defineExpose({
       No tienes categorías de {{ form.kind === 'income' ? 'ingreso' : 'gasto' }} todavía. Crea una primero.
     </p>
 
-    <BaseSelect v-model="form.familyMemberId" label="Miembro" placeholder="¿De quién es?" :options="memberOptions"
+    <BaseSelect v-if="form.isCash" v-model="form.familyMemberId" label="Pertenece a" placeholder="Selecciona un miembro" :options="memberOptions"
       :error="errors.familyMemberId" />
 
     <BaseInput v-model="form.occurredOn" label="Fecha" type="date" icon="solar:calendar-bold" />

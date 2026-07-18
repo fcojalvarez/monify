@@ -194,6 +194,7 @@ function openEditTransaction(transaction: TransactionWithRelations) {
 async function onTransactionSaved() {
   showTransaction.value = false
   await fetchHistory()
+  await family.fetchAll(true)
 }
 
 function clearFilters() {

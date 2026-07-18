@@ -70,6 +70,7 @@ async function onTransactionSaved() {
   await transactions.fetch()
   if (profile.cashEnabled) {
     await cashStore.fetch()
+    await family.fetchAll(true)
   }
 }
 
