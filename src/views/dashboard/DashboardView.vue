@@ -9,7 +9,7 @@ import { useTransactionsStore } from '@/stores/transactions'
 import { useSavingsStore } from '@/stores/savings'
 import { useCategoriesStore } from '@/stores/categories'
 import { useFamilyStore } from '@/stores/family'
-import { useCashStore } from '@/stores/cash' // 👈 Importado correctamente
+import { useCashStore } from '@/stores/cash'
 import { useUiStore } from '@/stores/ui'
 import { monthRange } from '@/utils/format'
 
@@ -30,13 +30,13 @@ const categories = useCategoriesStore()
 const family = useFamilyStore()
 const transactions = useTransactionsStore()
 const savingsStore = useSavingsStore()
-const cashStore = useCashStore() // 👈 Instanciado
+const cashStore = useCashStore()
 const ui = useUiStore()
 
 const { summary, annualSummary, usageByCategory, items, loading } = storeToRefs(transactions)
 const { items: savings } = storeToRefs(savingsStore)
 const { cashEnabled } = storeToRefs(profile)
-const { balance: cash } = storeToRefs(cashStore) // 👈 Extraído reactivamente (balance mapea a cash)
+const { balance: cash } = storeToRefs(cashStore)
 
 const savingsLoaded = ref(false)
 const activeMember = ref<string | null>(null)
@@ -69,7 +69,7 @@ async function onTransactionSaved() {
   showTransaction.value = false
   await transactions.fetch()
   if (profile.cashEnabled) {
-    await cashStore.fetch() // 👈 Cambiado a fetch() para refrescar el saldo tras un cambio
+    await cashStore.fetch()
   }
 }
 
