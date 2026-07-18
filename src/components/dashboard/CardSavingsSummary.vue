@@ -26,7 +26,7 @@ const cashSavings = computed(() =>
 
 const mainGoal = computed(() => {
     return props.savings
-        .filter(s => s.target != null)
+        .filter(s => s.target != null && s.status !== 'completed')
         .sort((a, b) => (b.balance / b.target!) - (a.balance / a.target!))[0]
 })
 

@@ -90,9 +90,11 @@ export const useSavingsStore = defineStore('savings', () => {
     }
   }
 
-  async function create(payload: Omit<Savings, 'id' | 'owner_id' | 'created_at' | 'balance'>) {
+  async function create(
+    payload: Omit<Savings, 'id' | 'owner_id' | 'created_at' | 'balance' | 'status'>,
+  ) {
     // Si el payload no trae status, aseguramos que se cree como 'active'
-    const finalPayload = { status: 'active', ...payload }
+    const finalPayload = { ...payload, status: 'active' as const }
     const created = await savingsService.create(finalPayload)
     items.value.push(created)
     return created

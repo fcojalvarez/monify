@@ -48,6 +48,7 @@ export interface Savings {
   color: string
   created_at: string
   type: 'bank' | 'cash'
+  status: 'active' | 'completed'
 }
 
 /** Movimiento de la cuenta de ahorros. */
