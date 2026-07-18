@@ -130,6 +130,7 @@ export type Database = {
           owner_id: string
           target: number | null
           type: Database['public']['Enums']['saving_type']
+          status: string
         }
         Insert: {
           balance?: number
@@ -140,6 +141,7 @@ export type Database = {
           owner_id?: string
           target?: number | null
           type?: Database['public']['Enums']['saving_type']
+          status?: string
         }
         Update: {
           balance?: number
@@ -150,6 +152,7 @@ export type Database = {
           owner_id?: string
           target?: number | null
           type?: Database['public']['Enums']['saving_type']
+          status?: string
         }
         Relationships: [
           {

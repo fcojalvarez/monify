@@ -21,18 +21,26 @@ export const useSavingsStore = defineStore('savings', () => {
   const loading = ref(false)
 
   /**
-   * Computados
+   * Computados (Filtrados para mostrar solo metas activas en las tarjetas)
    */
-  const bankSavings = computed(() => items.value.filter((s) => s.type === 'bank'))
+  const bankSavings = computed(() =>
+    items.value.filter((s) => s.type === 'bank' && s.status === 'active'),
+  )
 
-  const cashSavings = computed(() => items.value.filter((s) => s.type === 'cash'))
+  const cashSavings = computed(() =>
+    items.value.filter((s) => s.type === 'cash' && s.status === 'active'),
+  )
 
-  const bankBalance = computed(() => bankSavings.value.reduce((sum, s) => sum + s.balance, 0))
+  const bankBalance = computed(() =>
+    items.value.filter((s) => s.type === 'bank').reduce((sum, s) => sum + s.balance, 0),
+  )
 
-  const cashBalance = computed(() => cashSavings.value.reduce((sum, s) => sum + s.balance, 0))
+  const cashBalance = computed(() =>
+    items.value.filter((s) => s.type === 'cash').reduce((sum, s) => sum + s.balance, 0),
+  )
 
   function getByType(type: 'bank' | 'cash') {
-    return items.value.filter((s) => s.type === type)
+    return items.value.filter((s) => s.type === type && s.status === 'active')
   }
 
   async function fetchAll() {
@@ -69,6 +77,7 @@ export const useSavingsStore = defineStore('savings', () => {
             target: null,
             color: account.color,
             type: account.type,
+            status: 'active', // Estado inicial por defecto
           })
 
           items.value.push(created)
@@ -82,7 +91,9 @@ export const useSavingsStore = defineStore('savings', () => {
   }
 
   async function create(payload: Omit<Savings, 'id' | 'owner_id' | 'created_at' | 'balance'>) {
-    const created = await savingsService.create(payload)
+    // Si el payload no trae status, aseguramos que se cree como 'active'
+    const finalPayload = { status: 'active', ...payload }
+    const created = await savingsService.create(finalPayload)
     items.value.push(created)
     return created
   }
@@ -99,6 +110,10 @@ export const useSavingsStore = defineStore('savings', () => {
     }
 
     return updated
+  }
+
+  async function complete(id: string) {
+    return await update(id, { status: 'completed' } as any)
   }
 
   async function remove(id: string) {
@@ -131,7 +146,6 @@ export const useSavingsStore = defineStore('savings', () => {
 
     const isGeneral = savingsAccount.name === 'general'
 
-    // Aquí usamos el tipo correctamente
     const accountName = isGeneral
       ? savingsAccount.type === 'cash'
         ? 'Ahorro en efectivo'
@@ -202,6 +216,7 @@ export const useSavingsStore = defineStore('savings', () => {
     fetchAll,
     create,
     update,
+    complete,
     remove,
     transfer,
     getByType,

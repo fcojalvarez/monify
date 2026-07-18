@@ -27,7 +27,7 @@
             class="flex h-10 items-center gap-2 rounded-pill bg-primary-500 px-4 text-sm font-semibold text-white hover:bg-primary-600"
             @click="showAddDropdown = !showAddDropdown">
             <AppIcon name="solar:settings-bold" :size="18" />
-            Gestionar
+            gestionar
           </button>
 
           <div v-if="showAddDropdown" class="fixed inset-0 z-10" @click="showAddDropdown = false" />
@@ -96,7 +96,7 @@
         </div>
       </div>
 
-      <!-- Lista de Metas (Todas juntas con indicador de tipo) -->
+      <!-- Lista de Metas -->
       <div v-if="savingsStore.loading" class="py-12 text-center text-content-subtle">
         Cargando...
       </div>
@@ -104,7 +104,7 @@
       <div v-else-if="!displayGoals.length"
         class="rounded-card border border-dashed border-line bg-surface-raised py-8 text-center">
         <p class="font-medium text-content">
-          No existen metas de ahorro.
+          No existen metas de ahorro activas.
         </p>
 
         <p class="mt-2 text-xs text-content-subtle">
@@ -146,7 +146,15 @@
                 </div>
               </div>
 
-              <div class="flex gap-1">
+              <div class="flex items-center gap-1">
+                <!-- Botón de Marcar como completada -->
+                <button v-if="goal.target && goal.balance >= goal.target" type="button" title="Marcar como completada"
+                  class="flex h-8 items-center gap-1 rounded-pill bg-income/10 px-2.5 text-xs font-semibold text-income hover:bg-income/20 transition"
+                  @click="openCompleteGoal(goal)">
+                  <AppIcon name="solar:check-circle-bold" :size="14" />
+                  Completar
+                </button>
+
                 <button type="button"
                   class="flex h-8 w-8 items-center justify-center rounded-full text-content-muted hover:bg-surface-muted"
                   @click="openEditGoal(goal)">
@@ -277,16 +285,46 @@
       </form>
     </BaseDialog>
 
+    <!-- Diálogo: Confirmar Finalización (Completar Meta) -->
+    <BaseDialog v-model="showCompleteDialog" title="¿Completar meta de ahorro?">
+      <div class="space-y-4 pt-2">
+        <p class="text-sm text-content-muted">
+          Si confirmas la finalización de <strong class="text-content">"{{ goalToComplete?.name }}"</strong>, esta meta
+          ya no se volverá a mostrar en la lista activa.
+        </p>
+        <p class="text-sm text-content-muted">
+          Sus movimientos <strong class="text-content">seguirán estando disponibles en el historial</strong>. Si lo que
+          deseas es eliminar de forma permanente todo lo relacionado con ella, debes usar la opción de eliminar.
+        </p>
+        <div class="grid grid-cols-2 gap-3 w-full pt-4">
+          <BaseButton type="button" variant="secondary" @click="showCompleteDialog = false">
+            Cancelar
+          </BaseButton>
+          <BaseButton type="button" variant="primary" @click="confirmCompleteGoal">
+            Confirmar
+          </BaseButton>
+        </div>
+      </div>
+    </BaseDialog>
+
     <!-- Diálogo: Confirmar Eliminación -->
     <BaseDialog v-model="showDeleteDialog" title="¿Eliminar meta de ahorro?">
       <div class="space-y-4 pt-2">
         <p class="text-sm text-content-muted">
-          Estás a punto de eliminar la meta <strong class="text-content">"{{ goalToDelete?.name }}"</strong>. Esta
-          acción no se puede deshacer.
+          Al eliminar la meta <strong class="text-content">"{{ goalToDelete?.name }}"</strong> se borrará de forma
+          permanente **todo lo relacionado con ella, incluyendo su historial de movimientos**.
         </p>
-        <div class="flex justify-end gap-3 pt-2">
-          <BaseButton type="button" variant="secondary" @click="showDeleteDialog = false">Cancelar</BaseButton>
-          <BaseButton type="button" variant="danger" @click="confirmDeleteGoal">Confirmar Eliminación</BaseButton>
+        <p class="text-sm text-content-muted">
+          Si solo quieres que la meta deje de mostrarse sin perder sus registros del historial, cancela esta acción y
+          márcala como **completada**.
+        </p>
+        <div class="grid grid-cols-2 gap-3 w-full pt-4">
+          <BaseButton type="button" variant="secondary" @click="showDeleteDialog = false">
+            Cancelar
+          </BaseButton>
+          <BaseButton type="button" variant="danger" @click="confirmDeleteGoal">
+            Confirmar
+          </BaseButton>
         </div>
       </div>
     </BaseDialog>
@@ -365,11 +403,13 @@ const ui = useUiStore()
  * Estado
  * ---------------------------------------------------------- */
 const showAddGoalDialog = ref(false)
+const showCompleteDialog = ref(false)
 const showDeleteDialog = ref(false)
 const showTransferDialog = ref(false)
 const showAddDropdown = ref(false)
 
 const editingGoal = ref<Savings | null>(null)
+const goalToComplete = ref<Savings | null>(null)
 const goalToDelete = ref<Savings | null>(null)
 const transferAccount = ref<Savings | null>(null)
 
@@ -406,7 +446,7 @@ const cashSavingsBalance = computed(() => savingsStore.cashBalance)
 const totalSavingsBalance = computed(() => bankSavingsBalance.value + cashSavingsBalance.value)
 
 const displayGoals = computed(() => {
-  return savingsStore.items.filter((s) => s.name !== 'general')
+  return savingsStore.items.filter((s) => s.name !== 'general' && s.status === 'active')
 })
 
 const memberOptions = computed(() =>
@@ -460,6 +500,24 @@ async function saveGoal() {
   }
 
   showAddGoalDialog.value = false
+}
+
+/* ----------------------------------------------------------
+ * Completar Meta
+ * ---------------------------------------------------------- */
+function openCompleteGoal(goal: Savings) {
+  goalToComplete.value = goal
+  showCompleteDialog.value = true
+}
+
+async function confirmCompleteGoal() {
+  if (!goalToComplete.value) return
+  try {
+    await savingsStore.complete(goalToComplete.value.id)
+    showCompleteDialog.value = false
+  } catch (error) {
+    console.error('Error al completar la meta de ahorro:', error)
+  }
 }
 
 /* ----------------------------------------------------------
