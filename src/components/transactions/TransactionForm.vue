@@ -66,17 +66,17 @@ watch(
 )
 function validate(): boolean {
   const amount = parseAmount(form.amount)
-  
+
   if (form.kind === 'income') {
     errors.gross = isPositiveAmount(parseAmount(form.gross)) ? undefined : 'Introduce un importe mayor que 0'
   } else {
     errors.gross = undefined
   }
-  
+
   errors.amount = isPositiveAmount(amount) ? undefined : 'Introduce un importe mayor que 0'
   errors.categoryId = form.categoryId ? undefined : 'Elige una categoría'
   errors.familyMemberId = (!form.isCash || form.familyMemberId) ? undefined : 'Elige un miembro'
-  
+
   if (errors.amount || errors.categoryId || errors.familyMemberId || errors.gross) {
     return false
   }
@@ -193,13 +193,6 @@ defineExpose({
       { value: 'income', label: 'Ingreso' },
     ]" />
 
-    <BaseInput v-if="form.kind === 'income'" v-model="form.gross" label="Importe bruto" type="number"
-      icon="solar:tag-price-bold" placeholder="0,00" :error="errors.gross" />
-
-    <BaseInput v-model="form.amount" label="Importe" type="number" icon="solar:tag-price-bold" placeholder="0,00"
-      :error="errors.amount" />
-
-    <!-- Selector preguntando ¿Efectivo? -->
     <div class="flex items-center justify-between py-1">
       <span class="text-sm font-medium text-content">¿Efectivo?</span>
       <label class="relative cursor-pointer shrink-0 ml-4">
@@ -212,15 +205,22 @@ defineExpose({
       </label>
     </div>
 
+    <BaseSelect v-if="form.isCash" v-model="form.familyMemberId" label="Pertenece a" placeholder="Selecciona un miembro"
+      :options="memberOptions" :error="errors.familyMemberId" />
+
+    <BaseInput v-if="form.kind === 'income'" v-model="form.gross" label="Importe bruto" type="number"
+      icon="solar:tag-price-bold" placeholder="0,00" :error="errors.gross" />
+
+    <BaseInput v-model="form.amount" label="Importe" type="number" icon="solar:tag-price-bold" placeholder="0,00"
+      :error="errors.amount" />
+
+
     <BaseSelect v-if="categoryOptions.length" v-model="form.categoryId" label="Categoría"
       placeholder="Selecciona una categoría" :options="categoryOptions" :error="errors.categoryId"
       @click-add="emit('click-add')" />
     <p v-else class="rounded-field bg-surface-muted p-3 text-sm text-content-muted">
       No tienes categorías de {{ form.kind === 'income' ? 'ingreso' : 'gasto' }} todavía. Crea una primero.
     </p>
-
-    <BaseSelect v-if="form.isCash" v-model="form.familyMemberId" label="Pertenece a" placeholder="Selecciona un miembro" :options="memberOptions"
-      :error="errors.familyMemberId" />
 
     <BaseInput v-model="form.occurredOn" label="Fecha" type="date" icon="solar:calendar-bold" />
 
