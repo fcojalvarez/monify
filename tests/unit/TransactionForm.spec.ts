@@ -202,17 +202,20 @@ describe('TransactionForm', () => {
         ],
       },
     })
-    
+
     const store = useTransactionsStore()
 
     // Buscamos el checkbox ¿Efectivo? y lo marcamos
     const cashCheckbox = wrapper.find('input[type="checkbox"]')
     await cashCheckbox.setValue(true)
 
-    // Introducimos un importe de 60 (mayor que los 50 de la cartera)
+    const selects = wrapper.findAll('select')
+
+    await selects[0].setValue('mem-cash-1') // miembro
+    await selects[1].setValue('cat-1') // categoría
+
     await wrapper.find('input[type="number"]').setValue('60')
-    await wrapper.find('select').setValue('cat-1') // Categoría de gasto
-    
+
     await wrapper.find('form').trigger('submit.prevent')
 
     expect(wrapper.text()).toContain('No hay esa cantidad en la cartera de Alguien')
