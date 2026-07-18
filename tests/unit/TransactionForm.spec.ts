@@ -77,7 +77,12 @@ describe('TransactionForm', () => {
     ;(store.create as ReturnType<typeof vi.fn>).mockResolvedValue({})
 
     await wrapper.find('input[type="number"]').setValue('42.5')
-    await wrapper.find('select').setValue('cat-1')
+
+    const selects = wrapper.findAll('select')
+
+    await selects[0].setValue('mem-1') // miembro
+    await selects[1].setValue('cat-1') // categoría
+
     await wrapper.find('form').trigger('submit.prevent')
 
     await vi.waitFor(() => expect(store.create).toHaveBeenCalledTimes(1))

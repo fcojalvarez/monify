@@ -205,15 +205,14 @@ defineExpose({
       </label>
     </div>
 
-    <BaseSelect v-if="form.isCash" v-model="form.familyMemberId" label="Pertenece a" placeholder="Selecciona un miembro"
-      :options="memberOptions" :error="errors.familyMemberId" />
-
     <BaseInput v-if="form.kind === 'income'" v-model="form.gross" label="Importe bruto" type="number"
       icon="solar:tag-price-bold" placeholder="0,00" :error="errors.gross" />
 
     <BaseInput v-model="form.amount" label="Importe" type="number" icon="solar:tag-price-bold" placeholder="0,00"
       :error="errors.amount" />
 
+    <BaseSelect v-model="form.familyMemberId" label="Pertenece a" placeholder="Selecciona un miembro"
+      :options="memberOptions" :error="errors.familyMemberId" />
 
     <BaseSelect v-if="categoryOptions.length" v-model="form.categoryId" label="Categoría"
       placeholder="Selecciona una categoría" :options="categoryOptions" :error="errors.categoryId"
