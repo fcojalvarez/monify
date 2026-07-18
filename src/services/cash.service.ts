@@ -113,7 +113,7 @@ export const cashService = {
       owner_id: cash.owner_id,
       amount: Math.abs(options.amount), // Nos aseguramos de que el ingreso sume
       note: options.note ?? null,
-      family_member_id: options.familyMemberId,
+      family_member_id: options.familyMemberId!,
       occurred_on: options.occurredOn ?? new Date().toISOString(),
     })
 

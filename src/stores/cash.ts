@@ -169,7 +169,7 @@ export const useCashStore = defineStore('cash', () => {
     await cashService.deposit(account.value.id, {
       amount: payload.amount,
       note: payload.note,
-      familyMemberId: payload.familyMemberId,
+      familyMemberId: payload.familyMemberId!,
     })
 
     // 2. Si se marca el check, crear el ingreso principal en las transacciones generales
@@ -207,7 +207,7 @@ export const useCashStore = defineStore('cash', () => {
     await cashService.withdraw(account.value.id, {
       amount: payload.amount,
       note: payload.note,
-      familyMemberId: payload.familyMemberId,
+      familyMemberId: payload.familyMemberId!,
     })
 
     // 2. Si se marca el check, crear el gasto principal en las transacciones generales

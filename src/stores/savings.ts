@@ -60,7 +60,7 @@ export const useSavingsStore = defineStore('savings', () => {
         savingsService.listTransactions(),
       ])
 
-      items.value = savingsList
+      items.value = savingsList as Savings[]
       transactions.value = transactionsList
 
       const defaults = [
@@ -85,10 +85,13 @@ export const useSavingsStore = defineStore('savings', () => {
             target: null,
             color: account.color,
             type: account.type,
-            status: 'active', // Estado inicial por defecto
+            status: 'active',
           })
 
-          items.value.push(created)
+          items.value.push({
+            ...created,
+            status: created.status as 'active' | 'completed',
+          })
         }
       }
     } catch (error) {
@@ -104,7 +107,10 @@ export const useSavingsStore = defineStore('savings', () => {
     // Si el payload no trae status, aseguramos que se cree como 'active'
     const finalPayload = { ...payload, status: 'active' as const }
     const created = await savingsService.create(finalPayload)
-    items.value.push(created)
+    items.value.push({
+      ...created,
+      status: created.status as 'active' | 'completed',
+    })
     return created
   }
 
@@ -116,7 +122,11 @@ export const useSavingsStore = defineStore('savings', () => {
     const index = items.value.findIndex((s) => s.id === id)
 
     if (index !== -1) {
-      items.value[index] = { ...items.value[index], ...updated }
+      items.value[index] = {
+        ...items.value[index],
+        ...updated,
+        status: (updated.status ?? items.value[index].status) as 'active' | 'completed',
+      }
     }
 
     return updated
