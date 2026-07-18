@@ -1,24 +1,18 @@
-/**
- * Abstracción de plataforma pensada para el salto futuro a Capacitor.
- *
- * Hoy distingue el tipo de dispositivo mediante las APIs del navegador.
- * Cuando se añada Capacitor, bastará con sustituir `detectPlatform()`
- * por `Capacitor.getPlatform()` sin tocar el resto de la aplicación.
- */
-
 export type Platform = 'web' | 'ios' | 'android'
 
 function detectPlatform(): Platform {
-  if (typeof navigator === 'undefined') {
+  if (typeof window === 'undefined' || typeof navigator === 'undefined') {
     return 'web'
   }
 
   const ua = navigator.userAgent.toLowerCase()
 
-  // iPadOS 13+ puede identificarse como macOS.
-  const isIPad = navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1
+  const isAppleTouch =
+    navigator.maxTouchPoints &&
+    navigator.maxTouchPoints > 1 &&
+    (/macintosh/.test(ua) || (navigator.vendor && /apple/.test(navigator.vendor.toLowerCase())))
 
-  if (isIPad || /iphone|ipad|ipod/.test(ua)) {
+  if (isAppleTouch || /iphone|ipad|ipod/.test(ua)) {
     return 'ios'
   }
 
@@ -29,21 +23,20 @@ function detectPlatform(): Platform {
   return 'web'
 }
 
-const platform = detectPlatform()
+const currentPlatform = detectPlatform()
+const isMobileDevice = currentPlatform === 'ios' || currentPlatform === 'android'
 
-const isMobile = platform === 'ios' || platform === 'android'
+const state = Object.freeze({
+  platform: currentPlatform,
+  isWeb: currentPlatform === 'web',
+  isNative: currentPlatform !== 'web',
 
-const state = {
-  platform,
-  isWeb: platform === 'web',
-  isNative: platform !== 'web',
+  isDesktop: !isMobileDevice,
+  isMobile: isMobileDevice,
 
-  isDesktop: !isMobile,
-  isMobile,
-
-  isIOS: platform === 'ios',
-  isAndroid: platform === 'android',
-}
+  isIOS: currentPlatform === 'ios',
+  isAndroid: currentPlatform === 'android',
+})
 
 export function usePlatform() {
   return state

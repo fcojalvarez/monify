@@ -1,41 +1,48 @@
-/**
- * Envuelve la View Transitions API con degradación elegante:
- * si el navegador no la soporta (o el usuario prefiere menos movimiento),
- * ejecuta el cambio directamente sin animar.
- */
+import { nextTick } from 'vue'
+
 export type TransitionDirection = 'forward' | 'back' | 'none'
 
-/** Acceso seguro a la API aunque `lib.dom` aún no la tipe en esta versión de TS. */
-interface DocumentWithViewTransition {
-  startViewTransition?: (cb: () => void | Promise<void>) => { finished: Promise<void> }
-}
-
-const prefersReducedMotion = (): boolean =>
-  typeof window !== 'undefined' &&
-  window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+const isSSR = typeof window === 'undefined'
+const prefersReducedMotion =
+  !isSSR && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+// Comprobamos la existencia del método nativo en el documento
+const isSupported = !isSSR && 'startViewTransition' in document
 
 export function useViewTransition() {
-  const isSupported =
-    typeof document !== 'undefined' && 'startViewTransition' in document
-
   /**
-   * Ejecuta `update` dentro de una view transition.
-   * `direction` marca el sentido para elegir la animación en transitions.css.
+   * Ejecuta una mutación de estado asegurando la captura correcta del DOM en Vue.
+   * @param update Callback con la mutación de estado (síncrona o asíncrona)
+   * @param direction Dirección expuesta en `data-transition` para CSS
    */
-  function run(update: () => void | Promise<void>, direction: TransitionDirection = 'none') {
-    if (!isSupported || prefersReducedMotion()) {
-      void update()
+  async function run(update: () => void | Promise<void>, direction: TransitionDirection = 'none') {
+    if (!isSupported || prefersReducedMotion) {
+      await update()
       return
     }
 
     const root = document.documentElement
-    if (direction === 'none') root.removeAttribute('data-transition')
-    else root.dataset.transition = direction
 
-    const doc = document as Document & DocumentWithViewTransition
-    const transition = doc.startViewTransition!(() => update())
-    transition.finished.finally(() => root.removeAttribute('data-transition'))
+    if (direction === 'none') {
+      root.removeAttribute('data-transition')
+    } else {
+      root.dataset.transition = direction
+    }
+
+    try {
+      document.startViewTransition(async () => {
+        await update()
+        await nextTick()
+      })
+    } catch (error) {
+      await update()
+      console.error('ViewTransition falló, ejecutando fallback:', error)
+    } finally {
+      root.removeAttribute('data-transition')
+    }
   }
 
-  return { isSupported, run }
+  return {
+    isSupported,
+    run,
+  }
 }
