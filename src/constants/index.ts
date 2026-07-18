@@ -1,5 +1,3 @@
-import type { CategoryKind } from '@/types'
-
 export const ROUTE_NAMES = {
   login: 'login',
   register: 'register',
@@ -13,12 +11,13 @@ export const ROUTE_NAMES = {
   charts: 'charts',
 } as const
 
-export const CATEGORY_KIND: Record<CategoryKind, CategoryKind> = {
+// Ahora completamente tipado, inmutable y restrictivo
+export const CATEGORY_KIND = {
   income: 'income',
   expense: 'expense',
-}
+} as const
 
-/** Paleta sugerida al crear categorías / miembros (tokens de marca y acentos). */
+/** Paleta sugerida al crear categorías (tokens de marca y acentos). */
 export const PALETTE = [
   '#00b894',
   '#3a53a8',
@@ -44,4 +43,4 @@ export const SUGGESTED_ICONS = [
   'solar:gift-bold',
 ] as const
 
-export const DEFAULT_CATEGORY_ICON = 'solar:tag-bold'
+export const DEFAULT_CATEGORY_ICON = 'solar:tag-bold' as const
