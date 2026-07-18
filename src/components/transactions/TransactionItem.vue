@@ -1,11 +1,12 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import type { TransactionWithRelations } from '@/types'
 import { formatCurrency, formatDate } from '@/utils/format'
 import AppIcon from '@/components/ui/AppIcon.vue'
 
 const props = defineProps<{ transaction: TransactionWithRelations }>()
 
-const isIncome = props.transaction.kind === 'income'
+const isIncome = computed(() => props.transaction.kind === 'income')
 </script>
 
 <template>

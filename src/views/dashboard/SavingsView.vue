@@ -372,7 +372,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, defineAsyncComponent } from 'vue'
 
 import { useSavingsStore } from '@/stores/savings'
 import { useFamilyStore } from '@/stores/family'
@@ -387,8 +387,9 @@ import BaseInput from '@/components/ui/BaseInput.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import BaseDialog from '@/components/ui/BaseDialog.vue'
 import BaseSelect from '@/components/ui/BaseSelect.vue'
-import ColorPicker from '@/components/ui/ColorPicker.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
+
+const ColorPicker = defineAsyncComponent(() => import('@/components/ui/ColorPicker.vue'))
 
 import type { Savings } from '@/types'
 
@@ -396,9 +397,7 @@ const savingsStore = useSavingsStore()
 const familyStore = useFamilyStore()
 const ui = useUiStore()
 
-/* ----------------------------------------------------------
- * Estado
- * ---------------------------------------------------------- */
+// Estado
 const showAddGoalDialog = ref(false)
 const showCompleteDialog = ref(false)
 const showDeleteDialog = ref(false)
@@ -435,9 +434,7 @@ const savingTypeOptions = [
   { value: 'cash', label: 'Efectivo' },
 ]
 
-/* ----------------------------------------------------------
- * Computados
- * ---------------------------------------------------------- */
+// Computados
 const bankSavingsBalance = computed(() => savingsStore.bankBalance)
 const cashSavingsBalance = computed(() => savingsStore.cashBalance)
 const totalSavingsBalance = computed(() => bankSavingsBalance.value + cashSavingsBalance.value)
@@ -453,9 +450,7 @@ const memberOptions = computed(() =>
   })),
 )
 
-/* ----------------------------------------------------------
- * Crear / Editar ahorro
- * ---------------------------------------------------------- */
+// Crear / Editar ahorro
 function openAddGoal() {
   editingGoal.value = null
   goalForm.value = {
@@ -499,9 +494,7 @@ async function saveGoal() {
   showAddGoalDialog.value = false
 }
 
-/* ----------------------------------------------------------
- * Completar Meta
- * ---------------------------------------------------------- */
+// Completar Meta
 function openCompleteGoal(goal: Savings) {
   goalToComplete.value = goal
   showCompleteDialog.value = true
@@ -517,9 +510,7 @@ async function confirmCompleteGoal() {
   }
 }
 
-/* ----------------------------------------------------------
- * Eliminar
- * ---------------------------------------------------------- */
+// Eliminar
 function openDeleteGoal(goal: Savings) {
   goalToDelete.value = goal
   showDeleteDialog.value = true
@@ -531,9 +522,7 @@ async function confirmDeleteGoal() {
   showDeleteDialog.value = false
 }
 
-/* ----------------------------------------------------------
- * Transferencias
- * ---------------------------------------------------------- */
+// Transferencias
 function openGlobalTransfer(isDeposit: boolean) {
   transferAccount.value = null
   transferForm.value = {
@@ -617,9 +606,7 @@ async function executeTransfer() {
   }
 }
 
-/* ----------------------------------------------------------
- * Helpers
- * ---------------------------------------------------------- */
+// Helpers
 function getAccountName(id: string) {
   const account = savingsStore.items.find((s) => s.id === id)
   if (!account) return 'Ahorro'

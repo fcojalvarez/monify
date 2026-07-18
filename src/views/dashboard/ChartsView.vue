@@ -22,9 +22,7 @@ const savingsStore = useSavingsStore()
 const cashStore = useCashStore()
 const categoriesStore = useCategoriesStore()
 
-/* ----------------------------------------------------------
- * Estado y Carga
- * ---------------------------------------------------------- */
+// Estado y Carga
 const allTransactions = ref<any[]>([])
 const loading = ref(true)
 
@@ -65,9 +63,7 @@ onMounted(async () => {
 const savingsTransactions = computed(() => savingsStore.transactions)
 const cashTransactions = computed(() => cashStore.transactions)
 
-/* ----------------------------------------------------------
- * Años Disponibles
- * ---------------------------------------------------------- */
+// Años Disponibles
 const availableYears = computed(() => {
   const years = new Set<number>()
   years.add(new Date().getFullYear())
@@ -90,9 +86,7 @@ const availableYears = computed(() => {
   return Array.from(years).sort((a, b) => b - a)
 })
 
-/* ----------------------------------------------------------
- * Navegación de Años
- * ---------------------------------------------------------- */
+// Navegación de Años
 function prevYear() {
   const idx = availableYears.value.indexOf(selectedYear.value)
   if (idx !== -1 && idx < availableYears.value.length - 1) {
@@ -111,9 +105,7 @@ function nextYear() {
   }
 }
 
-/* ----------------------------------------------------------
- * Helpers de Fechas de Ahorro y Efectivo
- * ---------------------------------------------------------- */
+// Helpers de Fechas de Ahorro y Efectivo
 function getLastDayOfMonth(year: number, month: number): string {
   const pad = (n: number) => String(n).padStart(2, '0')
   const date = new Date(year, month + 1, 0)
@@ -163,9 +155,7 @@ function getMemberCashBalanceAtDate(memberId: string, dateStr: string) {
     .reduce((sum, t) => sum + t.amount, 0)
 }
 
-/* ----------------------------------------------------------
- * Datos Gráfica 1: Ingresos y Gastos
- * ---------------------------------------------------------- */
+// Datos Gráfica 1: Ingresos y Gastos
 const incomeExpensesData = computed(() => {
   if (viewMode.value === 'monthly') {
     const data = Array.from({ length: 12 }, (_, i) => ({
@@ -229,9 +219,7 @@ const periodMetrics = computed(() => {
   return { income, expense, balance, rate }
 })
 
-/* ----------------------------------------------------------
- * Datos Gráfica 2: Evolución de Ahorros
- * ---------------------------------------------------------- */
+// Datos Gráfica 2: Evolución de Ahorros
 const savingsEvolutionData = computed(() => {
   return incomeExpensesData.value.map((d, i) => {
     let dateStr = ''
@@ -255,9 +243,7 @@ const savingsEvolutionData = computed(() => {
   })
 })
 
-/* ----------------------------------------------------------
- * Datos Gráfica 3: Evolución de Efectivo y Carteras
- * ---------------------------------------------------------- */
+// Datos Gráfica 3: Evolución de Efectivo y Carteras
 const cashEvolutionData = computed(() => {
   return incomeExpensesData.value.map((d, i) => {
     let dateStr = ''
@@ -319,9 +305,7 @@ const walletDistribution = computed(() => {
   })
 })
 
-/* ----------------------------------------------------------
- * Desglose de Gastos por Categoría
- * ---------------------------------------------------------- */
+// Desglose de Gastos por Categoría
 const categoryBreakdown = computed(() => {
   const map = new Map<string, { category: any; spent: number }>()
   let totalSpent = 0
@@ -362,9 +346,7 @@ const categoryBreakdown = computed(() => {
   return { list, totalSpent }
 })
 
-/* ----------------------------------------------------------
- * Geometría y Coordenadas para SVG
- * ---------------------------------------------------------- */
+// Geometría y Coordenadas para SVG
 // Configuración común de gráficas SVG
 const svgW = 500
 const svgH = 200

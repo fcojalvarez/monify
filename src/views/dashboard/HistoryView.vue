@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch, defineAsyncComponent } from 'vue'
 import type { TransactionWithRelations } from '@/types'
 import { transactionsService, type TransactionFilters } from '@/services/transactions.service'
 import { useFamilyStore } from '@/stores/family'
@@ -9,12 +9,13 @@ import { formatCurrency } from '@/utils/format'
 import AppHeader from '@/components/layout/AppHeader.vue'
 import BottomNavigation from '@/components/layout/BottomNavigation.vue'
 import TransactionItem from '@/components/transactions/TransactionItem.vue'
-import TransactionForm from '@/components/transactions/TransactionForm.vue'
 
 import BaseCard from '@/components/ui/BaseCard.vue'
 import BaseSheet from '@/components/ui/BaseSheet.vue'
 import BaseSelect from '@/components/ui/BaseSelect.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
+
+const TransactionForm = defineAsyncComponent(() => import('@/components/transactions/TransactionForm.vue'))
 
 const family = useFamilyStore()
 const categories = useCategoriesStore()
@@ -64,7 +65,6 @@ function scrollToTop() {
   })
 }
 
-// Sheets
 const showTransaction = ref(false)
 const editingTransaction = ref<TransactionWithRelations>()
 const transactionFormRef = ref<InstanceType<typeof TransactionForm> | null>(null)

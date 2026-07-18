@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, defineAsyncComponent } from 'vue'
 import { storeToRefs } from 'pinia'
 import type { TransactionWithRelations } from '@/types'
 import { useAuthStore } from '@/stores/auth'
@@ -17,12 +17,13 @@ import BottomNavigation from '@/components/layout/BottomNavigation.vue'
 import BalanceSummary from '@/components/dashboard/BalanceSummary.vue'
 import CategoryProgress from '@/components/dashboard/CategoryProgress.vue'
 import TransactionItem from '@/components/transactions/TransactionItem.vue'
-import TransactionForm from '@/components/transactions/TransactionForm.vue'
-import CategoryManager from '@/components/categories/CategoryManager.vue'
-import FamilyManager from '@/components/family/FamilyManager.vue'
 import BaseCard from '@/components/ui/BaseCard.vue'
 import BaseSheet from '@/components/ui/BaseSheet.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
+
+const TransactionForm = defineAsyncComponent(() => import('@/components/transactions/TransactionForm.vue'))
+const CategoryManager = defineAsyncComponent(() => import('@/components/categories/CategoryManager.vue'))
+const FamilyManager = defineAsyncComponent(() => import('@/components/family/FamilyManager.vue'))
 
 const auth = useAuthStore()
 const profile = useProfileStore()
@@ -45,7 +46,6 @@ const limitedUsage = computed(() =>
   usageByCategory.value.filter((u) => u.limit != null).slice(0, 5),
 )
 
-// Sheets
 const showTransaction = ref(false)
 const editingTransaction = ref<TransactionWithRelations | undefined>()
 const showCategories = ref(false)
