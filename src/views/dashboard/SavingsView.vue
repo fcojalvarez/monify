@@ -1,7 +1,5 @@
 <template>
   <div class="min-h-dvh bg-surface pb-24">
-    <AppHeader />
-
     <main class="mx-auto max-w-2xl space-y-6 px-4 py-6">
       <!-- Cabecera -->
       <div class="flex items-center justify-between">
@@ -366,8 +364,6 @@
         </div>
       </form>
     </BaseDialog>
-
-    <BottomNavigation />
   </div>
 </template>
 
@@ -380,8 +376,6 @@ import { useUiStore } from '@/stores/ui'
 
 import { formatCurrency } from '@/utils/format'
 
-import AppHeader from '@/components/layout/AppHeader.vue'
-import BottomNavigation from '@/components/layout/BottomNavigation.vue'
 import BaseCard from '@/components/ui/BaseCard.vue'
 import BaseInput from '@/components/ui/BaseInput.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'

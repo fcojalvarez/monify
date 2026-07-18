@@ -6,8 +6,6 @@ import { useFamilyStore } from '@/stores/family'
 import { useCategoriesStore } from '@/stores/categories'
 import { formatCurrency } from '@/utils/format'
 
-import AppHeader from '@/components/layout/AppHeader.vue'
-import BottomNavigation from '@/components/layout/BottomNavigation.vue'
 import TransactionItem from '@/components/transactions/TransactionItem.vue'
 
 import BaseCard from '@/components/ui/BaseCard.vue'
@@ -226,8 +224,6 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="min-h-dvh bg-surface pb-24">
-    <AppHeader />
-
     <main class="mx-auto max-w-2xl space-y-6 px-4 py-6">
       <div class="flex items-center gap-3">
 
@@ -365,7 +361,5 @@ onBeforeUnmount(() => {
         <AppIcon name="solar:alt-arrow-up-bold" :size="22" />
       </button>
     </Transition>
-
-    <BottomNavigation />
   </div>
 </template>

@@ -11,70 +11,82 @@ const router = createRouter({
       path: '/',
       redirect: { name: ROUTE_NAMES.dashboard },
     },
+
+    // Auth (sin header ni navegación)
     {
       path: '/auth',
-      component: () => import(/* viteChunkName: "auth" */ '@/views/auth/AuthLayout.vue'),
+      component: () => import('@/views/auth/AuthLayout.vue'),
       meta: { requiresGuest: true },
       children: [
         {
           path: 'login',
           name: ROUTE_NAMES.login,
-          component: () => import(/* viteChunkName: "auth" */ '@/views/auth/LoginView.vue'),
+          component: () => import('@/views/auth/LoginView.vue'),
         },
         {
           path: 'register',
           name: ROUTE_NAMES.register,
-          component: () => import(/* viteChunkName: "auth" */ '@/views/auth/RegisterView.vue'),
+          component: () => import('@/views/auth/RegisterView.vue'),
         },
         {
           path: 'forgot-password',
           name: ROUTE_NAMES.forgotPassword,
-          component: () =>
-            import(/* viteChunkName: "auth" */ '@/views/auth/ForgotPasswordView.vue'),
+          component: () => import('@/views/auth/ForgotPasswordView.vue'),
         },
       ],
     },
+
     {
       path: '/auth/callback',
       name: ROUTE_NAMES.authCallback,
-      component: () => import(/* viteChunkName: "auth" */ '@/views/auth/AuthCallbackView.vue'),
+      component: () => import('@/views/auth/AuthCallbackView.vue'),
     },
+
+    // Layout principal de la aplicación
     {
-      path: '/dashboard',
-      name: ROUTE_NAMES.dashboard,
-      component: () => import('@/views/dashboard/DashboardView.vue'),
-      meta: { requiresAuth: true, index: 1 },
+      path: '/',
+      component: () => import('@/layouts/AppLayout.vue'),
+      meta: { requiresAuth: true },
+      children: [
+        {
+          path: 'dashboard',
+          name: ROUTE_NAMES.dashboard,
+          component: () => import('@/views/dashboard/DashboardView.vue'),
+          meta: { index: 1 },
+        },
+        {
+          path: 'history',
+          name: ROUTE_NAMES.history,
+          component: () => import('@/views/dashboard/HistoryView.vue'),
+          meta: { index: 2 },
+        },
+        {
+          path: 'savings',
+          name: ROUTE_NAMES.savings,
+          component: () => import('@/views/dashboard/SavingsView.vue'),
+          meta: { index: 3 },
+        },
+        {
+          path: 'cash',
+          name: ROUTE_NAMES.cash,
+          component: () => import('@/views/dashboard/CashView.vue'),
+          meta: { index: 4 },
+        },
+        {
+          path: 'charts',
+          name: ROUTE_NAMES.charts,
+          component: () => import('@/views/dashboard/ChartsView.vue'),
+          meta: { index: 5 },
+        },
+        {
+          path: 'profile',
+          name: ROUTE_NAMES.profile,
+          component: () => import('@/views/dashboard/ProfileView.vue'),
+          meta: { index: 6 },
+        },
+      ],
     },
-    {
-      path: '/history',
-      name: ROUTE_NAMES.history,
-      component: () => import('@/views/dashboard/HistoryView.vue'),
-      meta: { requiresAuth: true, index: 2 },
-    },
-    {
-      path: '/savings',
-      name: ROUTE_NAMES.savings,
-      component: () => import('@/views/dashboard/SavingsView.vue'),
-      meta: { requiresAuth: true, index: 3 },
-    },
-    {
-      path: '/cash',
-      name: ROUTE_NAMES.cash,
-      component: () => import('@/views/dashboard/CashView.vue'),
-      meta: { requiresAuth: true, index: 4 },
-    },
-    {
-      path: '/charts',
-      name: ROUTE_NAMES.charts,
-      component: () => import('@/views/dashboard/ChartsView.vue'),
-      meta: { requiresAuth: true, index: 5 },
-    },
-    {
-      path: '/profile',
-      name: ROUTE_NAMES.profile,
-      component: () => import('@/views/dashboard/ProfileView.vue'),
-      meta: { requiresAuth: true, index: 6 },
-    },
+
     {
       path: '/:pathMatch(.*)*',
       redirect: { name: ROUTE_NAMES.dashboard },

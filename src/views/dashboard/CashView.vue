@@ -5,8 +5,6 @@ import { useFamilyStore } from '@/stores/family'
 import { useUiStore } from '@/stores/ui'
 import { formatCurrency } from '@/utils/format'
 
-import AppHeader from '@/components/layout/AppHeader.vue'
-import BottomNavigation from '@/components/layout/BottomNavigation.vue'
 import BaseCard from '@/components/ui/BaseCard.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import BaseDialog from '@/components/ui/BaseDialog.vue'
@@ -159,8 +157,6 @@ onMounted(async () => {
 
 <template>
     <div class="min-h-dvh bg-surface pb-24">
-        <AppHeader />
-
         <main class="mx-auto max-w-3xl space-y-6 px-4 py-6">
             <!-- Cabecera -->
             <div class="flex items-center justify-between">
@@ -396,7 +392,5 @@ onMounted(async () => {
                 </div>
             </form>
         </BaseDialog>
-
-        <BottomNavigation />
     </div>
 </template>

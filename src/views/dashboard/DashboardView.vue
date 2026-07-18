@@ -12,8 +12,6 @@ import { useCashStore } from '@/stores/cash'
 import { useUiStore } from '@/stores/ui'
 import { monthRange } from '@/utils/format'
 
-import AppHeader from '@/components/layout/AppHeader.vue'
-import BottomNavigation from '@/components/layout/BottomNavigation.vue'
 import BalanceSummary from '@/components/dashboard/BalanceSummary.vue'
 import CategoryProgress from '@/components/dashboard/CategoryProgress.vue'
 import TransactionItem from '@/components/transactions/TransactionItem.vue'
@@ -127,8 +125,6 @@ onMounted(async () => {
 
 <template>
   <div class="min-h-dvh bg-surface pb-24">
-    <AppHeader />
-
     <main class="mx-auto max-w-2xl space-y-6 px-4 py-6">
       <div v-if="showSavingsPrompt"
         class="relative flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-card border border-violet-100 bg-violet-50/50 text-violet-950 dark:border-violet-900/30 dark:bg-violet-950/20 dark:text-violet-200">
@@ -269,7 +265,5 @@ onMounted(async () => {
 
       <FamilyManager ref="familyManagerRef" />
     </BaseSheet>
-
-    <BottomNavigation />
   </div>
 </template>

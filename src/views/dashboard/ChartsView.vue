@@ -9,8 +9,6 @@ import { useCashStore } from '@/stores/cash'
 import { useCategoriesStore } from '@/stores/categories'
 import { transactionsService } from '@/services/transactions.service'
 
-import AppHeader from '@/components/layout/AppHeader.vue'
-import BottomNavigation from '@/components/layout/BottomNavigation.vue'
 import BaseCard from '@/components/ui/BaseCard.vue'
 import SegmentedControl from '@/components/ui/SegmentedControl.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
@@ -493,8 +491,6 @@ const getXPercent = (index: number, total: number) => {
 
 <template>
   <div class="min-h-dvh bg-surface pb-24">
-    <AppHeader />
-
     <main class="mx-auto max-w-3xl space-y-6 px-4 py-6">
       <!-- Cabecera de Página -->
       <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -1066,6 +1062,5 @@ const getXPercent = (index: number, total: number) => {
         </BaseCard>
       </div>
     </main>
-    <BottomNavigation />
   </div>
 </template>
