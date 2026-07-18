@@ -7,9 +7,11 @@ const props = withDefaults(
     modelValue: boolean
     title?: string
     hasChanges?: boolean
+    closeOnClickOutside?: boolean
   }>(),
   {
     hasChanges: false,
+    closeOnClickOutside: true
   }
 )
 
@@ -66,6 +68,12 @@ function forceClose() {
   emit('update:modelValue', false)
 }
 
+function handleBackdropClick() {
+  if (props.closeOnClickOutside) {
+    close()
+  }
+}
+
 
 /**
  * Keyboard
@@ -111,7 +119,8 @@ onBeforeUnmount(() => {
       <div v-if="modelValue" class="fixed inset-0 z-50 flex items-end justify-center sm:items-center" role="dialog"
         aria-modal="true" :aria-label="title">
         <!-- Backdrop -->
-        <div class="sheet-backdrop absolute inset-0 bg-secondary-950/50 backdrop-blur-sm" @click="close" />
+        <div class="sheet-backdrop absolute inset-0 bg-secondary-950/50 backdrop-blur-sm"
+          @click="handleBackdropClick" />
 
         <!-- Panel -->
         <div

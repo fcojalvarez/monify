@@ -13,7 +13,7 @@ import BaseDialog from '@/components/ui/BaseDialog.vue'
 import SegmentedControl from '@/components/ui/SegmentedControl.vue'
 
 const props = defineProps<{ transaction?: TransactionWithRelations }>()
-const emit = defineEmits<{ saved: []; cancel: [] }>()
+const emit = defineEmits<{ saved: []; cancel: []; 'click-add': [] }>()
 
 const categories = useCategoriesStore()
 const family = useFamilyStore()
@@ -162,7 +162,8 @@ defineExpose({
       :error="errors.amount" />
 
     <BaseSelect v-if="categoryOptions.length" v-model="form.categoryId" label="Categoría"
-      placeholder="Selecciona una categoría" :options="categoryOptions" :error="errors.categoryId" />
+      placeholder="Selecciona una categoría" :options="categoryOptions" :error="errors.categoryId"
+      @click-add="emit('click-add')" />
     <p v-else class="rounded-field bg-surface-muted p-3 text-sm text-content-muted">
       No tienes categorías de {{ form.kind === 'income' ? 'ingreso' : 'gasto' }} todavía. Crea una primero.
     </p>
@@ -188,8 +189,8 @@ defineExpose({
     </div>
   </form>
 
-  <BaseDialog v-slot:default v-model="showDeleteConfirm" variant="danger" title="Eliminar movimiento"
-    confirm-text="Eliminar" cancel-text="Cancelar" show-cancel @confirm="onDeleteConfirm">
+  <BaseDialog v-model="showDeleteConfirm" variant="danger" title="Eliminar movimiento" confirm-text="Eliminar"
+    cancel-text="Cancelar" show-cancel @confirm="onDeleteConfirm">
     <p class="text-content">
       ¿Estás seguro de que deseas eliminar este movimiento? Esta acción no se puede deshacer.
     </p>

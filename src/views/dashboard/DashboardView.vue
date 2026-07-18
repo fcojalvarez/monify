@@ -129,32 +129,6 @@ onMounted(async () => {
     <AppHeader />
 
     <main class="mx-auto max-w-2xl space-y-6 px-4 py-6">
-      <div class="flex items-start justify-between">
-        <div class="flex">
-          <p class="text-sm text-content-muted mt-auto">
-            Hola,
-          </p>
-
-          <h1 class="text-2xl font-bold text-content ml-2">
-            {{ auth.displayName || 'de nuevo' }} 👋
-          </h1>
-        </div>
-
-        <div class="flex gap-1">
-          <button
-            class="flex h-10 w-10 items-center justify-center rounded-full bg-surface-muted text-content-muted hover:bg-line transition-colors"
-            aria-label="Gestionar categorías" @click="showCategories = true" title="Gestionar categorías">
-            <AppIcon name="solar:widget-add-bold" :size="20" />
-          </button>
-
-          <button
-            class="flex h-10 w-10 items-center justify-center rounded-full bg-surface-muted text-content-muted hover:bg-line transition-colors"
-            aria-label="Gestionar familia" @click="showFamily = true" title="Gestionar familia">
-            <AppIcon name="solar:users-group-rounded-bold" :size="20" />
-          </button>
-        </div>
-      </div>
-
       <div v-if="showSavingsPrompt"
         class="relative flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-card border border-violet-100 bg-violet-50/50 text-violet-950 dark:border-violet-900/30 dark:bg-violet-950/20 dark:text-violet-200">
         <div class="flex gap-3">
@@ -192,18 +166,27 @@ onMounted(async () => {
       <BalanceSummary :monthly-summary="summary" :annual-summary="annualSummary" :savings="savings" :cash="cash"
         :savings-loaded="savingsLoaded" :cash-enabled="cashEnabled" />
 
-      <div v-if="family.items.length > 1" class="flex gap-2 overflow-x-auto pb-1">
+      <div v-if="family.items.length > 0" class="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+        <!-- Botón "Todos" -->
         <button class="shrink-0 rounded-pill px-4 py-2 text-sm font-medium transition-colors"
-          :class="activeMember === null ? 'bg-primary-500 text-white' : 'bg-surface-muted text-content-muted'"
+          :class="activeMember === null ? 'bg-primary-500 text-white' : 'bg-surface-muted text-content-muted hover:bg-line'"
           @click="selectMember(null)">
           Todos
         </button>
 
+        <!-- Bucle de Miembros de la Familia -->
         <button v-for="member in family.items" :key="member.id"
           class="shrink-0 rounded-pill px-4 py-2 text-sm font-medium transition-colors"
-          :class="activeMember === member.id ? 'bg-primary-500 text-white' : 'bg-surface-muted text-content-muted'"
+          :class="activeMember === member.id ? 'bg-primary-500 text-white' : 'bg-surface-muted text-content-muted hover:bg-line'"
           @click="selectMember(member.id)">
           {{ member.name }}
+        </button>
+
+        <!-- Botón "+" para gestionar la familia (se muestra siempre al final) -->
+        <button
+          class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface-muted text-content-muted hover:bg-line hover:text-content transition-colors ml-1"
+          aria-label="Gestionar familia" title="Gestionar familia" @click="showFamily = true">
+          <AppIcon name="solar:add-circle-bold" :size="20" />
         </button>
       </div>
 
@@ -251,10 +234,11 @@ onMounted(async () => {
     <BaseSheet v-model="showTransaction" :title="editingTransaction ? 'Editar movimiento' : 'Nuevo movimiento'"
       :has-changes="transactionFormRef?.hasChanges">
       <TransactionForm ref="transactionFormRef" :transaction="editingTransaction" @saved="onTransactionSaved"
-        @cancel="showTransaction = false" />
+        @cancel="showTransaction = false" @click-add="showCategories = !showCategories" />
     </BaseSheet>
 
-    <BaseSheet v-model="showCategories" title="Categorías" :has-changes="categoryManagerRef?.hasChanges">
+    <BaseSheet v-model="showCategories" title="Categorías" :has-changes="categoryManagerRef?.hasChanges"
+      :closeOnClickOutside="false">
       <template #actions>
         <button v-if="categoryManagerRef?.view === 'list'" type="button"
           class="inline-flex h-7 items-center gap-2 rounded-full px-3 text-sm font-medium text-content-muted transition-colors hover:bg-surface-muted border border-primary-500"
