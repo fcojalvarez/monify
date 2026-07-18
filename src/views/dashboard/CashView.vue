@@ -3,10 +3,10 @@ import { ref, computed, onMounted } from 'vue'
 import { useCashStore } from '@/stores/cash'
 import { useFamilyStore } from '@/stores/family'
 import { useUiStore } from '@/stores/ui'
-import { ROUTE_NAMES } from '@/constants'
 import { formatCurrency } from '@/utils/format'
 
 import AppHeader from '@/components/layout/AppHeader.vue'
+import BottomNavigation from '@/components/layout/BottomNavigation.vue'
 import BaseCard from '@/components/ui/BaseCard.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import BaseDialog from '@/components/ui/BaseDialog.vue'
@@ -165,11 +165,6 @@ onMounted(async () => {
             <!-- Cabecera -->
             <div class="flex items-center justify-between">
                 <div class="flex items-center gap-3">
-                    <RouterLink :to="{ name: ROUTE_NAMES.dashboard }"
-                        class="flex h-10 w-10 items-center justify-center rounded-full bg-surface-muted text-content-muted transition hover:bg-line">
-                        <AppIcon name="solar:arrow-left-bold" :size="20" />
-                    </RouterLink>
-
                     <div>
                         <h1 class="text-2xl font-bold text-content">
                             Mi efectivo
@@ -401,5 +396,7 @@ onMounted(async () => {
                 </div>
             </form>
         </BaseDialog>
+
+        <BottomNavigation />
     </div>
 </template>

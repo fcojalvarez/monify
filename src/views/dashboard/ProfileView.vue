@@ -10,6 +10,7 @@ import { ROUTE_NAMES } from '@/constants'
 import { formatDate } from '@/utils/format'
 import { transactionsService } from '@/services/transactions.service'
 import AppHeader from '@/components/layout/AppHeader.vue'
+import BottomNavigation from '@/components/layout/BottomNavigation.vue'
 import BaseCard from '@/components/ui/BaseCard.vue'
 import BaseInput from '@/components/ui/BaseInput.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
@@ -211,7 +212,6 @@ const cashEnabled = computed({
     <AppHeader />
 
     <main class="mx-auto max-w-2xl space-y-6 px-4 py-6">
-      <!-- Botón de retorno y cabecera de la vista -->
       <div class="flex items-center gap-3">
         <RouterLink :to="{ name: ROUTE_NAMES.dashboard }"
           class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-muted text-content-muted hover:bg-line transition-colors"
@@ -423,5 +423,7 @@ const cashEnabled = computed({
         gastos de la base de datos. No se puede deshacer.
       </p>
     </BaseDialog>
+
+    <BottomNavigation />
   </div>
 </template>

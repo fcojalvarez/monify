@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { storeToRefs } from 'pinia'
-import { ROUTE_NAMES } from '@/constants'
 import type { TransactionWithRelations } from '@/types'
 import { useAuthStore } from '@/stores/auth'
 import { useProfileStore } from '@/stores/profile'
@@ -14,6 +13,7 @@ import { useUiStore } from '@/stores/ui'
 import { monthRange } from '@/utils/format'
 
 import AppHeader from '@/components/layout/AppHeader.vue'
+import BottomNavigation from '@/components/layout/BottomNavigation.vue'
 import BalanceSummary from '@/components/dashboard/BalanceSummary.vue'
 import CategoryProgress from '@/components/dashboard/CategoryProgress.vue'
 import TransactionItem from '@/components/transactions/TransactionItem.vue'
@@ -130,50 +130,26 @@ onMounted(async () => {
 
     <main class="mx-auto max-w-2xl space-y-6 px-4 py-6">
       <div class="flex items-start justify-between">
-        <div>
-          <p class="text-sm text-content-muted">
+        <div class="flex">
+          <p class="text-sm text-content-muted mt-auto">
             Hola,
           </p>
 
-          <h1 class="text-2xl font-bold text-content">
+          <h1 class="text-2xl font-bold text-content ml-2">
             {{ auth.displayName || 'de nuevo' }} 👋
           </h1>
         </div>
 
         <div class="flex gap-1">
-          <RouterLink :to="{ name: ROUTE_NAMES.charts }"
-            class="flex h-10 w-10 items-center justify-center rounded-full bg-surface-muted text-content-muted hover:bg-line hover:text-content transition-colors mr-1"
-            title="Ver gráficas" aria-label="Ver gráficas">
-            <AppIcon name="solar:chart-square-bold" :size="20" />
-          </RouterLink>
-
-          <RouterLink v-if="profile.cashEnabled" :to="{ name: ROUTE_NAMES.cash }"
-            class="flex h-10 w-10 items-center justify-center rounded-full bg-surface-muted text-content-muted hover:bg-line hover:text-content transition-colors mr-1"
-            title="Ver efectivo" aria-label="Ver efectivo">
-            <AppIcon :name="ui.currency === 'EUR' ? 'solar:euro-bold' : 'solar:dollar-bold'" :size="20" />
-          </RouterLink>
-
-          <RouterLink v-if="profile.savingsEnabled" :to="{ name: ROUTE_NAMES.savings }"
-            class="flex h-10 w-10 items-center justify-center rounded-full bg-surface-muted text-content-muted hover:bg-line hover:text-content transition-colors mr-1"
-            title="Ver ahorros" aria-label="Ver ahorros">
-            <AppIcon name="solar:safe-square-bold" :size="20" />
-          </RouterLink>
-
-          <RouterLink :to="{ name: ROUTE_NAMES.history }"
-            class="flex h-10 w-10 items-center justify-center rounded-full bg-surface-muted text-content-muted hover:bg-line hover:text-content transition-colors"
-            title="Ver histórico de movimientos" aria-label="Ver histórico de movimientos">
-            <AppIcon name="solar:bill-list-bold" :size="20" />
-          </RouterLink>
-
           <button
-            class="flex h-10 w-10 items-center justify-center rounded-full bg-surface-muted text-content-muted hover:bg-line"
-            aria-label="Gestionar categorías" @click="showCategories = true">
+            class="flex h-10 w-10 items-center justify-center rounded-full bg-surface-muted text-content-muted hover:bg-line transition-colors"
+            aria-label="Gestionar categorías" @click="showCategories = true" title="Gestionar categorías">
             <AppIcon name="solar:widget-add-bold" :size="20" />
           </button>
 
           <button
-            class="flex h-10 w-10 items-center justify-center rounded-full bg-surface-muted text-content-muted hover:bg-line"
-            aria-label="Gestionar familia" @click="showFamily = true">
+            class="flex h-10 w-10 items-center justify-center rounded-full bg-surface-muted text-content-muted hover:bg-line transition-colors"
+            aria-label="Gestionar familia" @click="showFamily = true" title="Gestionar familia">
             <AppIcon name="solar:users-group-rounded-bold" :size="20" />
           </button>
         </div>
@@ -308,5 +284,7 @@ onMounted(async () => {
 
       <FamilyManager ref="familyManagerRef" />
     </BaseSheet>
+
+    <BottomNavigation />
   </div>
 </template>

@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { ROUTE_NAMES } from '@/constants'
 import type { TransactionWithRelations } from '@/types'
 import { transactionsService, type TransactionFilters } from '@/services/transactions.service'
 import { useFamilyStore } from '@/stores/family'
@@ -8,6 +7,7 @@ import { useCategoriesStore } from '@/stores/categories'
 import { formatCurrency } from '@/utils/format'
 
 import AppHeader from '@/components/layout/AppHeader.vue'
+import BottomNavigation from '@/components/layout/BottomNavigation.vue'
 import TransactionItem from '@/components/transactions/TransactionItem.vue'
 import TransactionForm from '@/components/transactions/TransactionForm.vue'
 
@@ -229,11 +229,6 @@ onBeforeUnmount(() => {
 
     <main class="mx-auto max-w-2xl space-y-6 px-4 py-6">
       <div class="flex items-center gap-3">
-        <RouterLink :to="{ name: ROUTE_NAMES.dashboard }"
-          class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-muted text-content-muted transition-colors hover:bg-line"
-          title="Volver al Dashboard">
-          <AppIcon name="solar:arrow-left-bold" :size="20" />
-        </RouterLink>
 
         <div>
           <h1 class="text-2xl font-bold text-content">
@@ -364,10 +359,12 @@ onBeforeUnmount(() => {
       leave-active-class="transition duration-150 ease-in" enter-from-class="translate-y-4 opacity-0"
       leave-to-class="translate-y-4 opacity-0">
       <button v-if="showScrollTop" type="button"
-        class="fixed bottom-10 right-8 z-40 flex h-12 w-12 items-center justify-center rounded-full bg-primary-500 text-white shadow-lg transition hover:bg-primary-600 active:scale-95"
+        class="fixed bottom-24 right-8 z-40 flex h-12 w-12 items-center justify-center rounded-full bg-primary-500 text-white shadow-lg transition hover:bg-primary-600 active:scale-95"
         aria-label="Volver arriba" title="Volver arriba" @click="scrollToTop">
         <AppIcon name="solar:alt-arrow-up-bold" :size="22" />
       </button>
     </Transition>
+
+    <BottomNavigation />
   </div>
 </template>

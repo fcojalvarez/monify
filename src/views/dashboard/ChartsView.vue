@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { ROUTE_NAMES } from '@/constants'
 import { formatCurrency } from '@/utils/format'
 import { useUiStore } from '@/stores/ui'
 import { useProfileStore } from '@/stores/profile'
@@ -11,6 +10,7 @@ import { useCategoriesStore } from '@/stores/categories'
 import { transactionsService } from '@/services/transactions.service'
 
 import AppHeader from '@/components/layout/AppHeader.vue'
+import BottomNavigation from '@/components/layout/BottomNavigation.vue'
 import BaseCard from '@/components/ui/BaseCard.vue'
 import SegmentedControl from '@/components/ui/SegmentedControl.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
@@ -71,7 +71,7 @@ const cashTransactions = computed(() => cashStore.transactions)
 const availableYears = computed(() => {
   const years = new Set<number>()
   years.add(new Date().getFullYear())
-  
+
   for (const t of allTransactions.value) {
     if (t.occurred_on) {
       years.add(new Date(t.occurred_on).getFullYear())
@@ -298,7 +298,7 @@ const walletDistribution = computed(() => {
   }).sort((a, b) => b.balance - a.balance)
 
   const total = list.reduce((sum, item) => sum + item.balance, 0)
-  
+
   let accumulatedPercent = 0
   const r = 38
   const circ = 2 * Math.PI * r // ~238.76
@@ -411,7 +411,7 @@ const savingsPaths = computed(() => {
   const data = savingsEvolutionData.value
   const N = data.length
   const max = maxSavings.value
-  
+
   if (N <= 1) return { totalLine: '', bankLine: '', cashLine: '', totalArea: '', bankArea: '', cashArea: '' }
 
   const totalPts: { x: number; y: number }[] = []
@@ -426,7 +426,7 @@ const savingsPaths = computed(() => {
     cashPts.push({ x, y: padT + chartH - (d.cash / max) * chartH })
   }
 
-  const linePath = (pts: { x: number; y: number }[]) => 
+  const linePath = (pts: { x: number; y: number }[]) =>
     pts.map((p, idx) => `${idx === 0 ? 'M' : 'L'} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' ')
 
   const areaPath = (pts: { x: number; y: number }[]) => {
@@ -450,12 +450,12 @@ const cashPaths = computed(() => {
   const data = cashEvolutionData.value
   const N = data.length
   const max = maxCash.value
-  
+
   if (N <= 1) return { totalLine: '', totalArea: '', members: [] }
 
   const totalPts: { x: number; y: number }[] = []
   const memberPtsMap = new Map<string, { x: number; y: number }[]>()
-  
+
   for (const m of familyStore.items) {
     memberPtsMap.set(m.id, [])
   }
@@ -464,7 +464,7 @@ const cashPaths = computed(() => {
     const x = padL + (i / (N - 1)) * chartW
     const d = data[i]
     totalPts.push({ x, y: padT + chartH - (d.total / max) * chartH })
-    
+
     for (const mb of d.members) {
       memberPtsMap.get(mb.id)?.push({
         x,
@@ -473,7 +473,7 @@ const cashPaths = computed(() => {
     }
   }
 
-  const linePath = (pts: { x: number; y: number }[]) => 
+  const linePath = (pts: { x: number; y: number }[]) =>
     pts.map((p, idx) => `${idx === 0 ? 'M' : 'L'} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' ')
 
   const areaPath = (pts: { x: number; y: number }[]) => {
@@ -517,11 +517,6 @@ const getXPercent = (index: number, total: number) => {
       <!-- Cabecera de Página -->
       <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div class="flex items-center gap-3">
-          <RouterLink :to="{ name: ROUTE_NAMES.dashboard }"
-            class="flex h-10 w-10 items-center justify-center rounded-full bg-surface-muted text-content-muted transition hover:bg-line hover:text-content">
-            <AppIcon name="solar:arrow-left-bold" :size="20" />
-          </RouterLink>
-
           <div>
             <h1 class="text-2xl font-bold text-content">
               Análisis y Gráficas
@@ -534,13 +529,10 @@ const getXPercent = (index: number, total: number) => {
 
         <!-- Segmented Control de Rango -->
         <div class="w-full sm:w-48 shrink-0">
-          <SegmentedControl
-            v-model="viewMode"
-            :options="[
-              { value: 'monthly', label: 'Mensual' },
-              { value: 'yearly', label: 'Anual' }
-            ]"
-          />
+          <SegmentedControl v-model="viewMode" :options="[
+            { value: 'monthly', label: 'Mensual' },
+            { value: 'yearly', label: 'Anual' }
+          ]" />
         </div>
       </div>
 
@@ -551,32 +543,28 @@ const getXPercent = (index: number, total: number) => {
       </div>
 
       <div v-else-if="!allTransactions.length" class="text-center py-16">
-        <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-surface-muted text-content-subtle">
+        <div
+          class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-surface-muted text-content-subtle">
           <AppIcon name="solar:chart-2-bold" :size="32" />
         </div>
         <h3 class="mt-4 text-base font-bold text-content">No hay datos suficientes</h3>
         <p class="mt-2 text-sm text-content-muted max-w-sm mx-auto">
           Añade movimientos de gastos, ingresos, ahorros o efectivo para ver su evolución visual.
         </p>
-        <RouterLink :to="{ name: ROUTE_NAMES.dashboard }" class="mt-6 inline-flex h-10 items-center justify-center rounded-pill bg-primary-500 px-6 font-semibold text-white shadow-primary-glow hover:bg-primary-600 transition">
-          Volver al Dashboard
-        </RouterLink>
       </div>
 
       <div v-else class="space-y-6">
         <!-- Selector de Año (Solo para vista Mensual) -->
-        <div v-if="viewMode === 'monthly'" class="flex items-center justify-between rounded-card border border-line bg-surface-raised p-4">
+        <div v-if="viewMode === 'monthly'"
+          class="flex items-center justify-between rounded-card border border-line bg-surface-raised p-4">
           <div class="text-sm font-semibold text-content">
             Periodo de consulta
           </div>
 
           <div class="flex items-center gap-3">
-            <button
-              type="button"
+            <button type="button"
               class="flex h-9 w-9 items-center justify-center rounded-full bg-surface-muted text-content-muted hover:bg-line hover:text-content active:scale-95 transition-all"
-              title="Año anterior"
-              @click="prevYear"
-            >
+              title="Año anterior" @click="prevYear">
               <AppIcon name="solar:arrow-left-bold" :size="16" />
             </button>
 
@@ -584,12 +572,9 @@ const getXPercent = (index: number, total: number) => {
               {{ selectedYear }}
             </span>
 
-            <button
-              type="button"
+            <button type="button"
               class="flex h-9 w-9 items-center justify-center rounded-full bg-surface-muted text-content-muted hover:bg-line hover:text-content active:scale-95 transition-all"
-              title="Año siguiente"
-              @click="nextYear"
-            >
+              title="Año siguiente" @click="nextYear">
               <AppIcon name="solar:arrow-right-bold" :size="16" />
             </button>
           </div>
@@ -613,8 +598,12 @@ const getXPercent = (index: number, total: number) => {
 
           <div class="rounded-card border border-line bg-surface-raised p-4">
             <p class="text-2xs font-semibold uppercase tracking-wider text-content-subtle">Ahorro Neto</p>
-            <p class="mt-1 text-lg font-extrabold" :class="periodMetrics.balance >= 0 ? 'text-content' : 'text-expense'">
-              {{ periodMetrics.balance >= 0 ? '+' : '' }}{{ formatCurrency(periodMetrics.balance, { currency: ui.currency }) }}
+            <p class="mt-1 text-lg font-extrabold"
+              :class="periodMetrics.balance >= 0 ? 'text-content' : 'text-expense'">
+              {{ periodMetrics.balance >= 0 ? '+' : '' }}{{ formatCurrency(periodMetrics.balance, {
+                currency:
+                  ui.currency
+              }) }}
             </p>
           </div>
 
@@ -650,17 +639,21 @@ const getXPercent = (index: number, total: number) => {
           </div>
 
           <!-- Info interactiva -->
-          <div class="h-8 flex items-center bg-surface-muted/50 rounded-field px-3 text-xs font-semibold text-content-muted">
+          <div
+            class="h-8 flex items-center bg-surface-muted/50 rounded-field px-3 text-xs font-semibold text-content-muted">
             <span v-if="hoveredIncExpIdx === null">
               Pasa el cursor sobre las barras para ver detalles
             </span>
             <span v-else class="flex justify-between w-full">
               <span>{{ incomeExpensesData[hoveredIncExpIdx].fullLabel }}</span>
               <span class="flex gap-4">
-                <span class="text-income">Ingreso: {{ formatCurrency(incomeExpensesData[hoveredIncExpIdx].income) }}</span>
-                <span class="text-expense">Gasto: {{ formatCurrency(incomeExpensesData[hoveredIncExpIdx].expense) }}</span>
+                <span class="text-income">Ingreso: {{ formatCurrency(incomeExpensesData[hoveredIncExpIdx].income)
+                }}</span>
+                <span class="text-expense">Gasto: {{ formatCurrency(incomeExpensesData[hoveredIncExpIdx].expense)
+                }}</span>
                 <span :class="incomeExpensesData[hoveredIncExpIdx].balance >= 0 ? 'text-content' : 'text-expense'">
-                  Neto: {{ incomeExpensesData[hoveredIncExpIdx].balance >= 0 ? '+' : '' }}{{ formatCurrency(incomeExpensesData[hoveredIncExpIdx].balance) }}
+                  Neto: {{ incomeExpensesData[hoveredIncExpIdx].balance >= 0 ? '+' : '' }}{{
+                    formatCurrency(incomeExpensesData[hoveredIncExpIdx].balance) }}
                 </span>
               </span>
             </span>
@@ -679,72 +672,50 @@ const getXPercent = (index: number, total: number) => {
               <!-- Etiquetas del Eje Y -->
               <g fill="var(--content-subtle)" font-size="9" text-anchor="end" font-weight="bold">
                 <text :x="padL - 8" :y="padT + 3">{{ formatCurrency(maxIncExp, { signDisplay: 'never' }) }}</text>
-                <text :x="padL - 8" :y="padT + chartH * 0.5 + 3">{{ formatCurrency(maxIncExp * 0.5, { signDisplay: 'never' }) }}</text>
+                <text :x="padL - 8" :y="padT + chartH * 0.5 + 3">{{ formatCurrency(maxIncExp * 0.5, {
+                  signDisplay:
+                    'never'
+                }) }}</text>
                 <text :x="padL - 8" :y="padT + chartH + 3">{{ formatCurrency(0, { signDisplay: 'never' }) }}</text>
               </g>
 
               <!-- Barras -->
               <g v-for="(item, idx) in incomeExpensesData" :key="idx">
                 <!-- Columna de enfoque/hover -->
-                <rect
-                  v-if="hoveredIncExpIdx === idx"
+                <rect v-if="hoveredIncExpIdx === idx"
                   :x="getBarGroupX(idx, incomeExpensesData.length) - (chartW / incomeExpensesData.length) / 2"
-                  :y="padT - 5"
-                  :width="chartW / incomeExpensesData.length"
-                  :height="chartH + 10"
-                  fill="var(--surface-muted)"
-                  rx="6"
-                  opacity="0.5"
-                />
+                  :y="padT - 5" :width="chartW / incomeExpensesData.length" :height="chartH + 10"
+                  fill="var(--surface-muted)" rx="6" opacity="0.5" />
 
                 <!-- Barra Ingreso -->
                 <rect
                   :x="getBarGroupX(idx, incomeExpensesData.length) - (Math.max(2, (chartW / incomeExpensesData.length) * 0.35)) - 1"
                   :y="padT + chartH - ((item.income / maxIncExp) * chartH)"
                   :width="Math.max(2, (chartW / incomeExpensesData.length) * 0.35)"
-                  :height="(item.income / maxIncExp) * chartH"
-                  fill="#00b894"
-                  rx="2"
-                  class="transition-all duration-300"
-                />
+                  :height="(item.income / maxIncExp) * chartH" fill="#00b894" rx="2"
+                  class="transition-all duration-300" />
 
                 <!-- Barra Gasto -->
-                <rect
-                  :x="getBarGroupX(idx, incomeExpensesData.length) + 1"
+                <rect :x="getBarGroupX(idx, incomeExpensesData.length) + 1"
                   :y="padT + chartH - ((item.expense / maxIncExp) * chartH)"
                   :width="Math.max(2, (chartW / incomeExpensesData.length) * 0.35)"
-                  :height="(item.expense / maxIncExp) * chartH"
-                  fill="#f5492a"
-                  rx="2"
-                  class="transition-all duration-300"
-                />
+                  :height="(item.expense / maxIncExp) * chartH" fill="#f5492a" rx="2"
+                  class="transition-all duration-300" />
               </g>
 
               <!-- Etiquetas del Eje X -->
               <g fill="var(--content-muted)" font-size="9" text-anchor="middle" font-weight="600">
-                <text
-                  v-for="(item, idx) in incomeExpensesData"
-                  :key="idx"
-                  :x="getBarGroupX(idx, incomeExpensesData.length)"
-                  :y="padT + chartH + 18"
-                >
+                <text v-for="(item, idx) in incomeExpensesData" :key="idx"
+                  :x="getBarGroupX(idx, incomeExpensesData.length)" :y="padT + chartH + 18">
                   {{ item.label }}
                 </text>
               </g>
 
               <!-- Capa interactiva de rects transparentes -->
-              <rect
-                v-for="(item, idx) in incomeExpensesData"
-                :key="'hover-' + idx"
-                :x="getBarGroupX(idx, incomeExpensesData.length) - (chartW / incomeExpensesData.length) / 2"
-                :y="padT"
-                :width="chartW / incomeExpensesData.length"
-                :height="chartH"
-                fill="transparent"
-                class="cursor-pointer"
-                @mouseenter="hoveredIncExpIdx = idx"
-                @mouseleave="hoveredIncExpIdx = null"
-              />
+              <rect v-for="(item, idx) in incomeExpensesData" :key="'hover-' + idx"
+                :x="getBarGroupX(idx, incomeExpensesData.length) - (chartW / incomeExpensesData.length) / 2" :y="padT"
+                :width="chartW / incomeExpensesData.length" :height="chartH" fill="transparent" class="cursor-pointer"
+                @mouseenter="hoveredIncExpIdx = idx" @mouseleave="hoveredIncExpIdx = null" />
             </svg>
           </div>
         </BaseCard>
@@ -761,44 +732,39 @@ const getXPercent = (index: number, total: number) => {
 
             <!-- Toggles de Gráfica (Banco, Efectivo, Todo) -->
             <div class="flex rounded-field bg-surface-muted p-0.5 text-2xs font-bold w-full sm:w-fit">
-              <button
-                type="button"
-                class="px-3 py-1.5 rounded-[10px] transition-all"
+              <button type="button" class="px-3 py-1.5 rounded-[10px] transition-all"
                 :class="savingsFilter === 'all' ? 'bg-surface-raised text-content shadow-sm' : 'text-content-muted hover:text-content'"
-                @click="savingsFilter = 'all'"
-              >
+                @click="savingsFilter = 'all'">
                 Total
               </button>
-              <button
-                type="button"
-                class="px-3 py-1.5 rounded-[10px] transition-all"
+              <button type="button" class="px-3 py-1.5 rounded-[10px] transition-all"
                 :class="savingsFilter === 'bank' ? 'bg-surface-raised text-content shadow-sm' : 'text-content-muted hover:text-content'"
-                @click="savingsFilter = 'bank'"
-              >
+                @click="savingsFilter = 'bank'">
                 Banco
               </button>
-              <button
-                type="button"
-                class="px-3 py-1.5 rounded-[10px] transition-all"
+              <button type="button" class="px-3 py-1.5 rounded-[10px] transition-all"
                 :class="savingsFilter === 'cash' ? 'bg-surface-raised text-content shadow-sm' : 'text-content-muted hover:text-content'"
-                @click="savingsFilter = 'cash'"
-              >
+                @click="savingsFilter = 'cash'">
                 Efectivo
               </button>
             </div>
           </div>
 
           <!-- Info interactiva -->
-          <div class="h-8 flex items-center bg-surface-muted/50 rounded-field px-3 text-xs font-semibold text-content-muted">
+          <div
+            class="h-8 flex items-center bg-surface-muted/50 rounded-field px-3 text-xs font-semibold text-content-muted">
             <span v-if="hoveredSavingsIdx === null">
               Pasa el cursor sobre la gráfica para ver saldos históricos
             </span>
             <span v-else class="flex justify-between w-full">
               <span>Saldo a fin de {{ savingsEvolutionData[hoveredSavingsIdx].fullLabel }}</span>
               <span class="flex gap-4">
-                <span v-if="savingsFilter === 'all' || savingsFilter === 'bank'" class="text-violet-500">Banco: {{ formatCurrency(savingsEvolutionData[hoveredSavingsIdx].bank) }}</span>
-                <span v-if="savingsFilter === 'all' || savingsFilter === 'cash'" class="text-amber-500">Efectivo: {{ formatCurrency(savingsEvolutionData[hoveredSavingsIdx].cash) }}</span>
-                <span class="text-primary-500">Total: {{ formatCurrency(savingsEvolutionData[hoveredSavingsIdx].total) }}</span>
+                <span v-if="savingsFilter === 'all' || savingsFilter === 'bank'" class="text-violet-500">Banco: {{
+                  formatCurrency(savingsEvolutionData[hoveredSavingsIdx].bank) }}</span>
+                <span v-if="savingsFilter === 'all' || savingsFilter === 'cash'" class="text-amber-500">Efectivo: {{
+                  formatCurrency(savingsEvolutionData[hoveredSavingsIdx].cash) }}</span>
+                <span class="text-primary-500">Total: {{ formatCurrency(savingsEvolutionData[hoveredSavingsIdx].total)
+                }}</span>
               </span>
             </span>
           </div>
@@ -832,7 +798,10 @@ const getXPercent = (index: number, total: number) => {
               <!-- Etiquetas Eje Y -->
               <g fill="var(--content-subtle)" font-size="9" text-anchor="end" font-weight="bold">
                 <text :x="padL - 8" :y="padT + 3">{{ formatCurrency(maxSavings, { signDisplay: 'never' }) }}</text>
-                <text :x="padL - 8" :y="padT + chartH * 0.5 + 3">{{ formatCurrency(maxSavings * 0.5, { signDisplay: 'never' }) }}</text>
+                <text :x="padL - 8" :y="padT + chartH * 0.5 + 3">{{ formatCurrency(maxSavings * 0.5, {
+                  signDisplay:
+                    'never'
+                }) }}</text>
                 <text :x="padL - 8" :y="padT + chartH + 3">{{ formatCurrency(0, { signDisplay: 'never' }) }}</text>
               </g>
 
@@ -840,96 +809,67 @@ const getXPercent = (index: number, total: number) => {
               <!-- Caso 1: Todo el ahorro -->
               <g v-if="savingsFilter === 'all'">
                 <path :d="savingsPaths.totalArea" fill="url(#grad-total)" />
-                <path :d="savingsPaths.bankLine" fill="none" stroke="#8b5cf6" stroke-width="1.5" stroke-dasharray="3 3" opacity="0.6" />
-                <path :d="savingsPaths.cashLine" fill="none" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="3 3" opacity="0.6" />
-                <path :d="savingsPaths.totalLine" fill="none" stroke="#00b894" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+                <path :d="savingsPaths.bankLine" fill="none" stroke="#8b5cf6" stroke-width="1.5" stroke-dasharray="3 3"
+                  opacity="0.6" />
+                <path :d="savingsPaths.cashLine" fill="none" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="3 3"
+                  opacity="0.6" />
+                <path :d="savingsPaths.totalLine" fill="none" stroke="#00b894" stroke-width="3" stroke-linecap="round"
+                  stroke-linejoin="round" />
               </g>
 
               <!-- Caso 2: Banco -->
               <g v-else-if="savingsFilter === 'bank'">
                 <path :d="savingsPaths.bankArea" fill="url(#grad-bank)" />
-                <path :d="savingsPaths.bankLine" fill="none" stroke="#8b5cf6" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+                <path :d="savingsPaths.bankLine" fill="none" stroke="#8b5cf6" stroke-width="3" stroke-linecap="round"
+                  stroke-linejoin="round" />
               </g>
 
               <!-- Caso 3: Efectivo -->
               <g v-else-if="savingsFilter === 'cash'">
                 <path :d="savingsPaths.cashArea" fill="url(#grad-cash)" />
-                <path :d="savingsPaths.cashLine" fill="none" stroke="#f59e0b" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+                <path :d="savingsPaths.cashLine" fill="none" stroke="#f59e0b" stroke-width="3" stroke-linecap="round"
+                  stroke-linejoin="round" />
               </g>
 
               <!-- Focus Vertical Line -->
               <g v-if="hoveredSavingsIdx !== null">
-                <line
-                  :x1="padL + (hoveredSavingsIdx / (savingsEvolutionData.length - 1)) * chartW"
-                  :y1="padT"
-                  :x2="padL + (hoveredSavingsIdx / (savingsEvolutionData.length - 1)) * chartW"
-                  :y2="padT + chartH"
-                  stroke="var(--line-strong)"
-                  stroke-width="1.5"
-                />
-                
+                <line :x1="padL + (hoveredSavingsIdx / (savingsEvolutionData.length - 1)) * chartW" :y1="padT"
+                  :x2="padL + (hoveredSavingsIdx / (savingsEvolutionData.length - 1)) * chartW" :y2="padT + chartH"
+                  stroke="var(--line-strong)" stroke-width="1.5" />
+
                 <!-- Puntos sobre las líneas -->
                 <!-- Punto Total -->
-                <circle
-                  v-if="savingsFilter === 'all'"
+                <circle v-if="savingsFilter === 'all'"
                   :cx="padL + (hoveredSavingsIdx / (savingsEvolutionData.length - 1)) * chartW"
-                  :cy="padT + chartH - ((savingsEvolutionData[hoveredSavingsIdx].total / maxSavings) * chartH)"
-                  r="5"
-                  fill="#00b894"
-                  stroke="white"
-                  stroke-width="1.5"
-                />
+                  :cy="padT + chartH - ((savingsEvolutionData[hoveredSavingsIdx].total / maxSavings) * chartH)" r="5"
+                  fill="#00b894" stroke="white" stroke-width="1.5" />
                 <!-- Punto Banco -->
-                <circle
-                  v-if="savingsFilter === 'bank' || savingsFilter === 'all'"
+                <circle v-if="savingsFilter === 'bank' || savingsFilter === 'all'"
                   :cx="padL + (hoveredSavingsIdx / (savingsEvolutionData.length - 1)) * chartW"
-                  :cy="padT + chartH - ((savingsEvolutionData[hoveredSavingsIdx].bank / maxSavings) * chartH)"
-                  r="5"
-                  fill="#8b5cf6"
-                  stroke="white"
-                  stroke-width="1.5"
-                />
+                  :cy="padT + chartH - ((savingsEvolutionData[hoveredSavingsIdx].bank / maxSavings) * chartH)" r="5"
+                  fill="#8b5cf6" stroke="white" stroke-width="1.5" />
                 <!-- Punto Efectivo -->
-                <circle
-                  v-if="savingsFilter === 'cash' || savingsFilter === 'all'"
+                <circle v-if="savingsFilter === 'cash' || savingsFilter === 'all'"
                   :cx="padL + (hoveredSavingsIdx / (savingsEvolutionData.length - 1)) * chartW"
-                  :cy="padT + chartH - ((savingsEvolutionData[hoveredSavingsIdx].cash / maxSavings) * chartH)"
-                  r="5"
-                  fill="#f59e0b"
-                  stroke="white"
-                  stroke-width="1.5"
-                />
+                  :cy="padT + chartH - ((savingsEvolutionData[hoveredSavingsIdx].cash / maxSavings) * chartH)" r="5"
+                  fill="#f59e0b" stroke="white" stroke-width="1.5" />
               </g>
 
               <!-- Eje X etiquetas -->
               <g fill="var(--content-muted)" font-size="9" text-anchor="middle" font-weight="600">
-                <text
-                  v-for="(item, idx) in savingsEvolutionData"
-                  :key="idx"
-                  :x="padL + (idx / (savingsEvolutionData.length - 1)) * chartW"
-                  :y="padT + chartH + 18"
-                >
+                <text v-for="(item, idx) in savingsEvolutionData" :key="idx"
+                  :x="padL + (idx / (savingsEvolutionData.length - 1)) * chartW" :y="padT + chartH + 18">
                   {{ item.label }}
                 </text>
               </g>
 
               <!-- Zonas interactivas transparentes -->
-              <rect
-                v-for="(item, idx) in savingsEvolutionData"
-                :key="'sav-hover-' + idx"
-                :x="idx === 0
-                  ? padL
-                  : padL + ((idx - 0.5) / (savingsEvolutionData.length - 1)) * chartW"
-                :y="padT"
-                :width="idx === 0 || idx === savingsEvolutionData.length - 1
+              <rect v-for="(item, idx) in savingsEvolutionData" :key="'sav-hover-' + idx" :x="idx === 0
+                ? padL
+                : padL + ((idx - 0.5) / (savingsEvolutionData.length - 1)) * chartW" :y="padT" :width="idx === 0 || idx === savingsEvolutionData.length - 1
                   ? (chartW / (savingsEvolutionData.length - 1)) / 2
-                  : chartW / (savingsEvolutionData.length - 1)"
-                :height="chartH"
-                fill="transparent"
-                class="cursor-pointer"
-                @mouseenter="hoveredSavingsIdx = idx"
-                @mouseleave="hoveredSavingsIdx = null"
-              />
+                  : chartW / (savingsEvolutionData.length - 1)" :height="chartH" fill="transparent"
+                class="cursor-pointer" @mouseenter="hoveredSavingsIdx = idx" @mouseleave="hoveredSavingsIdx = null" />
             </svg>
           </div>
         </BaseCard>
@@ -949,29 +889,13 @@ const getXPercent = (index: number, total: number) => {
             <div class="md:col-span-5 flex justify-center">
               <div class="relative w-44 h-44">
                 <svg viewBox="0 0 100 100" class="w-full h-full transform -rotate-90">
-                  <circle
-                    cx="50"
-                    cy="50"
-                    r="38"
-                    stroke="var(--surface-muted)"
-                    stroke-width="10"
-                    fill="none"
-                  />
+                  <circle cx="50" cy="50" r="38" stroke="var(--surface-muted)" stroke-width="10" fill="none" />
                   <!-- Slices -->
-                  <circle
-                    v-for="slice in walletDistribution"
-                    :key="slice.id"
-                    cx="50"
-                    cy="50"
-                    r="38"
-                    :stroke="slice.color"
-                    stroke-width="10"
-                    fill="none"
+                  <circle v-for="slice in walletDistribution" :key="slice.id" cx="50" cy="50" r="38"
+                    :stroke="slice.color" stroke-width="10" fill="none"
                     :stroke-dasharray="`${slice.strokeLength.toFixed(2)} ${slice.circ.toFixed(2)}`"
-                    :stroke-dashoffset="slice.strokeOffset.toFixed(2)"
-                    stroke-linecap="round"
-                    class="transition-all duration-500 ease-out"
-                  />
+                    :stroke-dashoffset="slice.strokeOffset.toFixed(2)" stroke-linecap="round"
+                    class="transition-all duration-500 ease-out" />
                 </svg>
 
                 <!-- Centro del Donut (Total) -->
@@ -988,21 +912,17 @@ const getXPercent = (index: number, total: number) => {
 
             <!-- Listado de Miembros con saldos y porcentajes -->
             <div class="md:col-span-7 space-y-3">
-              <div
-                v-for="member in walletDistribution"
-                :key="member.id"
-                class="flex items-center justify-between p-2.5 rounded-field border border-line bg-surface/50"
-              >
+              <div v-for="member in walletDistribution" :key="member.id"
+                class="flex items-center justify-between p-2.5 rounded-field border border-line bg-surface/50">
                 <div class="flex items-center gap-3">
-                  <span
-                    class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-white"
-                    :style="{ backgroundColor: member.color }"
-                  >
+                  <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-white"
+                    :style="{ backgroundColor: member.color }">
                     <AppIcon :name="member.avatar || 'solar:user-bold'" :size="16" />
                   </span>
                   <div>
                     <span class="text-sm font-bold text-content">{{ member.name }}</span>
-                    <span class="ml-2 text-3xs font-semibold rounded-pill px-1.5 py-0.5 bg-surface-muted text-content-muted">
+                    <span
+                      class="ml-2 text-3xs font-semibold rounded-pill px-1.5 py-0.5 bg-surface-muted text-content-muted">
                       {{ member.percent }}%
                     </span>
                   </div>
@@ -1030,21 +950,19 @@ const getXPercent = (index: number, total: number) => {
             </div>
 
             <!-- Info interactiva -->
-            <div class="h-8 flex items-center bg-surface-muted/50 rounded-field px-3 text-xs font-semibold text-content-muted">
+            <div
+              class="h-8 flex items-center bg-surface-muted/50 rounded-field px-3 text-xs font-semibold text-content-muted">
               <span v-if="hoveredCashIdx === null">
                 Pasa el cursor sobre la gráfica para ver saldos históricos de efectivo
               </span>
               <span v-else class="flex justify-between w-full">
                 <span>Saldo a fin de {{ cashEvolutionData[hoveredCashIdx].fullLabel }}</span>
                 <span class="flex gap-4">
-                  <span
-                    v-for="m in cashEvolutionData[hoveredCashIdx].members"
-                    :key="m.id"
-                    :style="{ color: m.color }"
-                  >
+                  <span v-for="m in cashEvolutionData[hoveredCashIdx].members" :key="m.id" :style="{ color: m.color }">
                     {{ m.name }}: {{ formatCurrency(m.balance) }}
                   </span>
-                  <span class="text-primary-500 font-bold">Total: {{ formatCurrency(cashEvolutionData[hoveredCashIdx].total) }}</span>
+                  <span class="text-primary-500 font-bold">Total: {{
+                    formatCurrency(cashEvolutionData[hoveredCashIdx].total) }}</span>
                 </span>
               </span>
             </div>
@@ -1062,7 +980,10 @@ const getXPercent = (index: number, total: number) => {
                 <!-- Etiquetas Eje Y -->
                 <g fill="var(--content-subtle)" font-size="9" text-anchor="end" font-weight="bold">
                   <text :x="padL - 8" :y="padT + 3">{{ formatCurrency(maxCash, { signDisplay: 'never' }) }}</text>
-                  <text :x="padL - 8" :y="padT + chartH * 0.5 + 3">{{ formatCurrency(maxCash * 0.5, { signDisplay: 'never' }) }}</text>
+                  <text :x="padL - 8" :y="padT + chartH * 0.5 + 3">{{ formatCurrency(maxCash * 0.5, {
+                    signDisplay:
+                      'never'
+                  }) }}</text>
                   <text :x="padL - 8" :y="padT + chartH + 3">{{ formatCurrency(0, { signDisplay: 'never' }) }}</text>
                 </g>
 
@@ -1070,81 +991,44 @@ const getXPercent = (index: number, total: number) => {
                 <path :d="cashPaths.totalArea" fill="url(#grad-total)" opacity="0.4" />
 
                 <!-- Línea Total General -->
-                <path :d="cashPaths.totalLine" fill="none" stroke="#00b894" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+                <path :d="cashPaths.totalLine" fill="none" stroke="#00b894" stroke-width="2.5" stroke-linecap="round"
+                  stroke-linejoin="round" />
 
                 <!-- Líneas por miembro -->
-                <path
-                  v-for="ml in cashPaths.members"
-                  :key="ml.id"
-                  :d="ml.linePath"
-                  fill="none"
-                  :stroke="ml.color"
-                  stroke-width="1.8"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                />
+                <path v-for="ml in cashPaths.members" :key="ml.id" :d="ml.linePath" fill="none" :stroke="ml.color"
+                  stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
 
                 <!-- Focus Vertical Line -->
                 <g v-if="hoveredCashIdx !== null">
-                  <line
-                    :x1="padL + (hoveredCashIdx / (cashEvolutionData.length - 1)) * chartW"
-                    :y1="padT"
-                    :x2="padL + (hoveredCashIdx / (cashEvolutionData.length - 1)) * chartW"
-                    :y2="padT + chartH"
-                    stroke="var(--line-strong)"
-                    stroke-width="1.5"
-                  />
+                  <line :x1="padL + (hoveredCashIdx / (cashEvolutionData.length - 1)) * chartW" :y1="padT"
+                    :x2="padL + (hoveredCashIdx / (cashEvolutionData.length - 1)) * chartW" :y2="padT + chartH"
+                    stroke="var(--line-strong)" stroke-width="1.5" />
                   <!-- Puntos sobre las líneas de miembros -->
-                  <circle
-                    v-for="m in cashEvolutionData[hoveredCashIdx].members"
-                    :key="'point-' + m.id"
+                  <circle v-for="m in cashEvolutionData[hoveredCashIdx].members" :key="'point-' + m.id"
                     :cx="padL + (hoveredCashIdx / (cashEvolutionData.length - 1)) * chartW"
-                    :cy="padT + chartH - ((m.balance / maxCash) * chartH)"
-                    r="4"
-                    :fill="m.color"
-                    stroke="white"
-                    stroke-width="1"
-                  />
+                    :cy="padT + chartH - ((m.balance / maxCash) * chartH)" r="4" :fill="m.color" stroke="white"
+                    stroke-width="1" />
                   <!-- Punto Total -->
-                  <circle
-                    :cx="padL + (hoveredCashIdx / (cashEvolutionData.length - 1)) * chartW"
-                    :cy="padT + chartH - ((cashEvolutionData[hoveredCashIdx].total / maxCash) * chartH)"
-                    r="5"
-                    fill="#00b894"
-                    stroke="white"
-                    stroke-width="1.5"
-                  />
+                  <circle :cx="padL + (hoveredCashIdx / (cashEvolutionData.length - 1)) * chartW"
+                    :cy="padT + chartH - ((cashEvolutionData[hoveredCashIdx].total / maxCash) * chartH)" r="5"
+                    fill="#00b894" stroke="white" stroke-width="1.5" />
                 </g>
 
                 <!-- Eje X etiquetas -->
                 <g fill="var(--content-muted)" font-size="9" text-anchor="middle" font-weight="600">
-                  <text
-                    v-for="(item, idx) in cashEvolutionData"
-                    :key="idx"
-                    :x="padL + (idx / (cashEvolutionData.length - 1)) * chartW"
-                    :y="padT + chartH + 18"
-                  >
+                  <text v-for="(item, idx) in cashEvolutionData" :key="idx"
+                    :x="padL + (idx / (cashEvolutionData.length - 1)) * chartW" :y="padT + chartH + 18">
                     {{ item.label }}
                   </text>
                 </g>
 
                 <!-- Zonas interactivas transparentes -->
-                <rect
-                  v-for="(item, idx) in cashEvolutionData"
-                  :key="'cash-hover-' + idx"
-                  :x="idx === 0
-                    ? padL
-                    : padL + ((idx - 0.5) / (cashEvolutionData.length - 1)) * chartW"
-                  :y="padT"
-                  :width="idx === 0 || idx === cashEvolutionData.length - 1
+                <rect v-for="(item, idx) in cashEvolutionData" :key="'cash-hover-' + idx" :x="idx === 0
+                  ? padL
+                  : padL + ((idx - 0.5) / (cashEvolutionData.length - 1)) * chartW" :y="padT" :width="idx === 0 || idx === cashEvolutionData.length - 1
                     ? (chartW / (cashEvolutionData.length - 1)) / 2
-                    : chartW / (cashEvolutionData.length - 1)"
-                  :height="chartH"
-                  fill="transparent"
-                  class="cursor-pointer"
-                  @mouseenter="hoveredCashIdx = idx"
-                  @mouseleave="hoveredCashIdx = null"
-                />
+                    : chartW / (cashEvolutionData.length - 1)" :height="chartH" fill="transparent"
+                  class="cursor-pointer" @mouseenter="hoveredCashIdx = idx" @mouseleave="hoveredCashIdx = null" />
               </svg>
             </div>
           </div>
@@ -1172,17 +1056,11 @@ const getXPercent = (index: number, total: number) => {
           </div>
 
           <div v-else class="space-y-4">
-            <div
-              v-for="item in categoryBreakdown.list"
-              :key="item.category.id"
-              class="space-y-1.5"
-            >
+            <div v-for="item in categoryBreakdown.list" :key="item.category.id" class="space-y-1.5">
               <div class="flex items-center justify-between text-xs font-bold">
                 <div class="flex items-center gap-2">
-                  <span
-                    class="flex h-6 w-6 items-center justify-center rounded-full text-white"
-                    :style="{ backgroundColor: item.category.color }"
-                  >
+                  <span class="flex h-6 w-6 items-center justify-center rounded-full text-white"
+                    :style="{ backgroundColor: item.category.color }">
                     <AppIcon :name="item.category.icon || 'solar:tag-bold'" :size="12" />
                   </span>
                   <span class="text-content font-semibold">{{ item.category.name }}</span>
@@ -1196,18 +1074,16 @@ const getXPercent = (index: number, total: number) => {
 
               <!-- Barra de progreso estilizada -->
               <div class="h-2 w-full rounded-full bg-surface-muted overflow-hidden">
-                <div
-                  class="h-full rounded-full transition-all duration-500 ease-out"
-                  :style="{
-                    width: `${item.percent}%`,
-                    backgroundColor: item.category.color
-                  }"
-                />
+                <div class="h-full rounded-full transition-all duration-500 ease-out" :style="{
+                  width: `${item.percent}%`,
+                  backgroundColor: item.category.color
+                }" />
               </div>
             </div>
           </div>
         </BaseCard>
       </div>
     </main>
+    <BottomNavigation />
   </div>
 </template>
