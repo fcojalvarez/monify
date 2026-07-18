@@ -242,7 +242,7 @@ onMounted(async () => {
     </main>
 
     <button
-      class="fixed bottom-[calc(1.5rem+env(safe-area-inset-bottom))] right-4 md:right-[calc(50vw-20rem)] flex h-14 items-center gap-2 rounded-pill bg-primary-500 px-6 font-semibold text-white shadow-primary-glow transition-transform active:scale-95"
+      class="fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] right-4 md:right-[calc(50vw-20rem)] flex h-14 items-center gap-2 rounded-pill bg-primary-500 px-6 font-semibold text-white shadow-primary-glow transition-transform active:scale-95"
       aria-label="Añadir movimiento" @click="openNewTransaction">
       <AppIcon name="solar:add-circle-bold" :size="22" />
       Añadir
