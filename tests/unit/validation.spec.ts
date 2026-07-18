@@ -1,10 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import {
-  isValidEmail,
-  validatePassword,
-  parseAmount,
-  isPositiveAmount,
-} from '@/utils/validation'
+import { isValidEmail, validatePassword, parseAmount, isPositiveAmount } from '@/utils/validation'
 
 describe('validation utils', () => {
   describe('isValidEmail', () => {
@@ -24,11 +19,12 @@ describe('validation utils', () => {
       expect(validatePassword('abc12345')).toBeNull()
     })
     it('exige longitud mínima', () => {
-      expect(validatePassword('ab12')).toMatch(/8 caracteres/)
+      expect(validatePassword('ab12')).toBe('too_short')
     })
+
     it('exige letra y número', () => {
-      expect(validatePassword('12345678')).toMatch(/letra y un número/)
-      expect(validatePassword('abcdefgh')).toMatch(/letra y un número/)
+      expect(validatePassword('12345678')).toBe('missing_requirements')
+      expect(validatePassword('abcdefgh')).toBe('missing_requirements')
     })
   })
 
