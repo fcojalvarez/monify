@@ -43,25 +43,24 @@ export const useCashStore = defineStore('cash', () => {
     return balances
   })
 
-  /**
-   * Total de entradas
-   */
-  const totalIncome = computed(() =>
-    transactions.value
-      .filter((tx: any) => tx.amount > 0)
-      .reduce((sum: number, tx: any) => sum + tx.amount, 0),
-  )
+  const totals = computed(() => {
+    let income = 0
+    let expense = 0
+    for (const tx of transactions.value) {
+      if (tx.amount > 0) {
+        income += tx.amount
+      } else {
+        expense += tx.amount
+      }
+    }
+    return {
+      income,
+      expense: Math.abs(expense),
+    }
+  })
 
-  /**
-   * Total de salidas
-   */
-  const totalExpense = computed(() =>
-    Math.abs(
-      transactions.value
-        .filter((tx: any) => tx.amount < 0)
-        .reduce((sum: number, tx: any) => sum + tx.amount, 0),
-    ),
-  )
+  const totalIncome = computed(() => totals.value.income)
+  const totalExpense = computed(() => totals.value.expense)
 
   /**
    * Balance de un miembro

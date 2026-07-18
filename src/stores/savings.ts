@@ -31,13 +31,21 @@ export const useSavingsStore = defineStore('savings', () => {
     items.value.filter((s) => s.type === 'cash' && s.status === 'active'),
   )
 
-  const bankBalance = computed(() =>
-    items.value.filter((s) => s.type === 'bank').reduce((sum, s) => sum + s.balance, 0),
-  )
+  const balances = computed(() => {
+    let bank = 0
+    let cash = 0
+    for (const s of items.value) {
+      if (s.type === 'bank') {
+        bank += s.balance
+      } else if (s.type === 'cash') {
+        cash += s.balance
+      }
+    }
+    return { bank, cash }
+  })
 
-  const cashBalance = computed(() =>
-    items.value.filter((s) => s.type === 'cash').reduce((sum, s) => sum + s.balance, 0),
-  )
+  const bankBalance = computed(() => balances.value.bank)
+  const cashBalance = computed(() => balances.value.cash)
 
   function getByType(type: 'bank' | 'cash') {
     return items.value.filter((s) => s.type === type && s.status === 'active')

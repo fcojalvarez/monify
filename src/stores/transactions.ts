@@ -30,13 +30,21 @@ export const useTransactionsStore = defineStore('transactions', () => {
 
   const filters = ref<TransactionFilters>(monthRange())
 
-  const totalIncome = computed(() =>
-    items.value.filter((t) => t.kind === 'income').reduce((sum, t) => sum + t.amount, 0),
-  )
+  const totals = computed(() => {
+    let income = 0
+    let expense = 0
+    for (const t of items.value) {
+      if (t.kind === 'income') {
+        income += t.amount
+      } else if (t.kind === 'expense') {
+        expense += t.amount
+      }
+    }
+    return { income, expense }
+  })
 
-  const totalExpense = computed(() =>
-    items.value.filter((t) => t.kind === 'expense').reduce((sum, t) => sum + t.amount, 0),
-  )
+  const totalIncome = computed(() => totals.value.income)
+  const totalExpense = computed(() => totals.value.expense)
 
   const summary = computed<PeriodSummary>(() => {
     const ui = useUiStore()
@@ -49,18 +57,22 @@ export const useTransactionsStore = defineStore('transactions', () => {
     }
   })
 
-  /**
-   * Barras de categorías
-   */
   const usageByCategory = computed<CategoryUsage[]>(() => {
     const categories = useCategoriesStore()
 
+    const spentByCategory = new Map<string, number>()
+    for (const t of items.value) {
+      if (t.category_id) {
+        spentByCategory.set(
+          t.category_id,
+          (spentByCategory.get(t.category_id) ?? 0) + t.amount
+        )
+      }
+    }
+
     return categories.items
       .map((category) => {
-        const spent = items.value
-          .filter((t) => t.category_id === category.id)
-          .reduce((sum, t) => sum + t.amount, 0)
-
+        const spent = spentByCategory.get(category.id) ?? 0
         const limit = category.monthly_limit
 
         return {
@@ -93,9 +105,15 @@ export const useTransactionsStore = defineStore('transactions', () => {
         familyMemberId: filters.value.familyMemberId,
       })
 
-      const income = list.filter((t) => t.kind === 'income').reduce((sum, t) => sum + t.amount, 0)
-
-      const expense = list.filter((t) => t.kind === 'expense').reduce((sum, t) => sum + t.amount, 0)
+      let income = 0
+      let expense = 0
+      for (const t of list) {
+        if (t.kind === 'income') {
+          income += t.amount
+        } else if (t.kind === 'expense') {
+          expense += t.amount
+        }
+      }
 
       const ui = useUiStore()
 
