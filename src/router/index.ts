@@ -13,67 +13,67 @@ const router = createRouter({
     },
     {
       path: '/auth',
-      component: () => import('@/views/auth/AuthLayout.vue'),
+      component: () => import(/* viteChunkName: "auth" */ '@/views/auth/AuthLayout.vue'),
       meta: { requiresGuest: true },
       children: [
         {
           path: 'login',
           name: ROUTE_NAMES.login,
-          component: () => import('@/views/auth/LoginView.vue'),
+          component: () => import(/* viteChunkName: "auth" */ '@/views/auth/LoginView.vue'),
         },
         {
           path: 'register',
           name: ROUTE_NAMES.register,
-          component: () => import('@/views/auth/RegisterView.vue'),
+          component: () => import(/* viteChunkName: "auth" */ '@/views/auth/RegisterView.vue'),
         },
         {
           path: 'forgot-password',
           name: ROUTE_NAMES.forgotPassword,
-          component: () => import('@/views/auth/ForgotPasswordView.vue'),
+          component: () =>
+            import(/* viteChunkName: "auth" */ '@/views/auth/ForgotPasswordView.vue'),
         },
       ],
     },
     {
-      // Landing tras confirmar email / reset de contraseña (redirect de Supabase)
       path: '/auth/callback',
       name: ROUTE_NAMES.authCallback,
-      component: () => import('@/views/auth/AuthCallbackView.vue'),
+      component: () => import(/* viteChunkName: "auth" */ '@/views/auth/AuthCallbackView.vue'),
     },
     {
       path: '/dashboard',
       name: ROUTE_NAMES.dashboard,
       component: () => import('@/views/dashboard/DashboardView.vue'),
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, index: 1 },
     },
     {
       path: '/history',
       name: ROUTE_NAMES.history,
       component: () => import('@/views/dashboard/HistoryView.vue'),
-      meta: { requiresAuth: true },
-    },
-    {
-      path: '/profile',
-      name: ROUTE_NAMES.profile,
-      component: () => import('@/views/dashboard/ProfileView.vue'),
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, index: 2 },
     },
     {
       path: '/savings',
       name: ROUTE_NAMES.savings,
       component: () => import('@/views/dashboard/SavingsView.vue'),
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, index: 3 },
     },
     {
       path: '/cash',
       name: ROUTE_NAMES.cash,
       component: () => import('@/views/dashboard/CashView.vue'),
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, index: 4 },
     },
     {
       path: '/charts',
       name: ROUTE_NAMES.charts,
       component: () => import('@/views/dashboard/ChartsView.vue'),
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, index: 5 },
+    },
+    {
+      path: '/profile',
+      name: ROUTE_NAMES.profile,
+      component: () => import('@/views/dashboard/ProfileView.vue'),
+      meta: { requiresAuth: true, index: 6 },
     },
     {
       path: '/:pathMatch(.*)*',
@@ -85,18 +85,19 @@ const router = createRouter({
 router.beforeEach(authGuard)
 
 /**
- * View Transitions entre rutas. La dirección (forward / back) se deduce de la
- * profundidad de la ruta y se expone en <html data-transition> para que
- * `transitions.css` elija la animación. Degrada a navegación normal si el
- * navegador no soporta la API o el usuario prefiere menos movimiento.
+ * View Transitions entre rutas optimizadas mediante índices numéricos
  */
 router.beforeResolve((to, from) => {
   const root = document.documentElement
   const supported = 'startViewTransition' in document
   const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+
   if (!supported || reducedMotion || to.path === from.path) return
 
-  const direction = to.path.length >= from.path.length ? 'forward' : 'back'
+  const toIndex = (to.meta.index as number) || 0
+  const fromIndex = (from.meta.index as number) || 0
+
+  const direction = toIndex >= fromIndex ? 'forward' : 'back'
   root.dataset.transition = direction
 
   const doc = document as Document & {
@@ -105,10 +106,13 @@ router.beforeResolve((to, from) => {
 
   return new Promise<void>((resolve) => {
     const transition = doc.startViewTransition!(async () => {
-      resolve() // deja continuar la navegación → Vue re-renderiza la RouterView
-      await nextTick() // espera a que Vue actualice el DOM de forma reactiva en el microtask
+      resolve()
+      await nextTick()
     })
-    transition.finished.finally(() => root.removeAttribute('data-transition'))
+
+    transition.finished.then(() => {
+      root.removeAttribute('data-transition')
+    })
   })
 })
 

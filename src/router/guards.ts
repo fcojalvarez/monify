@@ -7,15 +7,10 @@ declare module 'vue-router' {
   interface RouteMeta {
     requiresAuth?: boolean
     requiresGuest?: boolean
+    index?: number
   }
 }
 
-/**
- * Guard de sesión (JWT de Supabase):
- *  - Rutas `requiresAuth`  → si NO hay sesión, se manda al login.
- *  - Rutas `requiresGuest` → si SÍ hay sesión, se manda al dashboard.
- * Espera a que el store resuelva la sesión inicial para no redirigir en falso.
- */
 export const authGuard: NavigationGuardWithThis<undefined> = async (
   to: RouteLocationNormalized,
 ) => {
@@ -24,15 +19,20 @@ export const authGuard: NavigationGuardWithThis<undefined> = async (
 
   if (!auth.initialized) {
     await auth.init()
-    await profile.load()
   }
 
-  if (to.meta.requiresAuth && !auth.isAuthenticated) {
+  const isAuth = auth.isAuthenticated
+
+  if (to.meta.requiresAuth && !isAuth) {
     return { name: ROUTE_NAMES.login, query: { redirect: to.fullPath } }
   }
 
-  if (to.meta.requiresGuest && auth.isAuthenticated) {
+  if (to.meta.requiresGuest && isAuth) {
     return { name: ROUTE_NAMES.dashboard }
+  }
+
+  if (isAuth && !profile.profile) {
+    await profile.load()
   }
 
   return true
