@@ -1,7 +1,9 @@
-import { nextTick } from 'vue'
 import { createRouter, createWebHistory } from 'vue-router'
 import { ROUTE_NAMES } from '@/constants'
 import { authGuard } from './guards'
+import { useNavigationDirection } from '@/composables/useNavigationDirection'
+
+const { setDirection } = useNavigationDirection()
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -12,7 +14,6 @@ const router = createRouter({
       redirect: { name: ROUTE_NAMES.dashboard },
     },
 
-    // Auth (sin header ni navegación)
     {
       path: '/auth',
       component: () => import('@/views/auth/AuthLayout.vue'),
@@ -42,7 +43,6 @@ const router = createRouter({
       component: () => import('@/views/auth/AuthCallbackView.vue'),
     },
 
-    // Layout principal de la aplicación
     {
       path: '/',
       component: () => import('@/layouts/AppLayout.vue'),
@@ -58,7 +58,7 @@ const router = createRouter({
           path: 'history',
           name: ROUTE_NAMES.history,
           component: () => import('@/views/dashboard/HistoryView.vue'),
-          meta: { index: 2 },
+          meta: { index: 5 },
         },
         {
           path: 'savings',
@@ -76,7 +76,7 @@ const router = createRouter({
           path: 'charts',
           name: ROUTE_NAMES.charts,
           component: () => import('@/views/dashboard/ChartsView.vue'),
-          meta: { index: 5 },
+          meta: { index: 2 },
         },
         {
           path: 'profile',
@@ -96,36 +96,14 @@ const router = createRouter({
 
 router.beforeEach(authGuard)
 
-/**
- * View Transitions entre rutas optimizadas mediante índices numéricos
- */
-router.beforeResolve((to, from) => {
-  const root = document.documentElement
-  const supported = 'startViewTransition' in document
-  const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+let previousIndex = 0
 
-  if (!supported || reducedMotion || to.path === from.path) return
+router.afterEach((to) => {
+  const currentIndex = (to.meta.index as number) ?? 0
 
-  const toIndex = (to.meta.index as number) || 0
-  const fromIndex = (from.meta.index as number) || 0
+  setDirection(currentIndex >= previousIndex ? 'forward' : 'back')
 
-  const direction = toIndex >= fromIndex ? 'forward' : 'back'
-  root.dataset.transition = direction
-
-  const doc = document as Document & {
-    startViewTransition?: (cb: () => void | Promise<void>) => { finished: Promise<void> }
-  }
-
-  return new Promise<void>((resolve) => {
-    const transition = doc.startViewTransition!(async () => {
-      resolve()
-      await nextTick()
-    })
-
-    transition.finished.then(() => {
-      root.removeAttribute('data-transition')
-    })
-  })
+  previousIndex = currentIndex
 })
 
 export default router

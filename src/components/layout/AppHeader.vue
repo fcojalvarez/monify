@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useProfileStore } from '@/stores/profile'
@@ -22,10 +22,13 @@ async function signOut() {
   showLogoutDialog.value = false
   router.push({ name: ROUTE_NAMES.login })
 }
+
+onMounted(() => console.log('Header mounted'))
+onUnmounted(() => console.log('Header unmounted'))
 </script>
 
 <template>
-  <header class="sticky top-0 z-10 border-b border-line bg-surface/80 backdrop-blur-lg">
+  <header class="app-header sticky top-0 z-10 border-b border-line bg-surface/80 backdrop-blur-lg">
     <div class="mx-auto flex h-14 max-w-2xl items-center justify-between px-4">
       <RouterLink :to="{ name: ROUTE_NAMES.dashboard }" class="focus-visible:ring-0">
         <AppLogo :size="30" />

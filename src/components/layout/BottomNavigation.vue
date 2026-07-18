@@ -57,25 +57,17 @@ const navigationItems = computed(() => {
 </script>
 
 <template>
-  <nav class="fixed bottom-0 left-0 right-0 z-50 border-t border-line bg-surface-raised/80 backdrop-blur-lg pb-[calc(0.5rem+env(safe-area-inset-bottom))] pt-2 shadow-raised md:mx-auto md:max-w-2xl md:rounded-t-card md:border-x">
+  <nav
+    class="bottom-navigation fixed bottom-0 left-0 right-0 z-50 border-t border-line bg-surface-raised/80 backdrop-blur-lg pb-[calc(0.5rem+env(safe-area-inset-bottom))] pt-2 shadow-raised md:mx-auto md:max-w-2xl md:rounded-t-card md:border-x">
     <div class="flex justify-around items-center px-2">
-      <RouterLink
-        v-for="item in navigationItems"
-        :key="item.name"
-        :to="{ name: item.name }"
-        class="flex flex-col items-center justify-center gap-1 py-1 px-3 rounded-xl transition-all duration-200"
-        :class="
-          currentRouteName === item.name
-            ? 'text-primary-500 font-bold scale-105'
-            : 'text-content-muted hover:text-content'
-        "
-      >
-        <AppIcon 
-          :name="currentRouteName === item.name ? item.activeIcon : item.icon" 
-          :size="22" 
+      <RouterLink v-for="item in navigationItems" :key="item.name" :to="{ name: item.name }"
+        class="flex flex-col items-center justify-center gap-1 py-1 px-3 rounded-xl transition-all duration-200" :class="currentRouteName === item.name
+          ? 'text-primary-500 font-bold scale-105'
+          : 'text-content-muted hover:text-content'
+          ">
+        <AppIcon :name="currentRouteName === item.name ? item.activeIcon : item.icon" :size="22"
           class="transition-transform duration-200"
-          :class="currentRouteName === item.name && 'drop-shadow-[0_2px_8px_rgba(0,184,148,0.3)]'"
-        />
+          :class="currentRouteName === item.name && 'drop-shadow-[0_2px_8px_rgba(0,184,148,0.3)]'" />
         <span class="text-[10px] tracking-wide leading-none">
           {{ item.label }}
         </span>
