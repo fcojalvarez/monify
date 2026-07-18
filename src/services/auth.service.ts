@@ -7,7 +7,7 @@ import type { Session, User } from '@supabase/supabase-js'
  * stores/vistas no conozcan los detalles del SDK.
  */
 export const authService = {
-  async signIn(email: string, password: string): Promise<Session> {
+  async signIn(email: string, password: string): Promise<Session | null> {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) throw error
     return data.session
@@ -43,7 +43,7 @@ export const authService = {
       data: { display_name: displayName },
     })
     if (error) throw error
-    return data.user
+    return data.user as User
   },
 
   async signOut(): Promise<void> {
@@ -52,11 +52,17 @@ export const authService = {
   },
 
   async getSession(): Promise<Session | null> {
-    const { data } = await supabase.auth.getSession()
+    const { data, error } = await supabase.auth.getSession()
+    if (error) throw error
     return data.session
   },
 
   onAuthStateChange(callback: (session: Session | null) => void) {
-    return supabase.auth.onAuthStateChange((_event, session) => callback(session))
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      callback(session)
+    })
+    return subscription
   },
 }

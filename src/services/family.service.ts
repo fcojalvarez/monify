@@ -1,7 +1,15 @@
 import { supabase } from '@/lib/supabase'
-import type { FamilyMember, TablesInsert, TablesUpdate } from '@/types'
+import type { Tables, TablesInsert, TablesUpdate } from '@/types/database.types'
+
+export type FamilyMember = Tables<'family_members'>
+export type FamilyMemberInsert = TablesInsert<'family_members'>
+export type FamilyMemberUpdate = TablesUpdate<'family_members'>
 
 export const familyService = {
+  /**
+   * Obtiene la lista de miembros de la familia.
+   * Coloca siempre al usuario principal ('is_self': true) al principio.
+   */
   async list(): Promise<FamilyMember[]> {
     const { data, error } = await supabase
       .from('family_members')
@@ -10,19 +18,34 @@ export const familyService = {
       .order('created_at', { ascending: true })
 
     if (error) throw error
-
     return data
   },
 
-  async create(payload: Omit<TablesInsert<'family_members'>, 'owner_id'>): Promise<FamilyMember> {
-    const { data, error } = await supabase.from('family_members').insert(payload).select().single()
+  /**
+   * Crea un nuevo miembro inyectando automáticamente el owner_id del usuario autenticado.
+   */
+  async create(payload: Omit<FamilyMemberInsert, 'owner_id'>): Promise<FamilyMember> {
+    const { data: userData, error: userError } = await supabase.auth.getUser()
+    if (userError) throw userError
+    if (!userData.user) throw new Error('Usuario no autenticado.')
+
+    const fullPayload: FamilyMemberInsert = {
+      ...payload,
+      owner_id: userData.user.id,
+      cash_balance: payload.cash_balance ?? 0,
+    }
+
+    const { data, error } = await supabase
+      .from('family_members')
+      .insert(fullPayload)
+      .select()
+      .single()
 
     if (error) throw error
-
     return data
   },
 
-  async update(id: string, changes: TablesUpdate<'family_members'>): Promise<FamilyMember> {
+  async update(id: string, changes: FamilyMemberUpdate): Promise<FamilyMember> {
     const { data, error } = await supabase
       .from('family_members')
       .update(changes)
@@ -31,12 +54,11 @@ export const familyService = {
       .single()
 
     if (error) throw error
-
     return data
   },
 
   /**
-   * Establece el saldo de efectivo del miembro.
+   * Establece un saldo fijo de efectivo para el miembro.
    */
   async setCashBalance(id: string, balance: number): Promise<FamilyMember> {
     return this.update(id, {
@@ -45,8 +67,8 @@ export const familyService = {
   },
 
   /**
-   * Incrementa o decrementa el saldo de efectivo.
-   * amount puede ser positivo o negativo.
+   * Modifica el saldo de efectivo de forma segura.
+   * amount puede ser positivo (ingreso) o negativo (gasto).
    */
   async changeCashBalance(id: string, amount: number): Promise<FamilyMember> {
     const { data: member, error } = await supabase
@@ -70,7 +92,6 @@ export const familyService = {
 
   async remove(id: string): Promise<void> {
     const { error } = await supabase.from('family_members').delete().eq('id', id)
-
     if (error) throw error
   },
 }

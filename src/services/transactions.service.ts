@@ -1,5 +1,17 @@
 import { supabase } from '@/lib/supabase'
-import type { TablesInsert, TablesUpdate, TransactionWithRelations } from '@/types'
+import type { Tables, TablesInsert, TablesUpdate } from '@/types/database.types'
+
+export type Transaction = Tables<'transactions'>
+export type TransactionInsert = TablesInsert<'transactions'>
+export type TransactionUpdate = TablesUpdate<'transactions'>
+
+type RelatedCategory = Pick<Tables<'categories'>, 'id' | 'name' | 'icon' | 'color' | 'kind'>
+type RelatedFamilyMember = Pick<Tables<'family_members'>, 'id' | 'name' | 'color' | 'avatar_icon'>
+
+export interface TransactionWithRelations extends Transaction {
+  category: RelatedCategory | null
+  family_member: RelatedFamilyMember | null
+}
 
 const SELECT_WITH_RELATIONS = `
   *,
@@ -25,18 +37,14 @@ export interface TransactionFilters {
   categoryId?: string
 }
 
-/**
- * Preparado para futuras ampliaciones
- * (efectivo, ahorros, transferencias, etc.)
- */
 export interface CreateTransactionOptions {
-  transaction: Omit<TablesInsert<'transactions'>, 'owner_id'>
+  transaction: Omit<TransactionInsert, 'owner_id'>
   useCash?: boolean
 }
 
 export const transactionsService = {
   /**
-   * Listado
+   * Obtiene el listado de transacciones generales aplicando filtros opcionales.
    */
   async list(filters: TransactionFilters = {}): Promise<TransactionWithRelations[]> {
     let query = supabase
@@ -62,38 +70,39 @@ export const transactionsService = {
     }
 
     const { data, error } = await query
+    if (error) throw error
 
-    if (error) {
-      throw error
-    }
-
-    return data as TransactionWithRelations[]
+    // Retorna la data tipada de forma limpia
+    return data as unknown as TransactionWithRelations[]
   },
 
   /**
-   * Crear transacción
+   * Registra una nueva transacción inyectando automáticamente el owner_id de la sesión.
    */
   async create({ transaction }: CreateTransactionOptions): Promise<TransactionWithRelations> {
+    const { data: userData, error: userError } = await supabase.auth.getUser()
+    if (userError) throw userError
+    if (!userData.user) throw new Error('Usuario no autenticado.')
+
+    const fullPayload: TransactionInsert = {
+      ...transaction,
+      owner_id: userData.user.id,
+    }
+
     const { data, error } = await supabase
       .from('transactions')
-      .insert(transaction)
+      .insert(fullPayload)
       .select(SELECT_WITH_RELATIONS)
       .single()
 
-    if (error) {
-      throw error
-    }
-
-    return data as TransactionWithRelations
+    if (error) throw error
+    return data as unknown as TransactionWithRelations
   },
 
   /**
-   * Actualizar
+   * Actualiza los datos de una transacción existente.
    */
-  async update(
-    id: string,
-    changes: TablesUpdate<'transactions'>,
-  ): Promise<TransactionWithRelations> {
+  async update(id: string, changes: TransactionUpdate): Promise<TransactionWithRelations> {
     const { data, error } = await supabase
       .from('transactions')
       .update(changes)
@@ -101,21 +110,16 @@ export const transactionsService = {
       .select(SELECT_WITH_RELATIONS)
       .single()
 
-    if (error) {
-      throw error
-    }
-
-    return data as TransactionWithRelations
+    if (error) throw error
+    return data as unknown as TransactionWithRelations
   },
 
   /**
-   * Eliminar
+   * Elimina una transacción de forma definitiva.
    */
   async remove(id: string): Promise<void> {
     const { error } = await supabase.from('transactions').delete().eq('id', id)
 
-    if (error) {
-      throw error
-    }
+    if (error) throw error
   },
 }

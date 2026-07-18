@@ -10,29 +10,26 @@ export type CashTransactionInsert = TablesInsert<'cash_transactions'>
 
 export interface CashMovementOptions {
   amount: number
-  familyMemberId?: string | null
+  familyMemberId: string
   note?: string
+  occurredOn?: string
 }
 
 export const cashService = {
   /**
-   * Cuenta de efectivo
+   * Cuenta de efectivo principal del usuario autenticado
    */
   async get() {
     const { data, error } = await supabase.from('cash').select('*').maybeSingle()
-
     if (error) throw error
-
     return data
   },
 
   async create() {
     const { data: userData, error: userError } = await supabase.auth.getUser()
-
     if (userError) throw userError
     if (!userData.user) throw new Error('Usuario no autenticado.')
 
-    // 1. Buscamos tu miembro de la familia (el que tiene is_self: true)
     const { data: memberData, error: memberError } = await supabase
       .from('family_members')
       .select('id')
@@ -53,9 +50,7 @@ export const cashService = {
     }
 
     const { data, error } = await supabase.from('cash').insert(payload).select().single()
-
     if (error) throw error
-
     return data
   },
 
@@ -68,7 +63,6 @@ export const cashService = {
       .single()
 
     if (error) throw error
-
     return data
   },
 
@@ -77,7 +71,7 @@ export const cashService = {
   },
 
   /**
-   * Historial
+   * Historial de transacciones de la caja de efectivo
    */
   async getTransactions(cashId: string) {
     const { data, error } = await supabase
@@ -93,7 +87,6 @@ export const cashService = {
       .order('created_at', { ascending: false })
 
     if (error) throw error
-
     return data
   },
 
@@ -105,63 +98,58 @@ export const cashService = {
       .single()
 
     if (error) throw error
-
     return data
   },
 
   /**
-   * Ingreso
+   * Registra un ingreso de efectivo
    */
   async deposit(cashId: string, options: CashMovementOptions) {
     const cash = await this.get()
-
-    if (!cash) {
-      throw new Error('No existe la cuenta de efectivo.')
-    }
+    if (!cash) throw new Error('No existe la cuenta de efectivo.')
 
     await this.addTransaction({
       cash_id: cashId,
       owner_id: cash.owner_id,
-      amount: options.amount,
+      amount: Math.abs(options.amount), // Nos aseguramos de que el ingreso sume
       note: options.note ?? null,
-      family_member_id: options.familyMemberId || '',
+      family_member_id: options.familyMemberId,
+      occurred_on: options.occurredOn ?? new Date().toISOString(),
     })
 
     return this.update(cashId, {
-      balance: cash.balance + options.amount,
+      balance: cash.balance + Math.abs(options.amount),
     })
   },
 
   /**
-   * Retirada
+   * Registra una retirada de efectivo
    */
   async withdraw(cashId: string, options: CashMovementOptions) {
     const cash = await this.get()
+    if (!cash) throw new Error('No existe la cuenta de efectivo.')
 
-    if (!cash) {
-      throw new Error('No existe la cuenta de efectivo.')
-    }
-
-    if (cash.balance < options.amount) {
+    const targetAmount = Math.abs(options.amount)
+    if (cash.balance < targetAmount) {
       throw new Error('No puedes retirar más efectivo del disponible.')
     }
 
     await this.addTransaction({
       cash_id: cashId,
       owner_id: cash.owner_id,
-      amount: -options.amount,
+      amount: -targetAmount,
       note: options.note ?? null,
-      family_member_id: options.familyMemberId || '',
+      family_member_id: options.familyMemberId,
+      occurred_on: options.occurredOn ?? new Date().toISOString(),
     })
 
     return this.update(cashId, {
-      balance: cash.balance - options.amount,
+      balance: cash.balance - targetAmount,
     })
   },
 
   async delete(id: string) {
     const { error } = await supabase.from('cash').delete().eq('id', id)
-
     if (error) throw error
   },
 }
