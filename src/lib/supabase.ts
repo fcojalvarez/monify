@@ -15,7 +15,7 @@ export const supabase = createClient<Database>(env.supabaseUrl, env.supabaseAnon
   auth: {
     persistSession: true,
     autoRefreshToken: true,
-    detectSessionInUrl: true,
+    detectSessionInUrl: false,
     flowType: 'pkce',
   },
 })
