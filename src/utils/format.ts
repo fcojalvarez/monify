@@ -1,57 +1,65 @@
 import { env } from '@/config/env'
-import { useUiStore } from '@/stores/ui'
 
-/** Formatea un importe como moneda usando el locale/divisa por defecto. */
+// Caché en memoria para reutilizar instancias de formateadores nativos
+const formattersCache = new Map<string, Intl.NumberFormat | Intl.DateTimeFormat>()
+
+/** Genera una clave única para identificar el formateador en la caché */
+const getCacheKey = (type: string, locale: string, options: object) =>
+  `${type}_${locale}_${JSON.stringify(options)}`
+
+/** Formatea un importe como moneda. Pasa locale/currency explícitos para máximo rendimiento. */
 export function formatCurrency(
   amount: number,
   options: { currency?: string; locale?: string; signDisplay?: 'auto' | 'never' | 'always' } = {},
 ): string {
-  let activeCurrency = options.currency
-  let activeLocale = options.locale
+  const currency = options.currency || env.defaultCurrency
+  const locale = options.locale || env.defaultLocale
+  const signDisplay = options.signDisplay || 'auto'
 
-  try {
-    const ui = useUiStore()
-    if (!activeCurrency) activeCurrency = ui.currency
-    if (!activeLocale) activeLocale = ui.locale
-  } catch (e) {
-    // Silently fall back if Pinia is not initialized
+  const cacheKey = getCacheKey('curr', locale, { currency, signDisplay })
+
+  let formatter = formattersCache.get(cacheKey) as Intl.NumberFormat
+  if (!formatter) {
+    formatter = new Intl.NumberFormat(locale, { style: 'currency', currency, signDisplay })
+    formattersCache.set(cacheKey, formatter)
   }
 
-  const {
-    currency = activeCurrency || env.defaultCurrency,
-    locale = activeLocale || env.defaultLocale,
-    signDisplay = 'auto',
-  } = options
-
-  return new Intl.NumberFormat(locale, {
-    style: 'currency',
-    currency,
-    signDisplay,
-  }).format(amount)
+  return formatter.format(amount)
 }
 
-/** Formatea una fecha ISO (YYYY-MM-DD) de forma legible. */
+/** Formatea una fecha ISO (YYYY-MM-DD) de forma legible evitando saltos de zona horaria. */
 export function formatDate(
   isoDate: string,
   options: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short', year: 'numeric' },
+  locale: string = env.defaultLocale,
 ): string {
-  let activeLocale = env.defaultLocale
+  if (!isoDate) return ''
 
-  try {
-    const ui = useUiStore()
-    activeLocale = ui.locale
-  } catch (e) {
-    // Silently fall back
+  const cacheKey = getCacheKey('date', locale, options)
+
+  let formatter = formattersCache.get(cacheKey) as Intl.DateTimeFormat
+  if (!formatter) {
+    formatter = new Intl.DateTimeFormat(locale, options)
+    formattersCache.set(cacheKey, formatter)
   }
 
-  return new Intl.DateTimeFormat(activeLocale, options).format(new Date(isoDate))
+  // Corregimos el bug del desfase horario dividiendo el string (Y-M-D) para forzar hora local
+  const parts = isoDate.split('-')
+  if (parts.length === 3) {
+    const date = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]))
+    return formatter.format(date)
+  }
+
+  return formatter.format(new Date(isoDate))
 }
 
 /** Devuelve la fecha de hoy como YYYY-MM-DD (sin desfase de zona horaria). */
 export function todayISO(): string {
   const now = new Date()
-  const offsetMs = now.getTimezoneOffset() * 60_000
-  return new Date(now.getTime() - offsetMs).toISOString().slice(0, 10)
+  const year = now.getFullYear()
+  const month = String(now.getMonth() + 1).padStart(2, '0')
+  const day = String(now.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
 }
 
 /** Primer y último día del mes de una fecha dada (para consultas por periodo). */
@@ -60,6 +68,7 @@ export function monthRange(reference: Date = new Date()): { from: string; to: st
   const month = reference.getMonth()
   const pad = (n: number) => String(n).padStart(2, '0')
   const lastDay = new Date(year, month + 1, 0).getDate()
+
   return {
     from: `${year}-${pad(month + 1)}-01`,
     to: `${year}-${pad(month + 1)}-${pad(lastDay)}`,
