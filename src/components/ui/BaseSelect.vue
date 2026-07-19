@@ -155,10 +155,10 @@ function select(value: T | '') {
       {{ selectedLabel ?? placeholder ?? 'Selecciona…' }}
     </button>
 
-    <component :is="teleport ? 'Teleport' : 'div'" :to="teleport ? 'body' : undefined">
+    <Teleport :disabled="!teleport" to="body">
       <Transition enter-active-class="transition-opacity duration-200"
         leave-active-class="transition-opacity duration-150" enter-from-class="opacity-0" leave-to-class="opacity-0">
-        <div v-if="open" @pointerdown.self="handleOverlayClick" :class="[
+        <div v-if="open" @click.self.stop="handleOverlayClick" :class="[
           teleport
             ? 'fixed inset-0 z-[999999] flex items-end justify-center bg-secondary-950/50 backdrop-blur-sm md:items-center'
             : 'absolute left-0 top-full z-[100] mt-2 w-full'
@@ -259,6 +259,6 @@ function select(value: T | '') {
 
         </div>
       </Transition>
-    </component>
+    </Teleport>
   </div>
 </template>
