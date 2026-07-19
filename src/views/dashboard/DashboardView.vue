@@ -10,7 +10,6 @@ import { useCategoriesStore } from '@/stores/categories'
 import { useFamilyStore } from '@/stores/family'
 import { useCashStore } from '@/stores/cash'
 import { useUiStore } from '@/stores/ui'
-import { monthRange } from '@/utils/format'
 
 import BalanceSummary from '@/components/dashboard/BalanceSummary.vue'
 import CategoryProgress from '@/components/dashboard/CategoryProgress.vue'
@@ -39,6 +38,62 @@ const { balance: cash } = storeToRefs(cashStore)
 
 const savingsLoaded = ref(false)
 const activeMember = ref<string | null>(null)
+type PeriodFilter = 'day' | 'week' | 'month' | 'year'
+const activeFilter = ref<PeriodFilter>('day')
+
+const filterLabel = computed(() => {
+  switch (activeFilter.value) {
+    case 'day':
+      return 'Movimientos de hoy'
+    case 'week':
+      return 'Movimientos de esta semana'
+    case 'month':
+      return 'Movimientos de este mes'
+    case 'year':
+      return 'Movimientos de este año'
+    default:
+      return 'Movimientos recientes'
+  }
+})
+
+const filteredItems = computed(() => {
+  if (!items.value.length) return []
+
+  const now = new Date()
+  const startOfPeriod = new Date(now)
+  const endOfPeriod = new Date(now)
+
+  startOfPeriod.setHours(0, 0, 0, 0)
+  endOfPeriod.setHours(23, 59, 59, 999)
+
+  switch (activeFilter.value) {
+    case 'day':
+      break
+    case 'week':
+      const day = startOfPeriod.getDay()
+      const diff = startOfPeriod.getDate() - day + (day === 0 ? -6 : 1)
+      startOfPeriod.setDate(diff)
+      endOfPeriod.setDate(startOfPeriod.getDate() + 6)
+      break
+    case 'month':
+      startOfPeriod.setDate(1)
+      endOfPeriod.setMonth(endOfPeriod.getMonth() + 1, 0)
+      break
+    case 'year':
+      startOfPeriod.setMonth(0, 1)
+      endOfPeriod.setMonth(11, 31)
+      break
+  }
+
+  return items.value.filter((transaction) => {
+    if (!transaction.occurred_on) return false
+
+    const [year, month, day] = transaction.occurred_on.split('-').map(Number)
+    const txDate = new Date(year, month - 1, day, 12, 0, 0)
+
+    return txDate >= startOfPeriod && txDate <= endOfPeriod
+  })
+})
 
 const limitedUsage = computed(() =>
   usageByCategory.value.filter((u) => u.limit != null).slice(0, 5),
@@ -65,7 +120,7 @@ function openEditTransaction(transaction: TransactionWithRelations) {
 
 async function onTransactionSaved() {
   showTransaction.value = false
-  await transactions.fetch()
+  await transactions.fetch({ familyMemberId: activeMember.value ?? undefined })
   if (profile.cashEnabled) {
     await cashStore.fetch()
     await family.fetchAll(true)
@@ -84,10 +139,8 @@ const showSavingsPrompt = ref(false)
 
 async function activateSavings() {
   await profile.updatePreference('savings_enabled', true)
-
   ui.setSavingsPromptDismissed(true)
   showSavingsPrompt.value = false
-
   await savingsStore.fetchAll()
 }
 
@@ -100,7 +153,7 @@ onMounted(async () => {
   const promises: Promise<any>[] = [
     categories.fetchAll(),
     family.fetchAll(),
-    transactions.fetch(monthRange()),
+    transactions.fetch({ familyMemberId: activeMember.value ?? undefined }),
   ]
 
   if (profile.cashEnabled) {
@@ -127,7 +180,7 @@ onMounted(async () => {
   <div class="min-h-dvh bg-surface pb-24">
     <main class="mx-auto max-w-2xl space-y-6 px-4 py-6">
       <div v-if="showSavingsPrompt"
-        class="relative flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-card border border-violet-100 bg-violet-50/50 text-violet-950 dark:border-violet-900/30 dark:bg-violet-950/20 dark:text-violet-200">
+        class="relative flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-card border border-violet-100 bg-violet-50/50 text-violet-950 dark:border-violet-100/30 dark:bg-violet-950/20 dark:text-violet-200">
         <div class="flex gap-3">
           <span
             class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-violet-100/80 text-violet-600 dark:bg-violet-900/50 dark:text-violet-400">
@@ -164,14 +217,12 @@ onMounted(async () => {
         :savings-loaded="savingsLoaded" :cash-enabled="cashEnabled" />
 
       <div v-if="family.items.length > 0" class="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-        <!-- Botón "Todos" -->
         <button class="shrink-0 rounded-pill px-4 py-2 text-sm font-medium transition-colors"
           :class="activeMember === null ? 'bg-primary-500 text-white' : 'bg-surface-muted text-content-muted hover:bg-line'"
           @click="selectMember(null)">
           Todos
         </button>
 
-        <!-- Bucle de Miembros de la Familia -->
         <button v-for="member in family.items" :key="member.id"
           class="shrink-0 rounded-pill px-4 py-2 text-sm font-medium transition-colors"
           :class="activeMember === member.id ? 'bg-primary-500 text-white' : 'bg-surface-muted text-content-muted hover:bg-line'"
@@ -179,7 +230,6 @@ onMounted(async () => {
           {{ member.name }}
         </button>
 
-        <!-- Botón "+" para gestionar la familia (se muestra siempre al final) -->
         <button
           class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface-muted text-content-muted hover:bg-line hover:text-content transition-colors ml-1"
           aria-label="Gestionar familia" title="Gestionar familia" @click="showFamily = true">
@@ -198,24 +248,39 @@ onMounted(async () => {
       </BaseCard>
 
       <BaseCard as="section">
-        <h2 class="mb-1 text-sm font-semibold text-content-muted">
-          Movimientos recientes
-        </h2>
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-sm font-semibold text-content-muted m-0">
+            {{ filterLabel }}
+          </h2>
+
+          <div class="relative flex items-center">
+            <select v-model="activeFilter"
+              class="appearance-none rounded-field bg-surface-muted pl-2.5 pr-7 py-1 text-xs font-medium text-content-muted border border-transparent hover:border-line focus:outline-none focus:border-primary-500 cursor-pointer transition-colors">
+              <option value="day">Hoy</option>
+              <option value="week">Esta semana</option>
+              <option value="month">Este mes</option>
+              <option value="year">Este año</option>
+            </select>
+
+            <AppIcon name="solar:alt-arrow-down-linear" :size="14"
+              class="absolute right-2.5 pointer-events-none text-content-muted" />
+          </div>
+        </div>
 
         <div v-if="loading" class="py-10 text-center text-sm text-content-subtle">
           Cargando…
         </div>
 
-        <div v-else-if="!items.length" class="py-10 text-center">
+        <div v-else-if="!filteredItems.length" class="py-10 text-center">
           <AppIcon name="solar:wallet-money-bold-duotone" :size="40" class="mx-auto text-content-subtle" />
 
           <p class="mt-2 text-sm text-content-muted">
-            Aún no hay movimientos este mes.
+            Aún no hay movimientos en este periodo.
           </p>
         </div>
 
         <ul v-else class="divide-y divide-line">
-          <TransactionItem v-for="transaction in items" :key="transaction.id" :transaction="transaction"
+          <TransactionItem v-for="transaction in filteredItems" :key="transaction.id" :transaction="transaction"
             class="cursor-pointer" @click="openEditTransaction(transaction)" />
         </ul>
       </BaseCard>
