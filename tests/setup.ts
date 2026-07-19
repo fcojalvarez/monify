@@ -42,3 +42,7 @@ if (!HTMLDialogElement.prototype.close) {
     }),
   })
 }
+
+// Polyfill/mock para Element.prototype.scrollTo ya que JSDOM no lo implementa
+Element.prototype.scrollTo = vi.fn()
+window.scrollTo = vi.fn()

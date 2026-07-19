@@ -85,6 +85,9 @@ describe('BaseSelect', () => {
     await wrapper.find('button').trigger('click')
     await nextTick()
 
+    // Limpiamos el spy antes de probar la propagación del backdrop
+    parentClickSpy.mockClear()
+
     // Buscamos el backdrop overlay
     const selectInstance = wrapper.findComponent(BaseSelect)
     const backdrop = selectInstance.find('div[class*="inset-0"]')

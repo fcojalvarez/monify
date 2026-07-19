@@ -1,13 +1,20 @@
 import { describe, it, expect, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
-import { nextTick } from 'vue'
+import { nextTick, h } from 'vue'
 import AppLayout from '@/layouts/AppLayout.vue'
 import { useNavigationDirection } from '@/composables/useNavigationDirection'
 
 vi.mock('vue-router', () => ({
   useRoute: () => ({ fullPath: '/dashboard' }),
   RouterView: {
-    template: '<div class="router-view-stub"><slot /></div>',
+    name: 'RouterView',
+    render(this: any) {
+      return h(
+        'div',
+        { class: 'router-view-stub' },
+        this.$slots.default ? this.$slots.default({ Component: 'div' }) : null
+      )
+    }
   },
 }))
 
@@ -18,8 +25,6 @@ describe('AppLayout', () => {
         stubs: {
           AppHeader: { template: '<header-stub />' },
           BottomNavigation: { template: '<nav-stub />' },
-          // Usamos el stub por defecto de Transition para inspeccionarlo como transition-stub
-          Transition: false,
         },
       },
     })

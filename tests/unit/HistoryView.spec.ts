@@ -105,6 +105,7 @@ describe('HistoryView', () => {
           BaseSheet: true,
           AppHeader: true,
           AppIcon: true,
+          Teleport: true,
         },
 
         plugins: [
