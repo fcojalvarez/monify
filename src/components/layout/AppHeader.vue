@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useProfileStore } from '@/stores/profile'
@@ -22,9 +22,6 @@ async function signOut() {
   showLogoutDialog.value = false
   router.push({ name: ROUTE_NAMES.login })
 }
-
-onMounted(() => console.log('Header mounted'))
-onUnmounted(() => console.log('Header unmounted'))
 </script>
 
 <template>
