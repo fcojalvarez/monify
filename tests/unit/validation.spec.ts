@@ -33,6 +33,17 @@ describe('validation utils', () => {
       expect(parseAmount('1,50')).toBe(1.5)
       expect(parseAmount(' 20 ')).toBe(20)
     })
+
+    it('soporta formatos complejos y símbolos de moneda', () => {
+      expect(parseAmount('1.234,56 €')).toBe(1234.56)
+      expect(parseAmount('1 234,56 $')).toBe(1234.56)
+      expect(parseAmount('1234.56')).toBe(1234.56)
+    })
+
+    it('devuelve NaN para cadenas vacías o no numéricas', () => {
+      expect(parseAmount('')).toBeNaN()
+      expect(parseAmount('abc')).toBeNaN()
+    })
   })
 
   describe('isPositiveAmount', () => {
