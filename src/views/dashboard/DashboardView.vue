@@ -19,8 +19,6 @@ import BaseSheet from '@/components/ui/BaseSheet.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
 
 const TransactionForm = defineAsyncComponent(() => import('@/components/transactions/TransactionForm.vue'))
-const CategoryManager = defineAsyncComponent(() => import('@/components/categories/CategoryManager.vue'))
-const FamilyManager = defineAsyncComponent(() => import('@/components/family/FamilyManager.vue'))
 
 const auth = useAuthStore()
 const profile = useProfileStore()
@@ -101,11 +99,7 @@ const limitedUsage = computed(() =>
 
 const showTransaction = ref(false)
 const editingTransaction = ref<TransactionWithRelations | undefined>()
-const showCategories = ref(false)
-const showFamily = ref(false)
 
-const categoryManagerRef = ref<InstanceType<typeof CategoryManager> | null>(null)
-const familyManagerRef = ref<InstanceType<typeof FamilyManager> | null>(null)
 const transactionFormRef = ref<InstanceType<typeof TransactionForm> | null>(null)
 
 function openNewTransaction() {
@@ -230,11 +224,6 @@ onMounted(async () => {
           {{ member.name }}
         </button>
 
-        <button
-          class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface-muted text-content-muted hover:bg-line hover:text-content transition-colors ml-1"
-          aria-label="Gestionar familia" title="Gestionar familia" @click="showFamily = true">
-          <AppIcon name="solar:add-circle-bold" :size="20" />
-        </button>
       </div>
 
       <BaseCard v-if="limitedUsage.length" as="section">
@@ -296,39 +285,8 @@ onMounted(async () => {
     <BaseSheet v-model="showTransaction" :title="editingTransaction ? 'Editar movimiento' : 'Nuevo movimiento'"
       :has-changes="transactionFormRef?.hasChanges">
       <TransactionForm ref="transactionFormRef" :transaction="editingTransaction" @saved="onTransactionSaved"
-        @cancel="showTransaction = false" @click-add="showCategories = !showCategories" />
+        @cancel="showTransaction = false" />
     </BaseSheet>
 
-    <BaseSheet v-model="showCategories" title="Categorías" :has-changes="categoryManagerRef?.hasChanges"
-      :closeOnClickOutside="false">
-      <template #actions>
-        <button v-if="categoryManagerRef?.view === 'list'" type="button"
-          class="inline-flex h-7 items-center gap-2 rounded-full px-3 text-sm font-medium text-content-muted transition-colors hover:bg-surface-muted border border-primary-500"
-          aria-label="Nueva categoría" @click="categoryManagerRef?.openForm()">
-          <AppIcon name="solar:add-circle-bold" class="text-primary-500" :size="20" />
-          <span class="text-primary-500">
-            Añadir
-          </span>
-        </button>
-      </template>
-
-      <CategoryManager ref="categoryManagerRef" />
-    </BaseSheet>
-
-    <BaseSheet v-model="showFamily" title="Familia" :has-changes="familyManagerRef?.hasChanges">
-      <template #actions>
-        <button v-if="familyManagerRef?.view === 'list'"
-          class="inline-flex h-7 items-center gap-2 rounded-full px-3 text-sm font-medium text-content-muted transition-colors hover:bg-surface-muted border border-primary-500"
-          aria-label="Añadir miembro" @click="familyManagerRef?.openForm()">
-          <AppIcon name="solar:add-circle-bold" class="text-primary-500" :size="20" />
-
-          <span class="text-primary-500">
-            Añadir
-          </span>
-        </button>
-      </template>
-
-      <FamilyManager ref="familyManagerRef" />
-    </BaseSheet>
   </div>
 </template>

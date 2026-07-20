@@ -113,12 +113,11 @@ describe('BaseSheet', () => {
     expect(wrapper.emitted('update:modelValue')?.[0]).toEqual([false])
   })
 
-  it('cierra el sheet al hacer clic en el backdrop si closeOnClickOutside es true', async () => {
+  it('cierra el sheet al hacer clic en el backdrop por defecto', async () => {
     const wrapper = mount(BaseSheet, {
       ...globalOptions,
       props: {
         modelValue: true,
-        closeOnClickOutside: true,
       },
     })
 

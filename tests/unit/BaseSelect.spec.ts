@@ -103,4 +103,24 @@ describe('BaseSelect', () => {
     // La propagación debe haberse detenido (.stop), por lo que el padre no recibe el evento click
     expect(parentClickSpy).not.toHaveBeenCalled()
   })
+
+  it('muestra un mensaje cuando la búsqueda no encuentra opciones', async () => {
+    const wrapper = mount(BaseSelect, {
+      ...globalOptions,
+      props: {
+        modelValue: '',
+        teleport: false,
+        options: Array.from({ length: 9 }, (_, index) => ({
+          value: String(index),
+          label: `Categoría ${index + 1}`,
+        })),
+      },
+    })
+
+    await wrapper.find('button').trigger('click')
+    await wrapper.find('input[placeholder="Buscar..."]').setValue('sin coincidencias')
+
+    expect(wrapper.text()).toContain('No hay resultados para esta búsqueda.')
+    expect(wrapper.findAll('button')).toHaveLength(1)
+  })
 })

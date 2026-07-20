@@ -13,7 +13,7 @@ import BaseDialog from '@/components/ui/BaseDialog.vue'
 import SegmentedControl from '@/components/ui/SegmentedControl.vue'
 
 const props = defineProps<{ transaction?: TransactionWithRelations }>()
-const emit = defineEmits<{ saved: []; cancel: []; 'click-add': [] }>()
+const emit = defineEmits<{ saved: []; cancel: [] }>()
 
 const categories = useCategoriesStore()
 const family = useFamilyStore()
@@ -215,10 +215,10 @@ defineExpose({
       :options="memberOptions" :error="errors.familyMemberId" />
 
     <BaseSelect v-if="categoryOptions.length" v-model="form.categoryId" label="Categoría"
-      placeholder="Selecciona una categoría" :options="categoryOptions" :error="errors.categoryId"
-      @click-add="emit('click-add')" />
+      placeholder="Selecciona una categoría" :options="categoryOptions" :error="errors.categoryId" />
     <p v-else class="rounded-field bg-surface-muted p-3 text-sm text-content-muted">
-      No tienes categorías de {{ form.kind === 'income' ? 'ingreso' : 'gasto' }} todavía. Crea una primero.
+      No tienes categorías de {{ form.kind === 'income' ? 'ingreso' : 'gasto' }} todavía. Puedes crearlas en
+      Gestionar cuenta → Organización → Categorías.
     </p>
 
     <BaseInput v-model="form.occurredOn" label="Fecha" type="date" icon="solar:calendar-bold" />

@@ -1,11 +1,13 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, defineAsyncComponent } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useUiStore } from '@/stores/ui'
 import { useProfileStore } from '@/stores/profile'
 import { useTransactionsStore } from '@/stores/transactions'
 import { useSavingsStore } from '@/stores/savings'
 import { useCashStore } from '@/stores/cash'
+import { useCategoriesStore } from '@/stores/categories'
+import { useFamilyStore } from '@/stores/family'
 import { ROUTE_NAMES } from '@/constants'
 import { formatDate } from '@/utils/format'
 import { transactionsService } from '@/services/transactions.service'
@@ -13,8 +15,12 @@ import BaseCard from '@/components/ui/BaseCard.vue'
 import BaseInput from '@/components/ui/BaseInput.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import BaseDialog from '@/components/ui/BaseDialog.vue'
+import BaseSheet from '@/components/ui/BaseSheet.vue'
 import SegmentedControl from '@/components/ui/SegmentedControl.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
+
+const CategoryManager = defineAsyncComponent(() => import('@/components/categories/CategoryManager.vue'))
+const FamilyManager = defineAsyncComponent(() => import('@/components/family/FamilyManager.vue'))
 
 const auth = useAuthStore()
 const profile = useProfileStore()
@@ -22,6 +28,13 @@ const ui = useUiStore()
 const transactions = useTransactionsStore()
 const savingsStore = useSavingsStore()
 const cashStore = useCashStore()
+const categories = useCategoriesStore()
+const family = useFamilyStore()
+
+const showCategories = ref(false)
+const showFamily = ref(false)
+const categoryManagerRef = ref<InstanceType<typeof CategoryManager> | null>(null)
+const familyManagerRef = ref<InstanceType<typeof FamilyManager> | null>(null)
 
 // Profile Form
 const name = ref(auth.displayName)
@@ -203,11 +216,15 @@ const cashEnabled = computed({
   },
 })
 
+onMounted(() => {
+  void Promise.all([categories.fetchAll(), family.fetchAll()])
+})
+
 </script>
 
 <template>
   <div class="min-h-dvh bg-surface pb-24">
-    <main class="mx-auto max-w-2xl space-y-6 px-4 py-6">
+    <main class="mx-auto flex max-w-2xl flex-col gap-6 px-4 py-6">
       <div class="flex items-center gap-3">
         <RouterLink :to="{ name: ROUTE_NAMES.dashboard }"
           class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-muted text-content-muted hover:bg-line transition-colors"
@@ -223,7 +240,7 @@ const cashEnabled = computed({
       </div>
 
       <!-- Sección 1: Datos Personales -->
-      <BaseCard as="section" class="p-5 space-y-4">
+      <BaseCard as="section" class="order-3 p-5 space-y-4">
         <h2 class="text-sm font-semibold text-content-muted uppercase tracking-wide">
           Datos Personales
         </h2>
@@ -253,7 +270,7 @@ const cashEnabled = computed({
       </BaseCard>
 
       <!-- Sección 2: Seguridad -->
-      <BaseCard as="section" class="p-5 space-y-4">
+      <BaseCard as="section" class="order-4 p-5 space-y-4">
         <h2 class="text-sm font-semibold text-content-muted uppercase tracking-wide">
           Seguridad
         </h2>
@@ -283,7 +300,7 @@ const cashEnabled = computed({
       </BaseCard>
 
       <!-- Preferencias -->
-      <BaseCard as="section" class="p-5 space-y-4">
+      <BaseCard as="section" class="order-1 p-5 space-y-4">
         <h2 class="text-sm font-semibold text-content-muted uppercase tracking-wide">
           Preferencias
         </h2>
@@ -341,8 +358,51 @@ const cashEnabled = computed({
         </div>
       </BaseCard>
 
+      <BaseCard as="section" class="order-2 p-5 space-y-4">
+        <div>
+          <h2 class="text-sm font-semibold text-content-muted uppercase tracking-wide">
+            Organización
+          </h2>
+          <p class="mt-1 text-xs text-content-subtle">
+            Configura las opciones que usas con menos frecuencia.
+          </p>
+        </div>
+
+        <div class="space-y-3">
+          <button type="button"
+            class="flex w-full items-center justify-between rounded-field border border-line p-3.5 text-left transition-colors hover:bg-surface-muted"
+            @click="showFamily = true">
+            <span class="flex items-center gap-3">
+              <span class="flex h-9 w-9 items-center justify-center rounded-full bg-surface-muted text-content-muted">
+                <AppIcon name="solar:users-group-rounded-bold" :size="18" />
+              </span>
+              <span>
+                <span class="block text-sm font-semibold text-content">Personas</span>
+                <span class="block text-xs text-content-subtle">Añade o edita los miembros de tu familia.</span>
+              </span>
+            </span>
+            <AppIcon name="solar:alt-arrow-right-linear" :size="18" class="shrink-0 text-content-subtle" />
+          </button>
+
+          <button type="button"
+            class="flex w-full items-center justify-between rounded-field border border-line p-3.5 text-left transition-colors hover:bg-surface-muted"
+            @click="showCategories = true">
+            <span class="flex items-center gap-3">
+              <span class="flex h-9 w-9 items-center justify-center rounded-full bg-surface-muted text-content-muted">
+                <AppIcon name="solar:tag-bold" :size="18" />
+              </span>
+              <span>
+                <span class="block text-sm font-semibold text-content">Categorías</span>
+                <span class="block text-xs text-content-subtle">Gestiona las categorías de ingresos y gastos.</span>
+              </span>
+            </span>
+            <AppIcon name="solar:alt-arrow-right-linear" :size="18" class="shrink-0 text-content-subtle" />
+          </button>
+        </div>
+      </BaseCard>
+
       <!-- Administración de datos -->
-      <BaseCard as="section" class="p-5 space-y-4">
+      <BaseCard as="section" class="order-5 p-5 space-y-4">
         <h2 class="text-sm font-semibold text-content-muted uppercase tracking-wide">
           Administración de datos
         </h2>
@@ -395,7 +455,7 @@ const cashEnabled = computed({
         </div>
       </BaseCard>
 
-      <div class="space-y-1 py-2 text-center">
+      <div class="order-6 space-y-1 py-2 text-center">
         <p v-if="joinedDate" class="text-xs text-content-subtle">
           Miembro de Monify desde:
           <strong class="text-content-muted">{{ joinedDate }}</strong>
@@ -419,5 +479,29 @@ const cashEnabled = computed({
         gastos de la base de datos. No se puede deshacer.
       </p>
     </BaseDialog>
+
+    <BaseSheet v-model="showCategories" title="Categorías" :has-changes="categoryManagerRef?.hasChanges">
+      <template #actions>
+        <button v-if="categoryManagerRef?.view === 'list'" type="button"
+          class="inline-flex h-7 items-center gap-2 rounded-full border border-primary-500 px-3 text-sm font-medium text-primary-500 transition-colors hover:bg-surface-muted"
+          aria-label="Nueva categoría" @click="categoryManagerRef?.openForm()">
+          <AppIcon name="solar:add-circle-bold" :size="20" />
+          <span>Añadir</span>
+        </button>
+      </template>
+      <CategoryManager ref="categoryManagerRef" />
+    </BaseSheet>
+
+    <BaseSheet v-model="showFamily" title="Personas" :has-changes="familyManagerRef?.hasChanges">
+      <template #actions>
+        <button v-if="familyManagerRef?.view === 'list'" type="button"
+          class="inline-flex h-7 items-center gap-2 rounded-full border border-primary-500 px-3 text-sm font-medium text-primary-500 transition-colors hover:bg-surface-muted"
+          aria-label="Añadir persona" @click="familyManagerRef?.openForm()">
+          <AppIcon name="solar:add-circle-bold" :size="20" />
+          <span>Añadir</span>
+        </button>
+      </template>
+      <FamilyManager ref="familyManagerRef" />
+    </BaseSheet>
   </div>
 </template>

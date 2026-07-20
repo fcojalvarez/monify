@@ -14,19 +14,17 @@ const props = withDefaults(
     showAllOption?: boolean
     allLabel?: string
     teleport?: boolean
-    withAddButton?: boolean
     closeOnClickOutside?: boolean
   }>(),
   {
     showAllOption: false,
     allLabel: 'Todos',
     teleport: true,
-    withAddButton: true,
     closeOnClickOutside: true
   }
 )
 
-const emit = defineEmits<{ 'update:modelValue': [value: T | ''], 'click-add': [] }>()
+const emit = defineEmits<{ 'update:modelValue': [value: T | ''] }>()
 
 const open = ref(false)
 const search = ref('')
@@ -198,28 +196,21 @@ function select(value: T | '') {
 
 
               <div v-if="showSearch" class="border-b border-line px-4 py-3">
-                <div class="flex">
-                  <input v-model="search" ref="searchInput" type="text" placeholder="Buscar..." class="
-                      h-10
-                      w-full
-                      rounded-field
-                      border
-                      border-line
-                      bg-surface
-                      px-3
-                      text-sm
-                      text-content
-                      placeholder:text-content-subtle
-                      focus:border-primary-400
-                      focus:outline-none
-                      focus:shadow-focus
-                    ">
-                  <button
-                    class="inline-flex h-10 w-9 shrink-0 items-center justify-center rounded-xl bg-surface-muted text-content-muted hover:bg-line hover:text-content transition-colors ml-1"
-                    aria-label="Crear categoría" title="Crear categoría" @click="emit('click-add')">
-                    <AppIcon name="solar:add-circle-bold" :size="20" />
-                  </button>
-                </div>
+                <input v-model="search" ref="searchInput" type="text" placeholder="Buscar..." class="
+                    h-10
+                    w-full
+                    rounded-field
+                    border
+                    border-line
+                    bg-surface
+                    px-3
+                    text-sm
+                    text-content
+                    placeholder:text-content-subtle
+                    focus:border-primary-400
+                    focus:outline-none
+                    focus:shadow-focus
+                  ">
               </div>
 
 
@@ -230,7 +221,12 @@ function select(value: T | '') {
                   px-2
                   p-2
                 ">
-                <button v-for="option in filteredOptions" :key="String(option.value)" type="button" class="
+                <p v-if="search.trim() && !filteredOptions.length"
+                  class="px-3 py-6 text-center text-sm text-content-subtle">
+                  No hay resultados para esta búsqueda.
+                </p>
+
+                <button v-else v-for="option in filteredOptions" :key="String(option.value)" type="button" class="
                     flex
                     w-full
                     items-center
