@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { useRouter } from 'vue-router'
 import BalanceSummary from '@/components/dashboard/BalanceSummary.vue'
+import { setLocale } from '@/i18n'
 
 vi.mock('vue-router', () => ({ useRouter: vi.fn() }))
 vi.mock('@/composables/usePlatform', () => ({
@@ -15,6 +16,7 @@ describe('BalanceSummary', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+    setLocale('es')
     routerPush = vi.fn()
     vi.mocked(useRouter).mockReturnValue({ push: routerPush } as any)
     localStorage.clear()

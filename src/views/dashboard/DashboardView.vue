@@ -19,10 +19,9 @@ import BaseSheet from '@/components/ui/BaseSheet.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
 import {
   currentPeriodRange,
-  dashboardMovementLabels,
-  dashboardPeriodLabels,
   type DashboardPeriod,
 } from '@/utils/period'
+import { useI18n } from '@/i18n'
 
 const TransactionForm = defineAsyncComponent(() => import('@/components/transactions/TransactionForm.vue'))
 
@@ -34,6 +33,7 @@ const transactions = useTransactionsStore()
 const savingsStore = useSavingsStore()
 const cashStore = useCashStore()
 const ui = useUiStore()
+const { t } = useI18n()
 
 const { summary, usageByCategory, items, loading } = storeToRefs(transactions)
 const { items: savings } = storeToRefs(savingsStore)
@@ -44,8 +44,8 @@ const savingsLoaded = ref(false)
 const activeMember = ref<string | null>(null)
 const activeFilter = ref<DashboardPeriod>('day')
 
-const filterLabel = computed(() => dashboardMovementLabels[activeFilter.value])
-const balancePeriodLabel = computed(() => dashboardPeriodLabels[activeFilter.value])
+const filterLabel = computed(() => t(`dashboard.movements.${activeFilter.value}`))
+const balancePeriodLabel = computed(() => t(`dashboard.period.${activeFilter.value}`))
 
 const filteredItems = computed(() => items.value)
 
@@ -210,10 +210,10 @@ onMounted(async () => {
           <div class="relative flex items-center">
             <select v-model="activeFilter" @change="selectPeriod"
               class="appearance-none rounded-field bg-surface-muted pl-2.5 pr-7 py-1 text-xs font-medium text-content-muted border border-transparent hover:border-line focus:outline-none focus:border-primary-500 cursor-pointer transition-colors">
-              <option value="day">Hoy</option>
-              <option value="week">Esta semana</option>
-              <option value="month">Este mes</option>
-              <option value="year">Este año</option>
+              <option value="day">{{ t('dashboard.filter.day') }}</option>
+              <option value="week">{{ t('dashboard.filter.week') }}</option>
+              <option value="month">{{ t('dashboard.filter.month') }}</option>
+              <option value="year">{{ t('dashboard.filter.year') }}</option>
             </select>
 
             <AppIcon name="solar:alt-arrow-down-linear" :size="14"

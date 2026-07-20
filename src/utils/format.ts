@@ -1,4 +1,5 @@
 import { env } from '@/config/env'
+import { getIntlLocale } from '@/i18n'
 
 // Caché en memoria para reutilizar instancias de formateadores nativos
 const formattersCache = new Map<string, Intl.NumberFormat | Intl.DateTimeFormat>()
@@ -13,7 +14,7 @@ export function formatCurrency(
   options: { currency?: string; locale?: string; signDisplay?: 'auto' | 'never' | 'always' } = {},
 ): string {
   const currency = options.currency || env.defaultCurrency
-  const locale = options.locale || env.defaultLocale
+  const locale = options.locale || getIntlLocale() || env.defaultLocale
   const signDisplay = options.signDisplay || 'auto'
 
   const cacheKey = getCacheKey('curr', locale, { currency, signDisplay })
@@ -31,7 +32,7 @@ export function formatCurrency(
 export function formatDate(
   isoDate: string,
   options: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short', year: 'numeric' },
-  locale: string = env.defaultLocale,
+  locale: string = getIntlLocale() || env.defaultLocale,
 ): string {
   if (!isoDate) return ''
 

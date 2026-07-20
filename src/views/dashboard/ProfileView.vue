@@ -17,7 +17,9 @@ import BaseButton from '@/components/ui/BaseButton.vue'
 import BaseDialog from '@/components/ui/BaseDialog.vue'
 import BaseSheet from '@/components/ui/BaseSheet.vue'
 import SegmentedControl from '@/components/ui/SegmentedControl.vue'
+import BaseSelect from '@/components/ui/BaseSelect.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
+import { localeOptions, type AppLocale, useI18n } from '@/i18n'
 
 const CategoryManager = defineAsyncComponent(() => import('@/components/categories/CategoryManager.vue'))
 const FamilyManager = defineAsyncComponent(() => import('@/components/family/FamilyManager.vue'))
@@ -30,6 +32,7 @@ const savingsStore = useSavingsStore()
 const cashStore = useCashStore()
 const categories = useCategoriesStore()
 const family = useFamilyStore()
+const { locale, setLocale, t } = useI18n()
 
 const showCategories = ref(false)
 const showFamily = ref(false)
@@ -216,6 +219,14 @@ const cashEnabled = computed({
   },
 })
 
+const language = computed({
+  get: () => locale.value,
+  set: async (value: AppLocale) => {
+    setLocale(value)
+    await profile.updatePreference('locale', value)
+  },
+})
+
 onMounted(() => {
   void Promise.all([categories.fetchAll(), family.fetchAll()])
 })
@@ -232,9 +243,9 @@ onMounted(() => {
           <AppIcon name="solar:arrow-left-bold" :size="20" />
         </RouterLink>
         <div>
-          <h1 class="text-2xl font-bold text-content">Gestionar cuenta</h1>
+          <h1 class="text-2xl font-bold text-content">{{ t('settings.title') }}</h1>
           <p class="text-xs text-content-muted">
-            Personaliza tus preferencias y administra tus datos
+            {{ t('settings.subtitle') }}
           </p>
         </div>
       </div>
@@ -302,12 +313,12 @@ onMounted(() => {
       <!-- Preferencias -->
       <BaseCard as="section" class="order-1 p-5 space-y-4">
         <h2 class="text-sm font-semibold text-content-muted uppercase tracking-wide">
-          Preferencias
+          {{ t('settings.preferences') }}
         </h2>
 
         <div class="space-y-4">
           <div>
-            <span class="field-label">Moneda por defecto</span>
+            <span class="field-label">{{ t('settings.currency') }}</span>
 
             <SegmentedControl :model-value="ui.currency" :options="[
               { value: 'EUR', label: 'Euro (€)' },
@@ -316,17 +327,24 @@ onMounted(() => {
           </div>
 
           <div>
-            <span class="field-label">Tema visual</span>
+            <span class="field-label">{{ t('settings.theme') }}</span>
 
             <SegmentedControl :model-value="ui.theme" :options="[
-              { value: 'light', label: 'Modo claro' },
-              { value: 'dark', label: 'Modo oscuro' }
+              { value: 'light', label: t('settings.light') },
+              { value: 'dark', label: t('settings.dark') }
             ]" @update:model-value="(val) => { if (val !== ui.theme) ui.toggleTheme() }" />
+          </div>
+
+          <div>
+            <BaseSelect v-model="language" :label="t('language.label')" :options="localeOptions.map(option => ({
+              value: option.value,
+              label: t(option.labelKey),
+            }))" />
           </div>
 
           <label class="flex cursor-pointer items-center justify-between">
             <span class="text-sm font-medium text-content">
-              ¿Quieres gestionar ahorros?
+              {{ t('settings.savings') }}
             </span>
 
             <div class="relative shrink-0 ml-4">
@@ -342,7 +360,7 @@ onMounted(() => {
 
           <label class="flex cursor-pointer items-center justify-between">
             <span class="text-sm font-medium text-content">
-              ¿Quieres gestionar tu efectivo?
+              {{ t('settings.cash') }}
             </span>
 
             <div class="relative shrink-0 ml-4">

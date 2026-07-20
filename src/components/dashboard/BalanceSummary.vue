@@ -7,8 +7,10 @@ import { usePlatform } from '@/composables/usePlatform'
 import SavingsSummaryCard from '@/components/dashboard/CardSavingsSummary.vue'
 import { useRouter } from 'vue-router'
 import { getVisibleWalletCount } from '@/utils/walletPreview'
+import { useI18n } from '@/i18n'
 
 const router = useRouter()
+const { t } = useI18n()
 
 const props = defineProps<{
   summary: PeriodSummary
@@ -199,21 +201,21 @@ onBeforeUnmount(() => walletPreviewObserver?.disconnect())
             </button>
 
             <section class="m-auto cursor-pointer md:w-11/12" @click="router.push('/history')">
-              <p class="text-sm text-white/70">Balance del {{ props.periodLabel }}</p>
+              <p class="text-sm text-white/70">{{ t('dashboard.balance', { period: props.periodLabel }) }}</p>
               <div class="mt-1 flex items-end justify-between">
                 <p class="text-3xl font-bold tracking-tight">
                   {{ formatCurrency(props.summary.balance + (props.cash || 0), { currency: props.summary.currency }) }}
                 </p>
                 <div v-if="props.cashEnabled" class="mr-2 flex gap-4 pb-1 text-right">
                   <div>
-                    <p class="text-[9px] uppercase text-white/60">Banco</p>
+                    <p class="text-[9px] uppercase text-white/60">{{ t('summary.bank') }}</p>
                     <p class="text-sm font-semibold">{{ formatCurrency(props.summary.balance, {
                       currency:
                         props.summary.currency
                     }) }}</p>
                   </div>
                   <div>
-                    <p class="text-[9px] uppercase text-white/60">Efectivo</p>
+                    <p class="text-[9px] uppercase text-white/60">{{ t('summary.cash') }}</p>
                     <p class="text-sm font-semibold">{{ formatCurrency(props.cash, { currency: props.summary.currency })
                     }}</p>
                   </div>
@@ -223,7 +225,7 @@ onBeforeUnmount(() => walletPreviewObserver?.disconnect())
                 <div class="rounded-field bg-white/10 p-3">
                   <div class="flex items-center gap-2 text-white/70">
                     <AppIcon name="solar:arrow-down-bold" :size="16" class="text-primary-300" /><span
-                      class="text-xs">Ingresos</span>
+                      class="text-xs">{{ t('summary.income') }}</span>
                   </div>
                   <p class="mt-1 font-semibold">{{ formatCurrency(props.summary.income, {
                     currency:
@@ -233,7 +235,7 @@ onBeforeUnmount(() => walletPreviewObserver?.disconnect())
                 <div class="rounded-field bg-white/10 p-3">
                   <div class="flex items-center gap-2 text-white/70">
                     <AppIcon name="solar:arrow-up-bold" :size="16" class="text-tertiary-300" /><span
-                      class="text-xs">Gastos</span>
+                      class="text-xs">{{ t('summary.expense') }}</span>
                   </div>
                   <p class="mt-1 font-semibold">{{ formatCurrency(props.summary.expense, {
                     currency:
@@ -258,15 +260,15 @@ onBeforeUnmount(() => walletPreviewObserver?.disconnect())
             </button>
 
             <section class="m-auto cursor-pointer md:w-11/12 px-2" @click="router.push('/cash')">
-              <p class="text-sm text-white/70">Balance de efectivo</p>
+              <p class="text-sm text-white/70">{{ t('summary.cashBalance') }}</p>
               <p class="mt-1 text-3xl font-bold tracking-tight">
                 {{ formatCurrency(props.cash, { currency: props.summary.currency }) }}
               </p>
 
               <div class="mt-3">
                 <div class="flex items-center justify-between gap-3">
-                  <p class="text-xs text-white/70">Carteras</p>
-                  <p class="text-2xs text-white/60">{{ props.members.length }} miembros</p>
+                  <p class="text-xs text-white/70">{{ t('summary.wallets') }}</p>
+                  <p class="text-2xs text-white/60">{{ t('summary.members', { count: props.members.length }) }}</p>
                 </div>
                 <div v-if="props.members.length" ref="walletPreviewRef" data-testid="cash-wallet-preview"
                   class="mt-2 flex w-full gap-2">
@@ -282,7 +284,7 @@ onBeforeUnmount(() => walletPreviewObserver?.disconnect())
                     +{{ hiddenCashMembers }}
                   </div>
                 </div>
-                <p v-else class="mt-2 text-xs text-white/60">Aún no hay carteras configuradas.</p>
+                <p v-else class="mt-2 text-xs text-white/60">{{ t('summary.noWallets') }}</p>
               </div>
             </section>
           </div>
