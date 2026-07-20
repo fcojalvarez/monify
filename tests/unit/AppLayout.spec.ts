@@ -23,8 +23,8 @@ describe('AppLayout', () => {
     return mount(AppLayout, {
       global: {
         stubs: {
-          AppHeader: { template: '<header-stub />' },
-          BottomNavigation: { template: '<nav-stub />' },
+          AppHeader: { template: '<header class="app-header-stub" />' },
+          BottomNavigation: { template: '<nav class="bottom-navigation-stub" />' },
         },
       },
     })
@@ -33,8 +33,8 @@ describe('AppLayout', () => {
   it('renderiza AppHeader, BottomNavigation y RouterView', () => {
     const wrapper = mountLayout()
 
-    expect(wrapper.find('header-stub').exists()).toBe(true)
-    expect(wrapper.find('nav-stub').exists()).toBe(true)
+    expect(wrapper.find('.app-header-stub').exists()).toBe(true)
+    expect(wrapper.find('.bottom-navigation-stub').exists()).toBe(true)
     expect(wrapper.find('.router-view-stub').exists()).toBe(true)
   })
 
