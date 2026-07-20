@@ -41,7 +41,7 @@ const cards = computed<CardId[]>(() => {
 const totalCards = computed(() => cards.value.length)
 const walletPreviewRef = ref<HTMLElement | HTMLElement[]>()
 // Antes de poder medir el ancho real, mostramos solo una cartera para no desplazar el +N fuera de la tarjeta.
-const visibleCashMemberCount = ref(1)
+const visibleCashMemberCount = ref(0)
 const visibleCashMembers = computed(() => props.members.slice(0, visibleCashMemberCount.value))
 const hiddenCashMembers = computed(() => Math.max(props.members.length - visibleCashMembers.value.length, 0))
 const activeIndex = ref(0)
@@ -224,8 +224,8 @@ onBeforeUnmount(() => walletPreviewObserver?.disconnect())
               <div class="mt-5 grid grid-cols-2 gap-3">
                 <div class="rounded-field bg-white/10 p-3">
                   <div class="flex items-center gap-2 text-white/70">
-                    <AppIcon name="solar:arrow-down-bold" :size="16" class="text-primary-300" /><span
-                      class="text-xs">{{ t('summary.income') }}</span>
+                    <AppIcon name="solar:arrow-down-bold" :size="16" class="text-primary-300" /><span class="text-xs">{{
+                      t('summary.income') }}</span>
                   </div>
                   <p class="mt-1 font-semibold">{{ formatCurrency(props.summary.income, {
                     currency:
@@ -234,8 +234,8 @@ onBeforeUnmount(() => walletPreviewObserver?.disconnect())
                 </div>
                 <div class="rounded-field bg-white/10 p-3">
                   <div class="flex items-center gap-2 text-white/70">
-                    <AppIcon name="solar:arrow-up-bold" :size="16" class="text-tertiary-300" /><span
-                      class="text-xs">{{ t('summary.expense') }}</span>
+                    <AppIcon name="solar:arrow-up-bold" :size="16" class="text-tertiary-300" /><span class="text-xs">{{
+                      t('summary.expense') }}</span>
                   </div>
                   <p class="mt-1 font-semibold">{{ formatCurrency(props.summary.expense, {
                     currency:
