@@ -259,7 +259,8 @@ defineExpose({
         ]" />
         <BaseInput v-model="form.endOn" label="Fecha de fin (opcional)" type="date" icon="solar:calendar-bold" />
         <p class="text-xs text-content-muted">
-          {{ form.endOn ? `Finalizará el ${form.endOn}.` : 'No tiene fecha de finalización.' }}
+          {{ form.endOn ? `Finalizará el ${form.endOn?.split("-").reverse().join("-")}.` : `No tiene fecha de
+          finalización.` }}
         </p>
       </div>
     </template>
