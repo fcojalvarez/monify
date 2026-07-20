@@ -17,6 +17,12 @@ import TransactionItem from '@/components/transactions/TransactionItem.vue'
 import BaseCard from '@/components/ui/BaseCard.vue'
 import BaseSheet from '@/components/ui/BaseSheet.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
+import {
+  currentPeriodRange,
+  dashboardMovementLabels,
+  dashboardPeriodLabels,
+  type DashboardPeriod,
+} from '@/utils/period'
 
 const TransactionForm = defineAsyncComponent(() => import('@/components/transactions/TransactionForm.vue'))
 
@@ -29,69 +35,19 @@ const savingsStore = useSavingsStore()
 const cashStore = useCashStore()
 const ui = useUiStore()
 
-const { summary, annualSummary, usageByCategory, items, loading } = storeToRefs(transactions)
+const { summary, usageByCategory, items, loading } = storeToRefs(transactions)
 const { items: savings } = storeToRefs(savingsStore)
 const { cashEnabled } = storeToRefs(profile)
 const { balance: cash } = storeToRefs(cashStore)
 
 const savingsLoaded = ref(false)
 const activeMember = ref<string | null>(null)
-type PeriodFilter = 'day' | 'week' | 'month' | 'year'
-const activeFilter = ref<PeriodFilter>('day')
+const activeFilter = ref<DashboardPeriod>('day')
 
-const filterLabel = computed(() => {
-  switch (activeFilter.value) {
-    case 'day':
-      return 'Movimientos de hoy'
-    case 'week':
-      return 'Movimientos de esta semana'
-    case 'month':
-      return 'Movimientos de este mes'
-    case 'year':
-      return 'Movimientos de este año'
-    default:
-      return 'Movimientos recientes'
-  }
-})
+const filterLabel = computed(() => dashboardMovementLabels[activeFilter.value])
+const balancePeriodLabel = computed(() => dashboardPeriodLabels[activeFilter.value])
 
-const filteredItems = computed(() => {
-  if (!items.value.length) return []
-
-  const now = new Date()
-  const startOfPeriod = new Date(now)
-  const endOfPeriod = new Date(now)
-
-  startOfPeriod.setHours(0, 0, 0, 0)
-  endOfPeriod.setHours(23, 59, 59, 999)
-
-  switch (activeFilter.value) {
-    case 'day':
-      break
-    case 'week':
-      const day = startOfPeriod.getDay()
-      const diff = startOfPeriod.getDate() - day + (day === 0 ? -6 : 1)
-      startOfPeriod.setDate(diff)
-      endOfPeriod.setDate(startOfPeriod.getDate() + 6)
-      break
-    case 'month':
-      startOfPeriod.setDate(1)
-      endOfPeriod.setMonth(endOfPeriod.getMonth() + 1, 0)
-      break
-    case 'year':
-      startOfPeriod.setMonth(0, 1)
-      endOfPeriod.setMonth(11, 31)
-      break
-  }
-
-  return items.value.filter((transaction) => {
-    if (!transaction.occurred_on) return false
-
-    const [year, month, day] = transaction.occurred_on.split('-').map(Number)
-    const txDate = new Date(year, month - 1, day, 12, 0, 0)
-
-    return txDate >= startOfPeriod && txDate <= endOfPeriod
-  })
-})
+const filteredItems = computed(() => items.value)
 
 const limitedUsage = computed(() =>
   usageByCategory.value.filter((u) => u.limit != null).slice(0, 5),
@@ -114,7 +70,7 @@ function openEditTransaction(transaction: TransactionWithRelations) {
 
 async function onTransactionSaved() {
   showTransaction.value = false
-  await transactions.fetch({ familyMemberId: activeMember.value ?? undefined })
+  await fetchTransactions()
   if (profile.cashEnabled) {
     await cashStore.fetch()
     await family.fetchAll(true)
@@ -124,9 +80,18 @@ async function onTransactionSaved() {
 async function selectMember(memberId: string | null) {
   activeMember.value = memberId
 
+  await fetchTransactions()
+}
+
+async function fetchTransactions() {
   await transactions.fetch({
-    familyMemberId: memberId ?? undefined,
+    ...currentPeriodRange(activeFilter.value),
+    familyMemberId: activeMember.value ?? undefined,
   })
+}
+
+async function selectPeriod() {
+  await fetchTransactions()
 }
 
 const showSavingsPrompt = ref(false)
@@ -147,7 +112,7 @@ onMounted(async () => {
   const promises: Promise<any>[] = [
     categories.fetchAll(),
     family.fetchAll(),
-    transactions.fetch({ familyMemberId: activeMember.value ?? undefined }),
+    fetchTransactions(),
   ]
 
   if (profile.cashEnabled) {
@@ -207,7 +172,7 @@ onMounted(async () => {
         </div>
       </div>
 
-      <BalanceSummary :monthly-summary="summary" :annual-summary="annualSummary" :savings="savings" :cash="cash"
+      <BalanceSummary :summary="summary" :period-label="balancePeriodLabel" :savings="savings" :cash="cash"
         :savings-loaded="savingsLoaded" :cash-enabled="cashEnabled" />
 
       <div v-if="family.items.length > 0" class="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
@@ -243,7 +208,7 @@ onMounted(async () => {
           </h2>
 
           <div class="relative flex items-center">
-            <select v-model="activeFilter"
+            <select v-model="activeFilter" @change="selectPeriod"
               class="appearance-none rounded-field bg-surface-muted pl-2.5 pr-7 py-1 text-xs font-medium text-content-muted border border-transparent hover:border-line focus:outline-none focus:border-primary-500 cursor-pointer transition-colors">
               <option value="day">Hoy</option>
               <option value="week">Esta semana</option>
