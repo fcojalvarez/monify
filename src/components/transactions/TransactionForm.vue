@@ -116,31 +116,52 @@ function validate(): boolean {
 async function onSubmit() {
   serverError.value = null
   if (!validate()) return
+
   saving.value = true
+
   try {
-    const payload = {
+    const baseData = {
       kind: form.kind,
-      gross: form.kind === 'income' ? parseAmount(form.gross || form.amount) : null,
       amount: parseAmount(form.amount),
       category_id: form.categoryId,
       family_member_id: form.familyMemberId || family.self?.id || '',
-      occurred_on: form.occurredOn,
       note: form.note.trim() || null,
       payment_method: (form.isCash ? 'cash' : 'bank') as 'cash' | 'bank',
     }
-    if (props.transaction) await transactions.update(props.transaction.id, payload)
-    else {
-      const { gross, ...transactionData } = payload
 
+    const gross = form.kind === 'income'
+      ? parseAmount(form.gross || form.amount)
+      : null
+
+    if (props.transaction) {
+      await transactions.update(props.transaction.id, {
+        ...baseData,
+        gross,
+        occurred_on: form.occurredOn,
+      })
+    } else {
       if (form.isRecurring) {
         await recurringTransactions.create({
-          ...transactionData, gross, frequency: form.frequency,
-          start_on: form.occurredOn, next_execution: form.occurredOn,
+          ...baseData,
+          gross,
+          frequency: form.frequency,
+          start_on: form.occurredOn,
+          next_execution: form.occurredOn,
           end_on: form.endOn || null,
         })
+
         await recurringTransactions.sync()
-      } else await transactions.create({ transaction: transactionData, gross: gross ?? 0 })
+      } else {
+        await transactions.create({
+          transaction: {
+            ...baseData,
+            occurred_on: form.occurredOn,
+          },
+          gross: gross ?? 0,
+        })
+      }
     }
+
     emit('saved')
   } catch (error) {
     serverError.value = error instanceof Error ? error.message : 'No se pudo guardar.'
