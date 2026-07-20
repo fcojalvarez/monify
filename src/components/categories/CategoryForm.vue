@@ -30,6 +30,38 @@ const form = reactive({
 const errors = reactive<Record<string, string | undefined>>({})
 const serverError = ref<string | null>(null)
 const saving = ref(false)
+const duplicateMatches = ref<Category[]>([])
+const showDuplicateDialog = ref(false)
+
+function normalizeName(value: string) {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '')
+}
+
+function similarity(first: string, second: string) {
+  const source = normalizeName(first)
+  const target = normalizeName(second)
+  if (!source || !target) return 0
+  const matrix = Array.from({ length: source.length + 1 }, () => Array(target.length + 1).fill(0))
+
+  for (let index = 0; index <= source.length; index++) matrix[index][0] = index
+  for (let index = 0; index <= target.length; index++) matrix[0][index] = index
+
+  for (let sourceIndex = 1; sourceIndex <= source.length; sourceIndex++) {
+    for (let targetIndex = 1; targetIndex <= target.length; targetIndex++) {
+      matrix[sourceIndex][targetIndex] = Math.min(
+        matrix[sourceIndex - 1][targetIndex] + 1,
+        matrix[sourceIndex][targetIndex - 1] + 1,
+        matrix[sourceIndex - 1][targetIndex - 1] + (source[sourceIndex - 1] === target[targetIndex - 1] ? 0 : 1),
+      )
+    }
+  }
+
+  return 1 - matrix[source.length][target.length] / Math.max(source.length, target.length)
+}
 
 function validate(): boolean {
   errors.name = form.name.trim() ? undefined : 'Ponle un nombre'
@@ -43,9 +75,9 @@ function validate(): boolean {
   return !errors.name && !errors.limit
 }
 
-async function onSubmit() {
+async function saveCategory() {
   serverError.value = null
-  if (!validate()) return
+  showDuplicateDialog.value = false
   saving.value = true
   try {
     const payload = {
@@ -63,6 +95,23 @@ async function onSubmit() {
   } finally {
     saving.value = false
   }
+}
+
+function onSubmit() {
+  if (!validate()) return
+
+  if (!props.category) {
+    duplicateMatches.value = categories.items.filter(
+      category => category.kind === form.kind && similarity(category.name, form.name) >= 0.70,
+    )
+
+    if (duplicateMatches.value.length) {
+      showDuplicateDialog.value = true
+      return
+    }
+  }
+
+  void saveCategory()
 }
 
 const initialForm = {
@@ -167,6 +216,19 @@ defineExpose({
     confirm-text="Descartar" cancel-text="Seguir editando" show-cancel @confirm="emit('cancel')">
     <p class="text-content">
       Tienes cambios sin guardar. ¿Seguro que quieres salir? Se perderán los datos introducidos.
+    </p>
+  </BaseDialog>
+
+  <BaseDialog v-model="showDuplicateDialog" variant="confirm" title="¿Categoría parecida?"
+    confirm-text="Crear de todos modos" cancel-text="Revisar" show-cancel @confirm="saveCategory">
+    <p class="text-content">
+      Ya existe {{ duplicateMatches.length === 1 ? 'una categoría muy parecida' : 'más de una categoría muy parecida'
+      }}:
+      <strong>{{duplicateMatches.map(category => category.name).join(', ')}}</strong>.
+    </p>
+    <p class="mt-2 text-sm text-content-subtle">
+      Revisa si te refieres a {{ duplicateMatches.length === 1 ? 'esa categoría' : 'alguna de ellas' }} antes de crear
+      una duplicada.
     </p>
   </BaseDialog>
 </template>

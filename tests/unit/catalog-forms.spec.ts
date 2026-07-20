@@ -11,9 +11,13 @@ const baseInput = {
   template: '<div><input class="base-input" :value="modelValue" @input="$emit(\'update:modelValue\', $event.target.value)" /><p v-if="error">{{ error }}</p></div>',
 }
 const baseButton = { template: '<button><slot /></button>' }
+const baseDialog = {
+  props: ['modelValue', 'title'],
+  template: '<div v-if="modelValue" class="dialog" :data-title="title"><slot /><button class="confirm" @click="$emit(\'confirm\')">Confirmar</button></div>',
+}
 const global = (pinia: ReturnType<typeof createPinia>) => ({
   plugins: [pinia],
-  stubs: { AppIcon: true, BaseInput: baseInput, BaseButton: baseButton, BaseDialog: true, SegmentedControl: true, IconPicker: true, ColorPicker: true },
+  stubs: { AppIcon: true, BaseInput: baseInput, BaseButton: baseButton, BaseDialog: baseDialog, SegmentedControl: true, IconPicker: true, ColorPicker: true },
 })
 
 describe('formularios de catálogos', () => {
@@ -53,5 +57,22 @@ describe('formularios de catálogos', () => {
 
     expect(update).toHaveBeenCalledWith('member-1', expect.objectContaining({ name: 'Ana María' }))
     expect(wrapper.emitted('saved')).toHaveLength(1)
+  })
+
+  it('advierte antes de crear una categoría muy parecida y permite confirmarla', async () => {
+    const store = useCategoriesStore()
+    store.items = [{ id: 'existing', name: 'Compras', kind: 'expense' }] as any
+    const create = vi.spyOn(store, 'create').mockResolvedValue({} as any)
+    const wrapper = mount(CategoryForm, { global: global(pinia) })
+
+    await wrapper.find('.base-input').setValue('Comprass')
+    await wrapper.find('form').trigger('submit')
+
+    expect(create).not.toHaveBeenCalled()
+    expect(wrapper.text()).toContain('Compras')
+    expect(wrapper.text()).toContain('Revisa si te refieres a esa categoría')
+
+    await wrapper.get('.dialog[data-title="¿Categoría parecida?"] .confirm').trigger('click')
+    expect(create).toHaveBeenCalledWith(expect.objectContaining({ name: 'Comprass' }))
   })
 })
