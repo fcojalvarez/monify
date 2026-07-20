@@ -27,6 +27,7 @@ describe('BalanceSummary', () => {
     savingsLoaded: true,
     cash: 0,
     cashEnabled: false,
+    members: [],
   })
 
   const globalOptions = {
@@ -81,6 +82,57 @@ describe('BalanceSummary', () => {
     expect(wrapper.text()).toContain('Banco')
     expect(wrapper.text()).toContain('Efectivo')
     expect(wrapper.text()).toContain('1150,00')
+  })
+
+  it('muestra una tarjeta de efectivo solo cuando su gestión está activada', async () => {
+    const wrapper = mount(BalanceSummary, {
+      ...globalOptions,
+      props: { ...defaultProps(), cashEnabled: true, cash: 150 },
+    })
+
+    expect(wrapper.text()).toContain('Balance de efectivo')
+    expect(wrapper.text()).toContain('Carteras')
+    expect(wrapper.text()).toContain('150,00')
+
+    const nextButton = wrapper.findAll('button').find(button => button.attributes('aria-label') === 'Ver tarjeta siguiente')
+    await nextButton!.trigger('click')
+    expect(localStorage.getItem('dashboard-balance-card')).toBe('cash')
+
+    await wrapper.findAll('section')[1].trigger('click')
+    expect(routerPush).toHaveBeenCalledWith('/cash')
+  })
+
+  it('muestra el total y resume las carteras sin añadir otro scroll horizontal', () => {
+    const wrapper = mount(BalanceSummary, {
+      ...globalOptions,
+      props: {
+        ...defaultProps(),
+        cashEnabled: true,
+        cash: 300,
+        members: [
+          { id: '1', name: 'Ana', color: '#00b894', avatar_icon: 'solar:user-bold', cash_balance: 100 },
+          { id: '2', name: 'Luis', color: '#3a53a8', avatar_icon: 'solar:user-bold', cash_balance: 200 },
+          { id: '3', name: 'Marta', color: '#f5492a', avatar_icon: 'solar:user-bold', cash_balance: 50 },
+        ] as any,
+      },
+    })
+
+    expect(wrapper.text()).toContain('300,00')
+    expect(wrapper.text()).toContain('3 miembros')
+    const walletPreview = wrapper.get('[data-testid="cash-wallet-preview"]')
+    expect(walletPreview.text()).toContain('Ana')
+    expect(walletPreview.text()).toContain('100,00')
+    expect(walletPreview.text()).not.toContain('Luis')
+    expect(walletPreview.text()).not.toContain('200,00')
+    expect(walletPreview.text()).toContain('+2')
+    expect(walletPreview.text()).not.toContain('Marta')
+    expect(walletPreview.classes()).not.toContain('overflow-x-auto')
+  })
+
+  it('no renderiza la tarjeta de efectivo si su gestión está desactivada', () => {
+    const wrapper = mount(BalanceSummary, { ...globalOptions, props: defaultProps() })
+
+    expect(wrapper.text()).not.toContain('Balance de efectivo')
   })
 
   it('renderiza la tarjeta de ahorros y permite navegar a ella', async () => {

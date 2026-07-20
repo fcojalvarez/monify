@@ -96,11 +96,11 @@ const visualProgress = computed(() => Math.min(mainGoalProgress.value, 100))
 
         <template v-else>
             <div class="mt-5 rounded-field bg-white/10 p-4">
-                <p class="text-sm text-white/80">
+                <p class="truncate text-sm text-white/80">
                     Todo tu dinero está destinado al ahorro.
                 </p>
 
-                <p class="mt-1 text-xs text-white/60">
+                <p class="truncate mt-1 text-xs text-white/60">
                     Crea una meta para hacer seguimiento de tus objetivos.
                 </p>
             </div>

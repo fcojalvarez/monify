@@ -173,7 +173,7 @@ onMounted(async () => {
       </div>
 
       <BalanceSummary :summary="summary" :period-label="balancePeriodLabel" :savings="savings" :cash="cash"
-        :savings-loaded="savingsLoaded" :cash-enabled="cashEnabled" />
+        :savings-loaded="savingsLoaded" :cash-enabled="cashEnabled" :members="family.items" />
 
       <div v-if="family.items.length > 0" class="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
         <button class="shrink-0 rounded-pill px-4 py-2 text-sm font-medium transition-colors"
