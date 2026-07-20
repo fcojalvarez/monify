@@ -11,6 +11,7 @@ import BaseSelect from '@/components/ui/BaseSelect.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import BaseDialog from '@/components/ui/BaseDialog.vue'
 import SegmentedControl from '@/components/ui/SegmentedControl.vue'
+import { useRecurringTransactionsStore } from '@/stores/recurring-transactions'
 
 const props = defineProps<{ transaction?: TransactionWithRelations }>()
 const emit = defineEmits<{ saved: []; cancel: [] }>()
@@ -18,6 +19,7 @@ const emit = defineEmits<{ saved: []; cancel: [] }>()
 const categories = useCategoriesStore()
 const family = useFamilyStore()
 const transactions = useTransactionsStore()
+const recurringTransactions = useRecurringTransactionsStore()
 
 const isEdit = computed(() => !!props.transaction)
 
@@ -43,6 +45,9 @@ const form = reactive({
   occurredOn: props.transaction?.occurred_on ?? defaultDate(),
   note: props.transaction?.note ?? '',
   isCash: props.transaction?.payment_method === 'cash',
+  isRecurring: false,
+  frequency: 'monthly' as 'daily' | 'weekly' | 'monthly' | 'yearly',
+  endOn: '',
 })
 
 const errors = reactive<Record<string, string | undefined>>({})
@@ -127,10 +132,14 @@ async function onSubmit() {
     else {
       const { gross, ...transactionData } = payload
 
-      await transactions.create({
-        transaction: transactionData,
-        gross: gross ?? 0
-      })
+      if (form.isRecurring) {
+        await recurringTransactions.create({
+          ...transactionData, gross, frequency: form.frequency,
+          start_on: form.occurredOn, next_execution: form.occurredOn,
+          end_on: form.endOn || null,
+        })
+        await recurringTransactions.sync()
+      } else await transactions.create({ transaction: transactionData, gross: gross ?? 0 })
     }
     emit('saved')
   } catch (error) {
@@ -166,6 +175,9 @@ const initialForm = {
   occurredOn: form.occurredOn,
   note: form.note,
   isCash: form.isCash,
+  isRecurring: form.isRecurring,
+  frequency: form.frequency,
+  endOn: form.endOn,
 }
 
 const hasChanges = computed(() => {
@@ -177,7 +189,10 @@ const hasChanges = computed(() => {
     form.familyMemberId !== initialForm.familyMemberId ||
     form.occurredOn !== initialForm.occurredOn ||
     form.note !== initialForm.note ||
-    form.isCash !== initialForm.isCash
+    form.isCash !== initialForm.isCash ||
+    form.isRecurring !== initialForm.isRecurring ||
+    form.frequency !== initialForm.frequency ||
+    form.endOn !== initialForm.endOn
   )
 })
 
@@ -224,6 +239,30 @@ defineExpose({
     <BaseInput v-model="form.occurredOn" label="Fecha" type="date" icon="solar:calendar-bold" />
 
     <BaseInput v-model="form.note" label="Nota (opcional)" icon="solar:pen-bold" placeholder="Descripción breve" />
+
+    <template v-if="!isEdit">
+      <div class="flex items-center justify-between py-1">
+        <span class="text-sm font-medium text-content">Repetir este movimiento</span>
+        <label class="relative cursor-pointer shrink-0 ml-4">
+          <input v-model="form.isRecurring" type="checkbox" class="sr-only" />
+          <span class="relative block h-6 w-11 rounded-pill transition-colors duration-200"
+            :class="form.isRecurring ? 'bg-primary-500' : 'bg-line'">
+            <span class="absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white transition-transform duration-200"
+              :class="form.isRecurring ? 'translate-x-5' : 'translate-x-0'" />
+          </span>
+        </label>
+      </div>
+      <div v-if="form.isRecurring" class="space-y-3 rounded-field border border-line p-3">
+        <BaseSelect v-model="form.frequency" label="Frecuencia" :options="[
+          { value: 'daily', label: 'Diaria' }, { value: 'weekly', label: 'Semanal' },
+          { value: 'monthly', label: 'Mensual' }, { value: 'yearly', label: 'Anual' },
+        ]" />
+        <BaseInput v-model="form.endOn" label="Fecha de fin (opcional)" type="date" icon="solar:calendar-bold" />
+        <p class="text-xs text-content-muted">
+          {{ form.endOn ? `Finalizará el ${form.endOn}.` : 'No tiene fecha de finalización.' }}
+        </p>
+      </div>
+    </template>
 
     <p v-if="serverError" class="text-sm font-medium text-expense">{{ serverError }}</p>
 

@@ -84,6 +84,12 @@ const router = createRouter({
           component: () => import('@/views/dashboard/ProfileView.vue'),
           meta: { index: 6 },
         },
+        {
+          path: 'recurring',
+          name: ROUTE_NAMES.recurring,
+          component: () => import('@/views/dashboard/RecurringView.vue'),
+          meta: { index: 7 },
+        },
       ],
     },
 

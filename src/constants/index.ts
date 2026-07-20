@@ -9,6 +9,7 @@ export const ROUTE_NAMES = {
   savings: 'savings',
   cash: 'cash',
   charts: 'charts',
+  recurring: 'recurring',
 } as const
 
 // Ahora completamente tipado, inmutable y restrictivo

@@ -416,6 +416,20 @@ onMounted(() => {
             </span>
             <AppIcon name="solar:alt-arrow-right-linear" :size="18" class="shrink-0 text-content-subtle" />
           </button>
+
+          <RouterLink :to="{ name: ROUTE_NAMES.recurring }"
+            class="flex w-full items-center justify-between rounded-field border border-line p-3.5 text-left transition-colors hover:bg-surface-muted">
+            <span class="flex items-center gap-3">
+              <span class="flex h-9 w-9 items-center justify-center rounded-full bg-surface-muted text-content-muted">
+                <AppIcon name="solar:repeat-bold" :size="18" />
+              </span>
+              <span>
+                <span class="block text-sm font-semibold text-content">{{ t('recurringList.title') }}</span>
+                <span class="block text-xs text-content-subtle">{{ t('recurringList.subtitle') }}</span>
+              </span>
+            </span>
+            <AppIcon name="solar:alt-arrow-right-linear" :size="18" class="shrink-0 text-content-subtle" />
+          </RouterLink>
         </div>
       </BaseCard>
 

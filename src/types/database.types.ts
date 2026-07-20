@@ -216,6 +216,8 @@ export type Database = {
           occurred_on: string
           owner_id: string
           payment_method: Database['public']['Enums']['payment_method']
+          occurrence_date: string | null
+          recurring_transaction_id: string | null
         }
         Insert: {
           amount: number
@@ -229,6 +231,8 @@ export type Database = {
           occurred_on?: string
           owner_id?: string
           payment_method?: Database['public']['Enums']['payment_method']
+          occurrence_date?: string | null
+          recurring_transaction_id?: string | null
         }
         Update: {
           amount?: number
@@ -242,6 +246,8 @@ export type Database = {
           occurred_on?: string
           owner_id?: string
           payment_method?: Database['public']['Enums']['payment_method']
+          occurrence_date?: string | null
+          recurring_transaction_id?: string | null
         }
         Relationships: [
           {
@@ -260,6 +266,88 @@ export type Database = {
           },
           {
             foreignKeyName: 'transactions_owner_id_fkey'
+            columns: ['owner_id']
+            isOneToOne: false
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      recurring_transactions: {
+        Row: {
+          id: string
+          owner_id: string
+          kind: Database['public']['Enums']['category_kind']
+          gross: number | null
+          amount: number
+          category_id: string
+          family_member_id: string
+          payment_method: Database['public']['Enums']['payment_method']
+          note: string | null
+          frequency: Database['public']['Enums']['recurring_frequency']
+          start_on: string
+          next_execution: string
+          end_on: string | null
+          is_active: boolean
+          last_synced_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          owner_id?: string
+          kind: Database['public']['Enums']['category_kind']
+          gross?: number | null
+          amount: number
+          category_id: string
+          family_member_id: string
+          payment_method?: Database['public']['Enums']['payment_method']
+          note?: string | null
+          frequency: Database['public']['Enums']['recurring_frequency']
+          start_on: string
+          next_execution: string
+          end_on?: string | null
+          is_active?: boolean
+          last_synced_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          owner_id?: string
+          kind?: Database['public']['Enums']['category_kind']
+          gross?: number | null
+          amount?: number
+          category_id?: string
+          family_member_id?: string
+          payment_method?: Database['public']['Enums']['payment_method']
+          note?: string | null
+          frequency?: Database['public']['Enums']['recurring_frequency']
+          start_on?: string
+          next_execution?: string
+          end_on?: string | null
+          is_active?: boolean
+          last_synced_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'recurring_transactions_category_id_fkey'
+            columns: ['category_id']
+            isOneToOne: false
+            referencedRelation: 'categories'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'recurring_transactions_family_member_id_fkey'
+            columns: ['family_member_id']
+            isOneToOne: false
+            referencedRelation: 'family_members'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'recurring_transactions_owner_id_fkey'
             columns: ['owner_id']
             isOneToOne: false
             referencedRelation: 'profiles'
@@ -378,6 +466,7 @@ export type Database = {
       category_kind: 'income' | 'expense'
       payment_method: 'bank' | 'cash'
       saving_type: 'bank' | 'cash'
+      recurring_frequency: 'daily' | 'weekly' | 'monthly' | 'yearly'
     }
     CompositeTypes: {
       [_ in never]: never
@@ -502,6 +591,7 @@ export const Constants = {
       category_kind: ['income', 'expense'],
       payment_method: ['bank', 'cash'],
       saving_type: ['bank', 'cash'],
+      recurring_frequency: ['daily', 'weekly', 'monthly', 'yearly'],
     },
   },
 } as const
@@ -509,3 +599,4 @@ export const Constants = {
 export type CategoryKind = Enums<'category_kind'>
 export type PaymentMethod = Enums<'payment_method'>
 export type SavingType = Enums<'saving_type'>
+export type RecurringFrequency = Enums<'recurring_frequency'>
