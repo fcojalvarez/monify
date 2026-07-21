@@ -203,9 +203,11 @@ defineExpose({
       { value: 'monthly', label: t('recurringList.frequencies.monthly') }, { value: 'yearly', label: t('recurringList.frequencies.yearly') },
     ]" />
 
-    <BaseInput v-model="form.startOn" :label="t('recurringForm.startDate')" type="date" icon="solar:calendar-bold" :error="errors.startOn" />
+    <BaseInput v-model="form.startOn" :label="t('recurringForm.startDate')" type="date" icon="solar:calendar-bold"
+      :error="errors.startOn" />
 
-    <BaseInput v-model="form.nextExecution" :label="t('recurringForm.nextExecution')" type="date" icon="solar:calendar-bold" :error="errors.nextExecution" />
+    <BaseInput v-model="form.nextExecution" :label="t('recurringForm.nextExecution')" type="date"
+      icon="solar:calendar-bold" :error="errors.nextExecution" />
 
     <BaseInput v-model="form.endOn" :label="t('transaction.endDate')" type="date" icon="solar:calendar-bold" />
     <p v-if="form.endOn" class="text-xs text-content-muted">
@@ -221,7 +223,7 @@ defineExpose({
 
     <div class="flex flex-col gap-3 pt-1">
       <BaseButton type="submit" block :loading="saving" :disabled="!categoryOptions.length">
-        {{ t('recurringForm.title') }}
+        {{ t('recurringForm.editButton') }}
       </BaseButton>
 
       <BaseButton type="button" variant="danger" block :loading="deleting" @click="showDeleteConfirm = true">
@@ -230,8 +232,8 @@ defineExpose({
     </div>
   </form>
 
-  <BaseDialog v-model="showDeleteConfirm" variant="danger" :title="t('recurringForm.deleteTitle')" confirm-text="Eliminar"
-    cancel-text="Cancelar" show-cancel @confirm="onDeleteConfirm">
+  <BaseDialog v-model="showDeleteConfirm" variant="danger" :title="t('recurringForm.deleteTitle')"
+    confirm-text="Eliminar" cancel-text="Cancelar" show-cancel @confirm="onDeleteConfirm">
     <p class="text-content">
       {{ t('recurringForm.deleteConfirm') }}
     </p>

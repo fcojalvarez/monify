@@ -54,7 +54,9 @@ describe('i18n', () => {
     expect(t('transaction.recurring')).toBe('Recurrente')
     expect(t('transaction.repeatMovement')).toBe('Repetir este movimiento')
     expect(t('transaction.frequency')).toBe('Frecuencia')
-    expect(t('transaction.endsOn', { date: '17 de Julio de 2026' })).toBe('Finalizará el 17 de Julio de 2026')
+    expect(t('transaction.endsOn', { date: '17 de Julio de 2026' })).toBe(
+      'Finalizará el 17 de Julio de 2026',
+    )
     expect(t('transaction.noEndDate')).toBe('No tiene fecha de finalización.')
   })
 
@@ -81,13 +83,13 @@ describe('i18n', () => {
     setLocale('es')
     expect(t('recurringForm.startDate')).toBe('Fecha de inicio')
     expect(t('recurringForm.nextExecution')).toBe('Próxima ejecución')
-    expect(t('recurringForm.deleteButton')).toBe('Eliminar movimiento recurrente')
+    expect(t('recurringForm.deleteButton')).toBe('Eliminar')
   })
 
   it('traduce textos de formulario recurrente en inglés', () => {
     setLocale('en')
     expect(t('recurringForm.startDate')).toBe('Start date')
     expect(t('recurringForm.nextExecution')).toBe('Next execution')
-    expect(t('recurringForm.deleteButton')).toBe('Delete recurring transaction')
+    expect(t('recurringForm.deleteButton')).toBe('Delete')
   })
 })

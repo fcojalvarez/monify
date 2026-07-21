@@ -69,7 +69,8 @@
     "deleteConfirm": "Are you sure you want to delete this recurring transaction? This action cannot be undone and will not affect already created transactions.",
     "startDate": "Start date",
     "nextExecution": "Next execution",
-    "deleteButton": "Delete recurring transaction",
+    "editButton": "Edit",
+    "deleteButton": "Delete",
     "deleteTitle": "Delete recurring transaction"
   },
   "common": {

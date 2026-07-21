@@ -69,7 +69,8 @@
     "deleteConfirm": "¿Estás seguro de que deseas eliminar este movimiento recurrente? Esta acción no se puede deshacer y no afectará a los movimientos ya creados.",
     "startDate": "Fecha de inicio",
     "nextExecution": "Próxima ejecución",
-    "deleteButton": "Eliminar movimiento recurrente",
+    "editButton": "Editar",
+    "deleteButton": "Eliminar",
     "deleteTitle": "Eliminar movimiento recurrente"
   },
   "common": {
