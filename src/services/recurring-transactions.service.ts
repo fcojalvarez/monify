@@ -66,4 +66,12 @@ export const recurringTransactionsService = {
     if (error) throw error
     return data?.length ? 1 : 0
   },
+
+  async remove(id: string) {
+    const { error } = await supabase
+      .from('recurring_transactions')
+      .delete()
+      .eq('id', id)
+    if (error) throw error
+  },
 }

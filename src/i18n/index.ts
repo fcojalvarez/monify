@@ -17,6 +17,7 @@ const messages = {
     settings: { title: 'Gestionar cuenta', subtitle: 'Personaliza tus preferencias y administra tus datos', preferences: 'Preferencias', currency: 'Moneda por defecto', theme: 'Tema visual', light: 'Modo claro', dark: 'Modo oscuro', savings: '¿Quieres gestionar ahorros?', cash: '¿Quieres gestionar tu efectivo?' },
     recurring: { syncingTitle: 'Actualizando movimientos', syncingPending: 'Estamos creando los ingresos y gastos recurrentes pendientes.' },
     recurringList: { title: 'Movimientos recurrentes', subtitle: 'Consulta las plantillas que se crearán automáticamente.', empty: 'No tienes movimientos recurrentes.', nextExecution: 'Próxima ejecución', noEnd: 'Sin fecha de finalización', end: 'Finaliza el {date}', frequencies: { daily: 'Diario', weekly: 'Semanal', monthly: 'Mensual', yearly: 'Anual' } },
+    recurringForm: { title: 'Editar movimiento recurrente', deleteConfirm: '¿Estás seguro de que deseas eliminar este movimiento recurrente? Esta acción no se puede deshacer y no afectará a los movimientos ya creados.' },
   },
   en: {
     language: { label: 'Language', spanish: 'Spanish', english: 'English' },
@@ -30,6 +31,7 @@ const messages = {
     settings: { title: 'Manage account', subtitle: 'Customize your preferences and manage your data', preferences: 'Preferences', currency: 'Default currency', theme: 'Theme', light: 'Light mode', dark: 'Dark mode', savings: 'Manage savings?', cash: 'Manage cash?' },
     recurring: { syncingTitle: 'Updating transactions', syncingPending: 'We are creating pending recurring income and expenses.' },
     recurringList: { title: 'Recurring transactions', subtitle: 'Review templates that will be created automatically.', empty: 'You have no recurring transactions.', nextExecution: 'Next execution', noEnd: 'No end date', end: 'Ends on {date}', frequencies: { daily: 'Daily', weekly: 'Weekly', monthly: 'Monthly', yearly: 'Yearly' } },
+    recurringForm: { title: 'Edit recurring transaction', deleteConfirm: 'Are you sure you want to delete this recurring transaction? This action cannot be undone and will not affect already created transactions.' },
   },
 } as const
 
