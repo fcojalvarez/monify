@@ -88,4 +88,25 @@ describe('RecurringItem', () => {
     expect(wrapper.emitted()).toHaveProperty('click')
     expect(wrapper.emitted('click')?.[0]).toEqual([transaction])
   })
+
+  it('muestra la próxima ejecución con el tamaño de texto correcto', () => {
+    const transaction = {
+      id: 'recurring-1',
+      kind: 'expense' as const,
+      amount: 25,
+      note: 'Netflix',
+      frequency: 'monthly' as const,
+      next_execution: '2026-08-01',
+      end_on: null,
+    }
+
+    const wrapper = mount(RecurringItem, {
+      props: { transaction },
+    })
+
+    const paragraphs = wrapper.findAll('p')
+    const nextExecutionParagraph = paragraphs.find(p => p.text().includes('Próxima ejecución'))
+    expect(nextExecutionParagraph).toBeDefined()
+    expect(nextExecutionParagraph?.classes()).toContain('text-[11px]')
+  })
 })
