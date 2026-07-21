@@ -8,12 +8,14 @@ import BaseButton from '@/components/ui/BaseButton.vue'
 import ColorPicker from '@/components/ui/ColorPicker.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
 import BaseDialog from '@/components/ui/BaseDialog.vue'
+import { useI18n } from '@/i18n'
 
 const props = defineProps<{ member?: FamilyMember }>()
 const emit = defineEmits<{ saved: []; cancel: [] }>()
 
 const family = useFamilyStore()
 const isEdit = computed(() => !!props.member)
+const { t } = useI18n()
 
 const AVATARS = [
   'solar:user-bold',
@@ -131,10 +133,10 @@ defineExpose({
 
     <div class="flex gap-3 pt-1">
       <BaseButton type="button" variant="secondary" block @click="onCancelClick">
-        Cancelar
+        {{ t('common.cancel') }}
       </BaseButton>
       <BaseButton type="submit" block :loading="saving">
-        {{ isEdit ? 'Guardar' : 'Añadir miembro' }}
+        {{ isEdit ? t('common.save') : t('common.addMember') }}
       </BaseButton>
     </div>
   </form>
@@ -143,14 +145,14 @@ defineExpose({
     v-slot:default
     v-model="showConfirmDialog"
     variant="danger"
-    title="Cambios sin guardar"
-    confirm-text="Descartar"
-    cancel-text="Seguir editando"
+    :title="t('common.unsavedChanges')"
+    :confirm-text="t('common.discard')"
+    :cancel-text="t('common.keepEditing')"
     show-cancel
     @confirm="emit('cancel')"
   >
     <p class="text-content">
-      Tienes cambios sin guardar. ¿Seguro que quieres salir? Se perderán los datos introducidos.
+      {{ t('common.unsavedChangesMessage') }}
     </p>
   </BaseDialog>
 </template>

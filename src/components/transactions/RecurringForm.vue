@@ -10,12 +10,14 @@ import BaseButton from '@/components/ui/BaseButton.vue'
 import BaseDialog from '@/components/ui/BaseDialog.vue'
 import SegmentedControl from '@/components/ui/SegmentedControl.vue'
 import { recurringTransactionsService } from '@/services/recurring-transactions.service'
+import { useI18n } from '@/i18n'
 
 const props = defineProps<{ transaction: RecurringTransaction }>()
 const emit = defineEmits<{ saved: []; cancel: [] }>()
 
 const categories = useCategoriesStore()
 const family = useFamilyStore()
+const { t } = useI18n()
 
 const form = reactive({
   kind: props.transaction.kind as CategoryKind,
@@ -196,21 +198,21 @@ defineExpose({
       Gestionar cuenta → Organización → Categorías.
     </p>
 
-    <BaseSelect v-model="form.frequency" label="Frecuencia" :options="[
-      { value: 'daily', label: 'Diaria' }, { value: 'weekly', label: 'Semanal' },
-      { value: 'monthly', label: 'Mensual' }, { value: 'yearly', label: 'Anual' },
+    <BaseSelect v-model="form.frequency" :label="t('transaction.frequency')" :options="[
+      { value: 'daily', label: t('recurringList.frequencies.daily') }, { value: 'weekly', label: t('recurringList.frequencies.weekly') },
+      { value: 'monthly', label: t('recurringList.frequencies.monthly') }, { value: 'yearly', label: t('recurringList.frequencies.yearly') },
     ]" />
 
-    <BaseInput v-model="form.startOn" label="Fecha de inicio" type="date" icon="solar:calendar-bold" :error="errors.startOn" />
+    <BaseInput v-model="form.startOn" :label="t('recurringForm.startDate')" type="date" icon="solar:calendar-bold" :error="errors.startOn" />
 
-    <BaseInput v-model="form.nextExecution" label="Próxima ejecución" type="date" icon="solar:calendar-bold" :error="errors.nextExecution" />
+    <BaseInput v-model="form.nextExecution" :label="t('recurringForm.nextExecution')" type="date" icon="solar:calendar-bold" :error="errors.nextExecution" />
 
-    <BaseInput v-model="form.endOn" label="Fecha de fin (opcional)" type="date" icon="solar:calendar-bold" />
+    <BaseInput v-model="form.endOn" :label="t('transaction.endDate')" type="date" icon="solar:calendar-bold" />
     <p v-if="form.endOn" class="text-xs text-content-muted">
-      Finalizará el {{ form.endOn.split("-").reverse().join("-") }}.
+      {{ t('transaction.endsOn', { date: form.endOn.split("-").reverse().join("-") }) }}
     </p>
     <p v-else class="text-xs text-content-muted">
-      No tiene fecha de finalización.
+      {{ t('transaction.noEndDate') }}
     </p>
 
     <BaseInput v-model="form.note" label="Nota (opcional)" icon="solar:pen-bold" placeholder="Descripción breve" />
@@ -219,19 +221,19 @@ defineExpose({
 
     <div class="flex flex-col gap-3 pt-1">
       <BaseButton type="submit" block :loading="saving" :disabled="!categoryOptions.length">
-        Guardar
+        {{ t('recurringForm.title') }}
       </BaseButton>
 
       <BaseButton type="button" variant="danger" block :loading="deleting" @click="showDeleteConfirm = true">
-        Eliminar movimiento recurrente
+        {{ t('recurringForm.deleteButton') }}
       </BaseButton>
     </div>
   </form>
 
-  <BaseDialog v-model="showDeleteConfirm" variant="danger" title="Eliminar movimiento recurrente" confirm-text="Eliminar"
+  <BaseDialog v-model="showDeleteConfirm" variant="danger" :title="t('recurringForm.deleteTitle')" confirm-text="Eliminar"
     cancel-text="Cancelar" show-cancel @confirm="onDeleteConfirm">
     <p class="text-content">
-      ¿Estás seguro de que deseas eliminar este movimiento recurrente? Esta acción no se puede deshacer y no afectará a los movimientos ya creados.
+      {{ t('recurringForm.deleteConfirm') }}
     </p>
   </BaseDialog>
 </template>

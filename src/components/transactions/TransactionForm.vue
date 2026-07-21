@@ -12,6 +12,7 @@ import BaseButton from '@/components/ui/BaseButton.vue'
 import BaseDialog from '@/components/ui/BaseDialog.vue'
 import SegmentedControl from '@/components/ui/SegmentedControl.vue'
 import { useRecurringTransactionsStore } from '@/stores/recurring-transactions'
+import { useI18n } from '@/i18n'
 
 const props = defineProps<{ transaction?: TransactionWithRelations }>()
 const emit = defineEmits<{ saved: []; cancel: [] }>()
@@ -20,6 +21,7 @@ const categories = useCategoriesStore()
 const family = useFamilyStore()
 const transactions = useTransactionsStore()
 const recurringTransactions = useRecurringTransactionsStore()
+const { t } = useI18n()
 
 const isEdit = computed(() => !!props.transaction)
 
@@ -293,7 +295,7 @@ defineExpose({
 
     <template v-if="!isEdit">
       <div class="flex items-center justify-between py-1">
-        <span class="text-sm font-medium text-content">Repetir este movimiento</span>
+        <span class="text-sm font-medium text-content">{{ t('transaction.repeatMovement') }}</span>
         <label class="relative cursor-pointer shrink-0 ml-4">
           <input v-model="form.isRecurring" type="checkbox" class="sr-only" />
           <span class="relative block h-6 w-11 rounded-pill transition-colors duration-200"
@@ -304,14 +306,13 @@ defineExpose({
         </label>
       </div>
       <div v-if="form.isRecurring" class="space-y-3 rounded-field border border-line p-3">
-        <BaseSelect v-model="form.frequency" label="Frecuencia" :options="[
-          { value: 'daily', label: 'Diaria' }, { value: 'weekly', label: 'Semanal' },
-          { value: 'monthly', label: 'Mensual' }, { value: 'yearly', label: 'Anual' },
+        <BaseSelect v-model="form.frequency" :label="t('transaction.frequency')" :options="[
+          { value: 'daily', label: t('recurringList.frequencies.daily') }, { value: 'weekly', label: t('recurringList.frequencies.weekly') },
+          { value: 'monthly', label: t('recurringList.frequencies.monthly') }, { value: 'yearly', label: t('recurringList.frequencies.yearly') },
         ]" />
-        <BaseInput v-model="form.endOn" label="Fecha de fin (opcional)" type="date" icon="solar:calendar-bold" />
+        <BaseInput v-model="form.endOn" :label="t('transaction.endDate')" type="date" icon="solar:calendar-bold" />
         <p class="text-xs text-content-muted">
-          {{ form.endOn ? `Finalizará el ${formatDateWithMonthName(form.endOn)}.` : `No tiene fecha de
-          finalización.` }}
+          {{ form.endOn ? t('transaction.endsOn', { date: formatDateWithMonthName(form.endOn) }) : t('transaction.noEndDate') }}
         </p>
       </div>
     </template>

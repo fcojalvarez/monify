@@ -3,8 +3,10 @@ import { computed } from 'vue'
 import type { TransactionWithRelations } from '@/types'
 import { formatCurrency, formatDate } from '@/utils/format'
 import AppIcon from '@/components/ui/AppIcon.vue'
+import { useI18n } from '@/i18n'
 
 const props = defineProps<{ transaction: TransactionWithRelations }>()
+const { t } = useI18n()
 
 const isIncome = computed(() => props.transaction.kind === 'income')
 const isRecurring = computed(() => !!props.transaction.recurring_transaction_id)
@@ -25,7 +27,7 @@ const isRecurring = computed(() => !!props.transaction.recurring_transaction_id)
         <span v-if="isRecurring"
           class="inline-flex shrink-0 items-center gap-1 rounded-full bg-primary-500/10 px-2 py-0.5 text-xs font-medium text-primary-500">
           <AppIcon name="solar:repeat-bold" :size="10" />
-          Recurrente
+          {{ t('transaction.recurring') }}
         </span>
       </div>
       <p class="truncate text-xs text-content-subtle">

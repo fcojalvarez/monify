@@ -11,12 +11,14 @@ import IconPicker from '@/components/ui/IconPicker.vue'
 import ColorPicker from '@/components/ui/ColorPicker.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
 import BaseDialog from '@/components/ui/BaseDialog.vue'
+import { useI18n } from '@/i18n'
 
 const props = defineProps<{ category?: Category }>()
 const emit = defineEmits<{ saved: []; cancel: [] }>()
 
 const categories = useCategoriesStore()
 const isEdit = computed(() => !!props.category)
+const { t } = useI18n()
 
 const form = reactive({
   name: props.category?.name ?? '',
@@ -181,7 +183,7 @@ defineExpose({
     <!-- Límite mensual opcional (vale también para ingresos) -->
     <div>
       <label class="flex cursor-pointer items-center justify-between">
-        <span class="text-sm font-medium text-content">Límite mensual</span>
+        <span class="text-sm font-medium text-content">{{ t('category.monthlyLimit') }}</span>
 
         <div class="relative shrink-0 ml-4">
           <input v-model="form.hasLimit" type="checkbox" class="sr-only" />
@@ -204,31 +206,30 @@ defineExpose({
 
     <div class="flex gap-3 pt-1">
       <BaseButton type="button" variant="secondary" block @click="onCancelClick">
-        Cancelar
+        {{ t('common.cancel') }}
       </BaseButton>
       <BaseButton type="submit" block :loading="saving">
-        {{ isEdit ? 'Guardar' : 'Crear categoría' }}
+        {{ isEdit ? t('common.save') : t('common.createCategory') }}
       </BaseButton>
     </div>
   </form>
 
-  <BaseDialog v-slot:default v-model="showConfirmDialog" variant="danger" title="Cambios sin guardar"
-    confirm-text="Descartar" cancel-text="Seguir editando" show-cancel @confirm="emit('cancel')">
+  <BaseDialog v-slot:default v-model="showConfirmDialog" variant="danger" :title="t('common.unsavedChanges')"
+    :confirm-text="t('common.discard')" :cancel-text="t('common.keepEditing')" show-cancel @confirm="emit('cancel')">
     <p class="text-content">
-      Tienes cambios sin guardar. ¿Seguro que quieres salir? Se perderán los datos introducidos.
+      {{ t('common.unsavedChangesMessage') }}
     </p>
   </BaseDialog>
 
-  <BaseDialog v-model="showDuplicateDialog" variant="confirm" title="¿Categoría parecida?"
-    confirm-text="Crear de todos modos" cancel-text="Revisar" show-cancel @confirm="saveCategory">
+  <BaseDialog v-model="showDuplicateDialog" variant="confirm" :title="t('common.similarCategory')"
+    :confirm-text="t('common.createAnyway')" :cancel-text="t('common.review')" show-cancel @confirm="saveCategory">
     <p class="text-content">
-      Ya existe {{ duplicateMatches.length === 1 ? 'una categoría muy parecida' : 'más de una categoría muy parecida'
-      }}:
+      {{ duplicateMatches.length === 1 ? t('common.duplicateCategoryOne') : t('common.duplicateCategoryMany') }}:
       <strong>{{duplicateMatches.map(category => category.name).join(', ')}}</strong>.
     </p>
     <p class="mt-2 text-sm text-content-subtle">
-      Revisa si te refieres a {{ duplicateMatches.length === 1 ? 'esa categoría' : 'alguna de ellas' }} antes de crear
-      una duplicada.
+      {{ duplicateMatches.length === 1 ? t('common.reviewOne') : t('common.reviewMany') }} antes de crear
+      {{ t('common.duplicateWarning') }}.
     </p>
   </BaseDialog>
 </template>

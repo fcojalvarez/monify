@@ -8,11 +8,13 @@ import { ROUTE_NAMES } from '@/constants'
 import AppLogo from '@/components/ui/AppLogo.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
 import BaseDialog from '@/components/ui/BaseDialog.vue'
+import { useI18n } from '@/i18n'
 
 const auth = useAuthStore()
 const profile = useProfileStore()
 const ui = useUiStore()
 const router = useRouter()
+const { t } = useI18n()
 
 const showLogoutDialog = ref(false)
 
@@ -34,31 +36,31 @@ async function signOut() {
       <div class="flex items-center gap-1">
         <RouterLink :to="{ name: ROUTE_NAMES.profile }"
           class="flex h-9 w-9 items-center justify-center rounded-full text-content-muted hover:bg-surface-muted transition-colors"
-          aria-label="Ajustes de cuenta" title="Ajustes de cuenta">
+          :aria-label="t('common.accountSettings')" :title="t('common.accountSettings')">
           <AppIcon name="solar:settings-bold" :size="20" />
         </RouterLink>
 
         <button class="flex h-9 w-9 items-center justify-center rounded-full text-content-muted hover:bg-surface-muted"
-          :aria-label="ui.theme === 'dark' ? 'Modo claro' : 'Modo oscuro'" @click="ui.toggleTheme">
+          :aria-label="ui.theme === 'dark' ? t('common.lightMode') : t('common.darkMode')" @click="ui.toggleTheme">
           <AppIcon :name="ui.theme === 'dark' ? 'solar:sun-bold' : 'solar:moon-bold'" :size="20" />
         </button>
 
         <button class="flex h-9 w-9 items-center justify-center rounded-full text-content-muted hover:bg-surface-muted"
-          aria-label="Cerrar sesión" @click="showLogoutDialog = true">
+          :aria-label="t('common.logout')" @click="showLogoutDialog = true">
           <AppIcon name="solar:logout-3-bold" :size="20" />
         </button>
       </div>
     </div>
   </header>
 
-  <BaseDialog v-model="showLogoutDialog" variant="confirm" title="Cerrar sesión" confirm-text="Cerrar sesión"
+  <BaseDialog v-model="showLogoutDialog" variant="confirm" :title="t('common.logout')" :confirm-text="t('common.logout')"
     show-cancel @confirm="signOut">
     <p class="text-content">
-      ¿Seguro que quieres cerrar la sesión?
+      {{ t('common.logoutConfirm') }}
     </p>
 
     <p class="mt-2 text-sm text-content-subtle">
-      Tendrás que volver a iniciar sesión para acceder a tu cuenta.
+      {{ t('common.logoutReauth') }}
     </p>
   </BaseDialog>
 </template>

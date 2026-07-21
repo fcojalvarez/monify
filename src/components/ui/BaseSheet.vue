@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, watch, onBeforeUnmount } from 'vue'
 import BaseDialog from './BaseDialog.vue'
+import { useI18n } from '@/i18n'
 
 const props = withDefaults(
   defineProps<{
@@ -16,6 +17,8 @@ const props = withDefaults(
 )
 
 const emit = defineEmits<{ 'update:modelValue': [value: boolean] }>()
+
+const { t } = useI18n()
 
 const showConfirmDialog = ref(false)
 
@@ -144,8 +147,8 @@ onBeforeUnmount(() => {
 
               <button type="button"
                 class="inline-flex h-7 items-center gap-2 rounded-full px-3 text-sm font-medium text-content-muted transition-colors hover:bg-surface-muted"
-                aria-label="Cerrar" @click="close">
-                <span>Cerrar</span>
+                :aria-label="t('common.close')" @click="close">
+                <span>{{ t('common.close') }}</span>
               </button>
             </div>
           </header>
@@ -157,10 +160,10 @@ onBeforeUnmount(() => {
       </div>
     </Transition>
 
-    <BaseDialog v-model="showConfirmDialog" variant="danger" title="Cambios sin guardar" confirm-text="Descartar"
-      cancel-text="Seguir editando" show-cancel @confirm="forceClose">
+    <BaseDialog v-model="showConfirmDialog" variant="danger" :title="t('common.unsavedChanges')" :confirm-text="t('common.discard')"
+      :cancel-text="t('common.keepEditing')" show-cancel @confirm="forceClose">
       <p class="text-content">
-        Tienes cambios sin guardar. ¿Seguro que quieres salir? Se perderán los datos introducidos.
+        {{ t('common.unsavedChangesMessage') }}
       </p>
     </BaseDialog>
   </Teleport>

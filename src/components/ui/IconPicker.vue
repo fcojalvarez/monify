@@ -2,9 +2,12 @@
 import { ref } from 'vue'
 import { SUGGESTED_ICONS } from '@/constants'
 import AppIcon from './AppIcon.vue'
+import { useI18n } from '@/i18n'
 
 const props = defineProps<{ modelValue: string; color?: string }>()
 const emit = defineEmits<{ 'update:modelValue': [value: string] }>()
+
+const { t } = useI18n()
 
 const custom = ref('')
 const showCustom = ref(false)
@@ -40,7 +43,7 @@ function applyCustom() {
 
       <button type="button"
         class="flex aspect-square items-center justify-center rounded-field border border-dashed border-line text-content-subtle hover:bg-surface-muted"
-        aria-label="Otro icono" @click="showCustom = !showCustom">
+        :aria-label="t('common.otherIcon')" @click="showCustom = !showCustom">
         <AppIcon name="solar:add-circle-linear" :size="22" />
       </button>
     </div>
@@ -52,7 +55,7 @@ function applyCustom() {
         placeholder="p.ej. mdi:cash o 💸" @keydown.enter.prevent="applyCustom" />
       <button type="button" class="rounded-field bg-surface-muted px-4 text-sm font-semibold text-content hover:bg-line"
         @click="applyCustom">
-        Usar
+        {{ t('common.use') }}
       </button>
     </div>
     <p class="helper-text">

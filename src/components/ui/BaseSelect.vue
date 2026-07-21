@@ -1,6 +1,7 @@
 <script setup lang="ts" generic="T extends string">
 import { computed, onMounted, onUnmounted, ref, nextTick } from 'vue'
 import AppIcon from './AppIcon.vue'
+import { useI18n } from '@/i18n'
 
 type Option<T extends string> = { value: T | '', label: string }
 
@@ -24,6 +25,10 @@ const props = withDefaults(
   }
 )
 
+const { t } = useI18n()
+
+const allLabel = computed(() => props.allLabel || t('common.all'))
+
 const emit = defineEmits<{ 'update:modelValue': [value: T | ''] }>()
 
 const open = ref(false)
@@ -35,7 +40,7 @@ const hasError = computed(() => !!props.error)
 
 const allOptions = computed<Option<T>[]>(() => {
   const options: Option<T>[] = [...props.options]
-  if (props.showAllOption) options.unshift({ value: '', label: props.allLabel })
+  if (props.showAllOption) options.unshift({ value: '', label: allLabel.value })
   return options
 })
 
@@ -160,7 +165,7 @@ defineExpose({ focus, $el: buttonRef })
       class="h-12 w-full rounded-field border bg-surface-muted px-4 text-left text-content transition-colors focus:bg-surface-raised focus:outline-none focus:shadow-focus"
       :class="hasError ? 'border-expense focus:border-expense' : 'border-transparent focus:border-primary-400'"
       @click="onOpenHandle">
-      {{ selectedLabel ?? placeholder ?? 'Selecciona…' }}
+      {{ selectedLabel ?? placeholder ?? t('common.select') }}
     </button>
 
     <p v-if="hasError" class="mt-1.5 text-xs font-medium text-expense">
@@ -212,7 +217,7 @@ defineExpose({ focus, $el: buttonRef })
 
 
               <div v-if="showSearch" class="border-b border-line px-4 py-3">
-                <input v-model="search" ref="searchInput" type="text" placeholder="Buscar..." class="
+                <input v-model="search" ref="searchInput" type="text" :placeholder="t('common.search')" class="
                     h-10
                     w-full
                     rounded-field
@@ -239,7 +244,7 @@ defineExpose({ focus, $el: buttonRef })
                 ">
                 <p v-if="search.trim() && !filteredOptions.length"
                   class="px-3 py-6 text-center text-sm text-content-subtle">
-                  No hay resultados para esta búsqueda.
+                  {{ t('common.noResults') }}
                 </p>
 
                 <button v-else v-for="option in filteredOptions" :key="String(option.value)" type="button" class="
