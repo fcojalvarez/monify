@@ -123,4 +123,64 @@ describe('BaseSelect', () => {
     expect(wrapper.text()).toContain('No hay resultados para esta búsqueda.')
     expect(wrapper.findAll('button')).toHaveLength(1)
   })
+
+  it('expone el método focus() y el elemento DOM', () => {
+    const wrapper = mount(BaseSelect, {
+      ...globalOptions,
+      props: {
+        modelValue: '',
+        options: [{ value: '1', label: 'Opción 1' }],
+      },
+    })
+    
+    expect(wrapper.vm.focus).toBeDefined()
+    expect(typeof wrapper.vm.focus).toBe('function')
+    expect(wrapper.vm.$el).toBeDefined()
+  })
+
+  it('hace focus en el botón al llamar al método focus()', () => {
+    const wrapper = mount(BaseSelect, {
+      ...globalOptions,
+      props: {
+        modelValue: '',
+        options: [{ value: '1', label: 'Opción 1' }],
+      },
+    })
+    
+    const button = wrapper.find('button')
+    const focusSpy = vi.spyOn(button.element, 'focus')
+    
+    wrapper.vm.focus()
+    
+    expect(focusSpy).toHaveBeenCalled()
+  })
+
+  it('muestra borde rojo y mensaje de error cuando hay error', () => {
+    const wrapper = mount(BaseSelect, {
+      ...globalOptions,
+      props: {
+        modelValue: '',
+        error: 'Debes seleccionar una opción',
+        options: [{ value: '1', label: 'Opción 1' }],
+      },
+    })
+    
+    const button = wrapper.find('button')
+    expect(button.classes()).toContain('border-expense')
+    expect(wrapper.text()).toContain('Debes seleccionar una opción')
+  })
+
+  it('no muestra borde rojo cuando no hay error', () => {
+    const wrapper = mount(BaseSelect, {
+      ...globalOptions,
+      props: {
+        modelValue: '',
+        options: [{ value: '1', label: 'Opción 1' }],
+      },
+    })
+    
+    const button = wrapper.find('button')
+    expect(button.classes()).not.toContain('border-expense')
+    expect(button.classes()).toContain('border-transparent')
+  })
 })

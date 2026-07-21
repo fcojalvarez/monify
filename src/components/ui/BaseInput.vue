@@ -17,6 +17,7 @@ const emit = defineEmits<{ 'update:modelValue': [value: string] }>()
 
 const id = useId()
 const hasError = computed(() => !!props.error)
+const inputRef = ref<HTMLInputElement | null>(null)
 
 const showPassword = ref(false)
 
@@ -34,6 +35,12 @@ function onInput(event: Event) {
 function togglePassword() {
   showPassword.value = !showPassword.value
 }
+
+function focus() {
+  inputRef.value?.focus()
+}
+
+defineExpose({ focus, $el: inputRef })
 </script>
 
 <template>
@@ -46,7 +53,7 @@ function togglePassword() {
       <AppIcon v-if="icon" :name="icon" :size="18"
         class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-content-subtle" />
 
-      <input :id="id" :value="modelValue" :type="inputType" :placeholder="placeholder" :autocomplete="autocomplete"
+      <input ref="inputRef" :id="id" :value="modelValue" :type="inputType" :placeholder="placeholder" :autocomplete="autocomplete"
         :required="required" :aria-invalid="hasError" :class="[
           'h-12 w-full rounded-field bg-surface-muted text-content placeholder:text-content-subtle',
           'border transition-colors duration-200 focus:bg-surface-raised focus:outline-none',

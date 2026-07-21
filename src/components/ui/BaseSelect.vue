@@ -29,6 +29,9 @@ const emit = defineEmits<{ 'update:modelValue': [value: T | ''] }>()
 const open = ref(false)
 const search = ref('')
 const searchInput = ref<HTMLInputElement | null>(null)
+const buttonRef = ref<HTMLButtonElement | null>(null)
+
+const hasError = computed(() => !!props.error)
 
 const allOptions = computed<Option<T>[]>(() => {
   const options: Option<T>[] = [...props.options]
@@ -139,6 +142,12 @@ function select(value: T | '') {
   emit('update:modelValue', value)
   close()
 }
+
+function focus() {
+  buttonRef.value?.focus()
+}
+
+defineExpose({ focus, $el: buttonRef })
 </script>
 
 <template>
@@ -147,11 +156,16 @@ function select(value: T | '') {
       {{ label }}
     </label>
 
-    <button type="button"
-      class="h-12 w-full rounded-field border border-transparent bg-surface-muted px-4 text-left text-content transition-colors focus:border-primary-400 focus:bg-surface-raised focus:outline-none focus:shadow-focus"
+    <button ref="buttonRef" type="button"
+      class="h-12 w-full rounded-field border bg-surface-muted px-4 text-left text-content transition-colors focus:bg-surface-raised focus:outline-none focus:shadow-focus"
+      :class="hasError ? 'border-expense focus:border-expense' : 'border-transparent focus:border-primary-400'"
       @click="onOpenHandle">
       {{ selectedLabel ?? placeholder ?? 'Selecciona…' }}
     </button>
+
+    <p v-if="hasError" class="mt-1.5 text-xs font-medium text-expense">
+      {{ error }}
+    </p>
 
     <Teleport :disabled="!teleport" to="body">
       <Transition enter-active-class="transition-opacity duration-200"

@@ -85,4 +85,33 @@ describe('BaseInput', () => {
     })
     expect(wrapper.findComponent({ name: 'AppIcon' }).exists()).toBe(true)
   })
+
+  it('expone el método focus() y el elemento DOM', () => {
+    const wrapper = mount(BaseInput, {
+      ...defaultOptions,
+      props: {
+        modelValue: '',
+      },
+    })
+    
+    expect(wrapper.vm.focus).toBeDefined()
+    expect(typeof wrapper.vm.focus).toBe('function')
+    expect(wrapper.vm.$el).toBeDefined()
+  })
+
+  it('hace focus en el input al llamar al método focus()', () => {
+    const wrapper = mount(BaseInput, {
+      ...defaultOptions,
+      props: {
+        modelValue: '',
+      },
+    })
+    
+    const input = wrapper.find('input')
+    const focusSpy = vi.spyOn(input.element, 'focus')
+    
+    wrapper.vm.focus()
+    
+    expect(focusSpy).toHaveBeenCalled()
+  })
 })

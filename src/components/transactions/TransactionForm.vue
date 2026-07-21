@@ -54,6 +54,11 @@ const errors = reactive<Record<string, string | undefined>>({})
 const serverError = ref<string | null>(null)
 const saving = ref(false)
 
+const grossInputRef = ref<InstanceType<typeof BaseInput> | null>(null)
+const amountInputRef = ref<InstanceType<typeof BaseInput> | null>(null)
+const familyMemberInputRef = ref<InstanceType<typeof BaseSelect> | null>(null)
+const categoryInputRef = ref<InstanceType<typeof BaseSelect> | null>(null)
+
 const categoryOptions = computed(() =>
   categories.items
     .filter((c) => c.kind === form.kind)
@@ -69,6 +74,29 @@ watch(
     if (!categoryOptions.value.some((o) => o.value === form.categoryId)) form.categoryId = ''
   },
 )
+function focusFirstError() {
+  if (errors.gross && grossInputRef.value) {
+    grossInputRef.value.focus()
+    grossInputRef.value.$el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    return
+  }
+  if (errors.amount && amountInputRef.value) {
+    amountInputRef.value.focus()
+    amountInputRef.value.$el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    return
+  }
+  if (errors.categoryId && categoryInputRef.value) {
+    categoryInputRef.value.focus()
+    categoryInputRef.value.$el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    return
+  }
+  if (errors.familyMemberId && familyMemberInputRef.value) {
+    familyMemberInputRef.value.focus()
+    familyMemberInputRef.value.$el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    return
+  }
+}
+
 function validate(): boolean {
   const amount = parseAmount(form.amount)
 
@@ -83,6 +111,7 @@ function validate(): boolean {
   errors.familyMemberId = (!form.isCash || form.familyMemberId) ? undefined : 'Elige un miembro'
 
   if (errors.amount || errors.categoryId || errors.familyMemberId || errors.gross) {
+    focusFirstError()
     return false
   }
 
@@ -107,6 +136,7 @@ function validate(): boolean {
       const errMsg = `No hay esa cantidad en la cartera de ${selectedMember?.name ?? 'esta persona'}`
       errors.familyMemberId = errMsg
       serverError.value = errMsg
+      focusFirstError()
       return false
     }
   }
@@ -241,16 +271,16 @@ defineExpose({
       </label>
     </div>
 
-    <BaseInput v-if="form.kind === 'income'" v-model="form.gross" label="Importe bruto" type="number"
+    <BaseInput v-if="form.kind === 'income'" ref="grossInputRef" v-model="form.gross" label="Importe bruto" type="number"
       icon="solar:tag-price-bold" placeholder="0,00" :error="errors.gross" />
 
-    <BaseInput v-model="form.amount" label="Importe" type="number" icon="solar:tag-price-bold" placeholder="0,00"
+    <BaseInput ref="amountInputRef" v-model="form.amount" label="Importe" type="number" icon="solar:tag-price-bold" placeholder="0,00"
       :error="errors.amount" />
 
-    <BaseSelect v-model="form.familyMemberId" label="Pertenece a" placeholder="Selecciona un miembro"
+    <BaseSelect ref="familyMemberInputRef" v-model="form.familyMemberId" label="Pertenece a" placeholder="Selecciona un miembro"
       :options="memberOptions" :error="errors.familyMemberId" />
 
-    <BaseSelect v-if="categoryOptions.length" v-model="form.categoryId" label="Categoría"
+    <BaseSelect v-if="categoryOptions.length" ref="categoryInputRef" v-model="form.categoryId" label="Categoría"
       placeholder="Selecciona una categoría" :options="categoryOptions" :error="errors.categoryId" />
     <p v-else class="rounded-field bg-surface-muted p-3 text-sm text-content-muted">
       No tienes categorías de {{ form.kind === 'income' ? 'ingreso' : 'gasto' }} todavía. Puedes crearlas en

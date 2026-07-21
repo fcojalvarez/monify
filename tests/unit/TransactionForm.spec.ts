@@ -226,4 +226,38 @@ describe('TransactionForm', () => {
     expect(wrapper.text()).toContain('No hay esa cantidad en la cartera de Alguien')
     expect(store.create).not.toHaveBeenCalled()
   })
+
+  it('hace focus en el primer input con error de validación', async () => {
+    const wrapper = mount(TransactionForm, {
+      global: {
+        stubs: {
+          BaseInput: {
+            props: ['modelValue', 'error'],
+            emits: ['update:modelValue'],
+            template: '<input :value="modelValue" @input="$emit(\'update:modelValue\', $event.target.value)">',
+          },
+          BaseSelect: {
+            props: ['modelValue', 'options', 'error'],
+            emits: ['update:modelValue'],
+            template: '<select :value="modelValue" @change="$emit(\'update:modelValue\', $event.target.value)"></select>',
+          },
+        },
+        plugins: [
+          createTestingPinia({
+            createSpy: vi.fn,
+            initialState: {
+              categories: { items: [category], loaded: true },
+              family: { items: [member], loaded: true },
+            },
+          }),
+        ],
+      },
+    })
+
+    // Intentar enviar formulario vacío para generar errores
+    await wrapper.find('form').trigger('submit.prevent')
+
+    // Verificar que hay mensajes de error
+    expect(wrapper.text()).toContain('Introduce un importe mayor que 0')
+  })
 })
