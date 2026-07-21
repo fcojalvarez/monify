@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { formatCurrency, monthRange, todayISO, formatDate } from '@/utils/format'
+import { formatCurrency, monthRange, todayISO, formatDate, formatDateWithMonthName } from '@/utils/format'
 
 describe('format utils', () => {
   it('formatCurrency usa EUR por defecto', () => {
@@ -40,6 +40,23 @@ describe('format utils', () => {
       expect(result).toContain('19')
       expect(result.toLowerCase()).toContain('jul')
       expect(result).toContain('2026')
+    })
+  })
+
+  describe('formatDateWithMonthName', () => {
+    it('formatea fecha con nombre completo del mes en español', () => {
+      const result = formatDateWithMonthName('2026-07-17', 'es-ES')
+      expect(result).toBe('17 de julio de 2026')
+    })
+
+    it('formatea fecha con nombre completo del mes en inglés', () => {
+      const result = formatDateWithMonthName('2026-07-17', 'en-US')
+      expect(result).toBe('July 17, 2026')
+    })
+
+    it('formatea diferentes meses correctamente', () => {
+      expect(formatDateWithMonthName('2026-01-15', 'es-ES')).toBe('15 de enero de 2026')
+      expect(formatDateWithMonthName('2026-12-25', 'es-ES')).toBe('25 de diciembre de 2026')
     })
   })
 })
