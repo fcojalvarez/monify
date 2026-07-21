@@ -46,7 +46,8 @@ const visibleCashMembers = computed(() => props.members.slice(0, visibleCashMemb
 const hiddenCashMembers = computed(() => Math.max(props.members.length - visibleCashMembers.value.length, 0))
 const activeIndex = ref(0)
 let walletPreviewObserver: ResizeObserver | undefined
-const walletChipWidth = 112
+// w-28 (112px) + px-3 (24px padding) = 136px
+const walletChipWidth = 136
 const moreIndicatorWidth = 56
 
 function getWalletPreviewElement() {
@@ -148,6 +149,13 @@ watch(() => [props.members.length, props.cashEnabled], () => {
   nextTick(() => {
     updateWalletPreview()
     observeWalletPreview()
+    requestAnimationFrame(updateWalletPreview)
+  })
+})
+
+watch(() => activeIndex.value, () => {
+  nextTick(() => {
+    updateWalletPreview()
     requestAnimationFrame(updateWalletPreview)
   })
 })

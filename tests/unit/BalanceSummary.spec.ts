@@ -4,6 +4,13 @@ import { useRouter } from 'vue-router'
 import BalanceSummary from '@/components/dashboard/BalanceSummary.vue'
 import { setLocale } from '@/i18n'
 
+// Mock ResizeObserver
+global.ResizeObserver = vi.fn().mockImplementation(() => ({
+  observe: vi.fn(),
+  disconnect: vi.fn(),
+  unobserve: vi.fn(),
+}))
+
 vi.mock('vue-router', () => ({ useRouter: vi.fn() }))
 vi.mock('@/composables/usePlatform', () => ({
   usePlatform: () => ({ isDesktop: true, isMobile: false }),
@@ -162,5 +169,40 @@ describe('BalanceSummary', () => {
 
     await wrapper.find('section').trigger('click')
     expect(routerPush).toHaveBeenCalledWith('/history')
+  })
+
+  it('muestra todas las carteras cuando hay suficiente espacio', async () => {
+    const wrapper = mount(BalanceSummary, {
+      ...globalOptions,
+      props: {
+        ...defaultProps(),
+        cashEnabled: true,
+        cash: 300,
+        members: [
+          { id: '1', name: 'Ana', color: '#00b894', avatar_icon: 'solar:user-bold', cash_balance: 100 },
+          { id: '2', name: 'Luis', color: '#3a53a8', avatar_icon: 'solar:user-bold', cash_balance: 200 },
+        ] as any,
+      },
+    })
+
+    // Simular que el contenedor tiene suficiente ancho para ambas carteras
+    const walletPreview = wrapper.find('[data-testid="cash-wallet-preview"]')
+    expect(walletPreview.exists()).toBe(true)
+
+    // Establecer un ancho suficiente para ambas carteras (136px * 2 + gap 8px = ~280px)
+    Object.defineProperty(walletPreview.element, 'getBoundingClientRect', {
+      value: () => ({ width: 400 }),
+      writable: true,
+    })
+
+    // Trigger el resize observer manualmente llamando a updateWalletPreview
+    // @ts-ignore - accediendo a método privado para test
+    await wrapper.vm.updateWalletPreview()
+    await wrapper.vm.$nextTick()
+
+    // Verificar que se muestran ambas carteras (no debería haber indicador +N)
+    expect(wrapper.text()).toContain('Ana')
+    expect(wrapper.text()).toContain('Luis')
+    expect(wrapper.text()).not.toContain('+')
   })
 })
