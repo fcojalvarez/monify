@@ -10,27 +10,33 @@ import BaseButton from '@/components/ui/BaseButton.vue'
 import BaseDialog from '@/components/ui/BaseDialog.vue'
 import SegmentedControl from '@/components/ui/SegmentedControl.vue'
 import { recurringTransactionsService } from '@/services/recurring-transactions.service'
+import { useRecurringTransactionsStore } from '@/stores/recurring-transactions'
+import { todayISO } from '@/utils/format'
 import { useI18n } from '@/i18n'
 
-const props = defineProps<{ transaction: RecurringTransaction }>()
+const props = defineProps<{ transaction?: RecurringTransaction }>()
 const emit = defineEmits<{ saved: []; cancel: [] }>()
 
 const categories = useCategoriesStore()
 const family = useFamilyStore()
+const recurringTransactions = useRecurringTransactionsStore()
 const { t } = useI18n()
 
+const isEdit = computed(() => !!props.transaction)
+const today = todayISO()
+
 const form = reactive({
-  kind: props.transaction.kind as CategoryKind,
-  gross: String(props.transaction.gross ?? ''),
-  amount: String(props.transaction.amount),
-  categoryId: props.transaction.category_id,
-  familyMemberId: props.transaction.family_member_id,
-  note: props.transaction.note ?? '',
-  isCash: props.transaction.payment_method === 'cash',
-  frequency: props.transaction.frequency as 'daily' | 'weekly' | 'monthly' | 'yearly',
-  startOn: props.transaction.start_on,
-  nextExecution: props.transaction.next_execution,
-  endOn: props.transaction.end_on ?? '',
+  kind: (props.transaction?.kind ?? 'expense') as CategoryKind,
+  gross: props.transaction ? String(props.transaction.gross ?? '') : '',
+  amount: props.transaction ? String(props.transaction.amount) : '',
+  categoryId: props.transaction?.category_id ?? '',
+  familyMemberId: props.transaction?.family_member_id ?? family.self?.id ?? '',
+  note: props.transaction?.note ?? '',
+  isCash: props.transaction?.payment_method === 'cash',
+  frequency: (props.transaction?.frequency ?? 'monthly') as 'daily' | 'weekly' | 'monthly' | 'yearly',
+  startOn: props.transaction?.start_on ?? today,
+  nextExecution: props.transaction?.next_execution ?? today,
+  endOn: props.transaction?.end_on ?? '',
 })
 
 const errors = reactive<Record<string, string | undefined>>({})
@@ -95,14 +101,27 @@ async function onSubmit() {
       ? parseAmount(form.gross || form.amount)
       : null
 
-    await recurringTransactionsService.update(props.transaction.id, {
-      ...baseData,
-      gross,
-      frequency: form.frequency,
-      start_on: form.startOn,
-      next_execution: form.nextExecution,
-      end_on: form.endOn || null,
-    })
+    if (isEdit.value) {
+      await recurringTransactionsService.update(props.transaction!.id, {
+        ...baseData,
+        gross,
+        frequency: form.frequency,
+        start_on: form.startOn,
+        next_execution: form.nextExecution,
+        end_on: form.endOn || null,
+      })
+    } else {
+      await recurringTransactions.create({
+        ...baseData,
+        gross,
+        frequency: form.frequency,
+        start_on: form.startOn,
+        next_execution: form.nextExecution,
+        end_on: form.endOn || null,
+      })
+
+      await recurringTransactions.sync()
+    }
 
     emit('saved')
   } catch (error) {
@@ -116,6 +135,7 @@ const deleting = ref(false)
 const showDeleteConfirm = ref(false)
 
 async function onDeleteConfirm() {
+  if (!props.transaction) return
   showDeleteConfirm.value = false
   deleting.value = true
   try {
@@ -223,10 +243,10 @@ defineExpose({
 
     <div class="flex flex-col gap-3 pt-1">
       <BaseButton type="submit" block :loading="saving" :disabled="!categoryOptions.length">
-        {{ t('recurringForm.editButton') }}
+        {{ isEdit ? t('recurringForm.editButton') : t('recurringForm.createButton') }}
       </BaseButton>
 
-      <BaseButton type="button" variant="danger" block :loading="deleting" @click="showDeleteConfirm = true">
+      <BaseButton v-if="isEdit" type="button" variant="danger" block :loading="deleting" @click="showDeleteConfirm = true">
         {{ t('recurringForm.deleteButton') }}
       </BaseButton>
     </div>

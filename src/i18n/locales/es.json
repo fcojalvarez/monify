@@ -54,9 +54,14 @@
     "title": "Movimientos recurrentes",
     "subtitle": "Consulta las plantillas que se crearán automáticamente.",
     "empty": "No tienes movimientos recurrentes.",
+    "noCategory": "Sin categoría",
     "nextExecution": "Próxima ejecución",
     "noEnd": "Sin fecha de finalización",
     "end": "Finaliza el {date}",
+    "kind": {
+      "income": "Ingreso",
+      "expense": "Gasto"
+    },
     "frequencies": {
       "daily": "Diario",
       "weekly": "Semanal",
@@ -66,10 +71,12 @@
   },
   "recurringForm": {
     "title": "Editar movimiento recurrente",
+    "createTitle": "Nuevo movimiento recurrente",
     "deleteConfirm": "¿Estás seguro de que deseas eliminar este movimiento recurrente? Esta acción no se puede deshacer y no afectará a los movimientos ya creados.",
     "startDate": "Fecha de inicio",
     "nextExecution": "Próxima ejecución",
     "editButton": "Editar",
+    "createButton": "Crear",
     "deleteButton": "Eliminar",
     "deleteTitle": "Eliminar movimiento recurrente"
   },

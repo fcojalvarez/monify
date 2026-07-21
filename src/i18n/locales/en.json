@@ -54,9 +54,14 @@
     "title": "Recurring transactions",
     "subtitle": "Review templates that will be created automatically.",
     "empty": "You have no recurring transactions.",
+    "noCategory": "No category",
     "nextExecution": "Next execution",
     "noEnd": "No end date",
     "end": "Ends on {date}",
+    "kind": {
+      "income": "Income",
+      "expense": "Expense"
+    },
     "frequencies": {
       "daily": "Daily",
       "weekly": "Weekly",
@@ -66,10 +71,12 @@
   },
   "recurringForm": {
     "title": "Edit recurring transaction",
+    "createTitle": "New recurring transaction",
     "deleteConfirm": "Are you sure you want to delete this recurring transaction? This action cannot be undone and will not affect already created transactions.",
     "startDate": "Start date",
     "nextExecution": "Next execution",
     "editButton": "Edit",
+    "createButton": "Create",
     "deleteButton": "Delete",
     "deleteTitle": "Delete recurring transaction"
   },
