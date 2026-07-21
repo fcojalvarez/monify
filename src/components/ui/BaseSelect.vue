@@ -197,7 +197,8 @@ defineExpose({ focus, $el: buttonRef })
                 keyboardOffset > 0 ? 'fixed bottom-0' : ''
               ]" :style="teleport
                 ? {
-                  maxHeight: keyboardOffset > 0 ? `${keyboardOffset}px` : '85dvh',
+                  maxHeight: keyboardOffset > 0 ? `calc(${keyboardOffset}px - 16px)` : '85dvh',
+                  marginBottom: keyboardOffset > 0 ? '16px' : '0',
                   transform: `translateY(${translateY}px)`
                 }
                 : {}

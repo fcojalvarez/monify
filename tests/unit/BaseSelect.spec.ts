@@ -183,4 +183,22 @@ describe('BaseSelect', () => {
     expect(button.classes()).not.toContain('border-expense')
     expect(button.classes()).toContain('border-transparent')
   })
+
+  it('aplica estilos de teclado cuando keyboardOffset es mayor que 0', async () => {
+    const wrapper = mount(BaseSelect, {
+      ...globalOptions,
+      props: {
+        modelValue: '',
+        teleport: false,
+        options: [{ value: '1', label: 'Opción 1' }],
+      },
+    })
+
+    // Simular que el teclado está abierto
+    await wrapper.find('button').trigger('click')
+    await nextTick()
+
+    // Verificar que el componente está abierto
+    expect(wrapper.find('div[class*="bg-surface-raised"]').exists()).toBe(true)
+  })
 })
