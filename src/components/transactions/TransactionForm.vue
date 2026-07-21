@@ -54,10 +54,10 @@ const errors = reactive<Record<string, string | undefined>>({})
 const serverError = ref<string | null>(null)
 const saving = ref(false)
 
-const grossInputRef = ref<InstanceType<typeof BaseInput> | null>(null)
-const amountInputRef = ref<InstanceType<typeof BaseInput> | null>(null)
-const familyMemberInputRef = ref<InstanceType<typeof BaseSelect> | null>(null)
-const categoryInputRef = ref<InstanceType<typeof BaseSelect> | null>(null)
+const grossInputRef = ref<{ focus: () => void; $el?: { scrollIntoView?: (options?: any) => void } } | null>(null)
+const amountInputRef = ref<{ focus: () => void; $el?: { scrollIntoView?: (options?: any) => void } } | null>(null)
+const familyMemberInputRef = ref<{ focus: () => void; $el?: { scrollIntoView?: (options?: any) => void } } | null>(null)
+const categoryInputRef = ref<{ focus: () => void; $el?: { scrollIntoView?: (options?: any) => void } } | null>(null)
 
 const categoryOptions = computed(() =>
   categories.items

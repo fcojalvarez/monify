@@ -14,6 +14,9 @@ export type Category = Tables<'categories'>
 /** Movimiento (ingreso o gasto). */
 export type Transaction = Tables<'transactions'>
 
+/** Movimiento recurrente. */
+export type RecurringTransaction = Tables<'recurring_transactions'>
+
 /** Transacción con sus relaciones ya resueltas (para pintar en UI). */
 export interface TransactionWithRelations extends Transaction {
   category: Pick<Category, 'id' | 'name' | 'icon' | 'color' | 'kind'> | null
