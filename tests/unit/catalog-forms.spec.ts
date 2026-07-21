@@ -5,6 +5,7 @@ import CategoryForm from '@/components/categories/CategoryForm.vue'
 import FamilyForm from '@/components/family/FamilyForm.vue'
 import { useCategoriesStore } from '@/stores/categories'
 import { useFamilyStore } from '@/stores/family'
+import { setLocale } from '@/i18n'
 
 const baseInput = {
   props: ['modelValue', 'error'],
@@ -24,6 +25,7 @@ describe('formularios de catálogos', () => {
   let pinia: ReturnType<typeof createPinia>
 
   beforeEach(() => {
+    setLocale('es')
     pinia = createPinia()
     setActivePinia(pinia)
   })

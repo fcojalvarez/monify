@@ -1,7 +1,8 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { nextTick } from 'vue'
 import BaseSelect from '@/components/ui/BaseSelect.vue'
+import { setLocale } from '@/i18n'
 
 const globalOptions = {
   global: {
@@ -12,6 +13,10 @@ const globalOptions = {
 }
 
 describe('BaseSelect', () => {
+  beforeEach(() => {
+    setLocale('es')
+  })
+
   it('muestra la etiqueta y el valor seleccionado', () => {
     const wrapper = mount(BaseSelect, {
       ...globalOptions,
@@ -118,7 +123,8 @@ describe('BaseSelect', () => {
     })
 
     await wrapper.find('button').trigger('click')
-    await wrapper.find('input[placeholder="Buscar..."]').setValue('sin coincidencias')
+    const input = wrapper.find('input[type="text"]')
+    await input.setValue('sin coincidencias')
 
     expect(wrapper.text()).toContain('No hay resultados para esta búsqueda.')
     expect(wrapper.findAll('button')).toHaveLength(1)

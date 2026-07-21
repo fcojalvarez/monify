@@ -7,6 +7,7 @@ import { useUiStore } from '@/stores/ui'
 import { useRouter } from 'vue-router'
 import AppHeader from '@/components/layout/AppHeader.vue'
 import AppLogo from '@/components/ui/AppLogo.vue'
+import { setLocale } from '@/i18n'
 
 vi.mock('vue-router', () => ({
   useRouter: vi.fn(),
@@ -18,6 +19,7 @@ describe('AppHeader', () => {
   let routerPush: any
 
   beforeEach(() => {
+    setLocale('es')
     vi.clearAllMocks()
     routerPush = vi.fn()
     vi.mocked(useRouter).mockReturnValue({

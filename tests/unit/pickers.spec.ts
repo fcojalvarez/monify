@@ -1,12 +1,16 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { PALETTE, SUGGESTED_ICONS } from '@/constants'
 import ColorPicker from '@/components/ui/ColorPicker.vue'
 import IconPicker from '@/components/ui/IconPicker.vue'
+import { setLocale } from '@/i18n'
 
 const global = { stubs: { AppIcon: true } }
 
 describe('selectores de color e icono', () => {
+  beforeEach(() => {
+    setLocale('es')
+  })
   it('emite el color seleccionado', async () => {
     const wrapper = mount(ColorPicker, { props: { modelValue: PALETTE[0] }, global })
 
@@ -23,7 +27,7 @@ describe('selectores de color e icono', () => {
       SUGGESTED_ICONS[0].includes('set:') ? `solar:${SUGGESTED_ICONS[0].split('set:')[1]}` : SUGGESTED_ICONS[0],
     ])
 
-    await wrapper.get('[aria-label="Otro icono"]').trigger('click')
+    await wrapper.get('button[aria-label="Otro icono"]').trigger('click')
     await wrapper.get('input').setValue('mdi:cash')
     await wrapper.get('input').trigger('keydown.enter')
 

@@ -3,8 +3,18 @@ import { mount } from '@vue/test-utils'
 import { nextTick } from 'vue'
 import BaseSheet from '@/components/ui/BaseSheet.vue'
 import BaseDialog from '@/components/ui/BaseDialog.vue'
+import { setLocale } from '@/i18n'
 
 describe('BaseSheet', () => {
+  beforeEach(() => {
+    setLocale('es')
+    document.body.style.overflow = ''
+  })
+
+  afterEach(() => {
+    document.body.style.overflow = ''
+  })
+
   const globalOptions = {
     global: {
       stubs: {
@@ -16,14 +26,6 @@ describe('BaseSheet', () => {
       },
     },
   }
-
-  beforeEach(() => {
-    document.body.style.overflow = ''
-  })
-
-  afterEach(() => {
-    document.body.style.overflow = ''
-  })
 
   it('no renderiza nada cuando modelValue es falso', () => {
     const wrapper = mount(BaseSheet, {
