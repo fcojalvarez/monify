@@ -10,6 +10,10 @@ describe('getVisibleWalletCount', () => {
     expect(getVisibleWalletCount(352, [112, 112, 112], 56)).toBe(3)
   })
 
+  it('muestra dos carteras cuando caben sin indicador', () => {
+    expect(getVisibleWalletCount(232, [112, 112], 56)).toBe(2)
+  })
+
   it('muestra cuatro carteras cuando caben junto al indicador +N', () => {
     expect(getVisibleWalletCount(536, Array(5).fill(112), 56)).toBe(4)
   })
