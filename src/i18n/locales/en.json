@@ -52,7 +52,7 @@
   },
   "recurringList": {
     "title": "Recurring transactions",
-    "subtitle": "Review templates that will be created automatically.",
+    "subtitle": "Review transactions that will be created automatically.",
     "empty": "You have no recurring transactions.",
     "noCategory": "No category",
     "searchPlaceholder": "Search by note or category…",

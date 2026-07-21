@@ -52,7 +52,7 @@
   },
   "recurringList": {
     "title": "Movimientos recurrentes",
-    "subtitle": "Consulta las plantillas que se crearán automáticamente.",
+    "subtitle": "Consulta los movimientos que se crearán automáticamente.",
     "empty": "No tienes movimientos recurrentes.",
     "noCategory": "Sin categoría",
     "searchPlaceholder": "Buscar por nota o categoría…",
