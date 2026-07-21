@@ -161,12 +161,17 @@ defineExpose({ focus, $el: buttonRef })
       {{ label }}
     </label>
 
-    <button ref="buttonRef" type="button"
-      class="h-12 w-full rounded-field border bg-surface-muted px-4 text-left text-content transition-colors focus:bg-surface-raised focus:outline-none focus:shadow-focus"
-      :class="hasError ? 'border-expense focus:border-expense' : 'border-transparent focus:border-primary-400'"
-      @click="onOpenHandle">
-      {{ selectedLabel ?? placeholder ?? t('common.select') }}
-    </button>
+    <div class="relative">
+      <button ref="buttonRef" type="button"
+        class="h-12 w-full rounded-field border bg-surface-muted px-4 pr-10 text-left text-content transition-colors focus:bg-surface-raised focus:outline-none focus:shadow-focus"
+        :class="hasError ? 'border-expense focus:border-expense' : 'border-transparent focus:border-primary-400'"
+        @click="onOpenHandle">
+        {{ selectedLabel ?? placeholder ?? t('common.select') }}
+      </button>
+
+      <AppIcon name="solar:alt-arrow-down-linear" :size="16"
+        class="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-content-muted" />
+    </div>
 
     <p v-if="hasError" class="mt-1.5 text-xs font-medium text-expense">
       {{ error }}
