@@ -77,22 +77,22 @@ watch(
 function focusFirstError() {
   if (errors.gross && grossInputRef.value) {
     grossInputRef.value.focus()
-    grossInputRef.value.$el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    grossInputRef.value.$el?.scrollIntoView?.({ behavior: 'smooth', block: 'center' })
     return
   }
   if (errors.amount && amountInputRef.value) {
     amountInputRef.value.focus()
-    amountInputRef.value.$el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    amountInputRef.value.$el?.scrollIntoView?.({ behavior: 'smooth', block: 'center' })
     return
   }
   if (errors.categoryId && categoryInputRef.value) {
     categoryInputRef.value.focus()
-    categoryInputRef.value.$el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    categoryInputRef.value.$el?.scrollIntoView?.({ behavior: 'smooth', block: 'center' })
     return
   }
   if (errors.familyMemberId && familyMemberInputRef.value) {
     familyMemberInputRef.value.focus()
-    familyMemberInputRef.value.$el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    familyMemberInputRef.value.$el?.scrollIntoView?.({ behavior: 'smooth', block: 'center' })
     return
   }
 }
