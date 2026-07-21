@@ -5,7 +5,7 @@ import { useCategoriesStore } from '@/stores/categories'
 import { useFamilyStore } from '@/stores/family'
 import { useTransactionsStore } from '@/stores/transactions'
 import { parseAmount, isPositiveAmount } from '@/utils/validation'
-import { todayISO } from '@/utils/format'
+import { todayISO, formatDateWithMonthName } from '@/utils/format'
 import BaseInput from '@/components/ui/BaseInput.vue'
 import BaseSelect from '@/components/ui/BaseSelect.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
@@ -310,7 +310,7 @@ defineExpose({
         ]" />
         <BaseInput v-model="form.endOn" label="Fecha de fin (opcional)" type="date" icon="solar:calendar-bold" />
         <p class="text-xs text-content-muted">
-          {{ form.endOn ? `Finalizará el ${form.endOn?.split("-").reverse().join("-")}.` : `No tiene fecha de
+          {{ form.endOn ? `Finalizará el ${formatDateWithMonthName(form.endOn)}.` : `No tiene fecha de
           finalización.` }}
         </p>
       </div>

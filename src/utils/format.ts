@@ -54,6 +54,14 @@ export function formatDate(
   return formatter.format(new Date(isoDate))
 }
 
+/** Formatea una fecha con el nombre completo del mes (ej: "17 de Julio de 2026"). */
+export function formatDateWithMonthName(
+  isoDate: string,
+  locale: string = getIntlLocale() || env.defaultLocale,
+): string {
+  return formatDate(isoDate, { day: 'numeric', month: 'long', year: 'numeric' }, locale)
+}
+
 /** Devuelve la fecha de hoy como YYYY-MM-DD (sin desfase de zona horaria). */
 export function todayISO(): string {
   const now = new Date()
