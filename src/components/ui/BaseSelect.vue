@@ -194,10 +194,10 @@ defineExpose({ focus, $el: buttonRef })
                 rounded-t-2xl
               " :class="[
                 teleport ? 'md:max-w-md' : '',
+                keyboardOffset > 0 ? 'fixed bottom-0' : ''
               ]" :style="teleport
                 ? {
-                  bottom: keyboardOffset > 0 ? `${keyboardOffset}px` : '0',
-                  maxHeight: keyboardOffset > 0 ? `calc(100dvh - ${keyboardOffset}px - 20px)` : '85dvh',
+                  maxHeight: keyboardOffset > 0 ? `${keyboardOffset}px` : '85dvh',
                   transform: `translateY(${translateY}px)`
                 }
                 : {}
