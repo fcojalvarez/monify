@@ -15,11 +15,6 @@ const categories = useCategoriesStore()
 const isIncome = computed(() => props.transaction.kind === 'income')
 const category = computed(() => categories.getById(props.transaction.category_id))
 const categoryName = computed(() => category.value?.name ?? t('recurringList.noCategory'))
-const endDateLabel = computed(() =>
-  props.transaction.end_on
-    ? t('recurringList.end', { date: formatDate(props.transaction.end_on) })
-    : t('recurringList.noEnd'),
-)
 
 const scheduleLabel = computed(() => {
   if (props.transaction.frequency === 'custom') {
@@ -61,8 +56,10 @@ function handleClick() {
 
       <p class="text-xs text-content-subtle">
         {{ scheduleLabel }}
-        ·
-        {{ endDateLabel }}
+        <span v-if="props.transaction.end_on">
+          ·
+          {{ t('recurringList.end', { date: formatDate(props.transaction.end_on) }) }}
+        </span>
       </p>
 
       <p class="text-xs text-content">

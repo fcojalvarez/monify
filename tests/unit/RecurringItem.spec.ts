@@ -10,16 +10,18 @@ describe('RecurringItem', () => {
     setLocale('es')
     setActivePinia(createPinia())
     const categories = useCategoriesStore()
-    categories.items = [{
-      id: 'cat-1',
-      name: 'Ocio',
-      kind: 'expense',
-      icon: 'solar:gamepad-bold',
-      color: '#ff0000',
-      owner_id: 'user-1',
-      created_at: '',
-      updated_at: '',
-    }]
+    categories.items = [
+      {
+        id: 'cat-1',
+        name: 'Ocio',
+        kind: 'expense',
+        icon: 'solar:gamepad-bold',
+        color: '#ff0000',
+        owner_id: 'user-1',
+        created_at: '',
+        updated_at: '',
+      },
+    ]
   })
 
   it('muestra categor?a, nota, frecuencia, pr?xima ejecuci?n e importe de un gasto', () => {
@@ -41,7 +43,6 @@ describe('RecurringItem', () => {
     expect(wrapper.text()).toContain('Ocio')
     expect(wrapper.text()).toContain('Netflix')
     expect(wrapper.text()).toContain(t('recurringList.frequencies.monthly'))
-    expect(wrapper.text()).toContain(t('recurringList.noEnd'))
     expect(wrapper.text()).toContain(t('recurringList.nextExecution'))
     expect(wrapper.text()).toContain('25,00')
   })
@@ -194,8 +195,9 @@ describe('RecurringItem', () => {
       props: { transaction },
     })
 
-    const nextExecutionParagraph = wrapper.findAll('p')
-      .find(p => p.text().includes(t('recurringList.nextExecution')))
+    const nextExecutionParagraph = wrapper
+      .findAll('p')
+      .find((p) => p.text().includes(t('recurringList.nextExecution')))
     expect(nextExecutionParagraph).toBeDefined()
     expect(nextExecutionParagraph?.classes()).toContain('text-xs')
   })

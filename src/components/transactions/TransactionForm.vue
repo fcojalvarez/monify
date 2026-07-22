@@ -186,17 +186,17 @@ async function onSubmit() {
         // months/day_of_month solo se envían para el modo personalizado (requiere migración SQL).
         const scheduleData = form.frequency === 'custom'
           ? {
-              frequency: 'custom' as const,
-              start_on: form.occurredOn,
-              next_execution: customOccurrenceOnOrAfter(form.occurredOn, form.months, day),
-              months: normalizeMonths(form.months),
-              day_of_month: day,
-            }
+            frequency: 'custom' as const,
+            start_on: form.occurredOn,
+            next_execution: customOccurrenceOnOrAfter(form.occurredOn, form.months, day),
+            months: normalizeMonths(form.months),
+            day_of_month: day,
+          }
           : {
-              frequency: form.frequency,
-              start_on: form.occurredOn,
-              next_execution: form.occurredOn,
-            }
+            frequency: form.frequency,
+            start_on: form.occurredOn,
+            next_execution: form.occurredOn,
+          }
 
         await recurringTransactions.create({
           ...baseData,
@@ -290,24 +290,26 @@ defineExpose({
 
     <BaseSwitch v-model="form.isCash" :label="t('form.isCash')" />
 
-    <BaseInput v-if="form.kind === 'income'" ref="grossInputRef" v-model="form.gross" :label="t('form.grossAmount')" type="number"
-      icon="solar:tag-price-bold" :placeholder="t('form.amountPlaceholder')" :error="errors.gross" />
+    <BaseInput v-if="form.kind === 'income'" ref="grossInputRef" v-model="form.gross" :label="t('form.grossAmount')"
+      type="number" icon="solar:tag-price-bold" :placeholder="t('form.amountPlaceholder')" :error="errors.gross" />
 
-    <BaseInput ref="amountInputRef" v-model="form.amount" :label="t('form.amount')" type="number" icon="solar:tag-price-bold" :placeholder="t('form.amountPlaceholder')"
-      :error="errors.amount" />
+    <BaseInput ref="amountInputRef" v-model="form.amount" :label="t('form.amount')" type="number"
+      icon="solar:tag-price-bold" :placeholder="t('form.amountPlaceholder')" :error="errors.amount" />
 
-    <BaseSelect ref="familyMemberInputRef" v-model="form.familyMemberId" :label="t('form.belongsTo')" :placeholder="t('form.selectMember')"
-      :options="memberOptions" :error="errors.familyMemberId" />
+    <BaseSelect ref="familyMemberInputRef" v-model="form.familyMemberId" :label="t('form.belongsTo')"
+      :placeholder="t('form.selectMember')" :options="memberOptions" :error="errors.familyMemberId" />
 
-    <BaseSelect v-if="categoryOptions.length" ref="categoryInputRef" v-model="form.categoryId" :label="t('form.category')"
-      :placeholder="t('form.selectCategory')" :options="categoryOptions" :error="errors.categoryId" />
+    <BaseSelect v-if="categoryOptions.length" ref="categoryInputRef" v-model="form.categoryId"
+      :label="t('form.category')" :placeholder="t('form.selectCategory')" :options="categoryOptions"
+      :error="errors.categoryId" />
     <p v-else class="rounded-field bg-surface-muted p-3 text-sm text-content-muted">
       {{ t('form.noCategories', { kind: form.kind === 'income' ? t('form.kindIncome') : t('form.kindExpense') }) }}
     </p>
 
     <BaseInput v-model="form.occurredOn" :label="t('form.date')" type="date" icon="solar:calendar-bold" />
 
-    <BaseInput v-model="form.note" :label="t('form.noteOptional')" icon="solar:pen-bold" :placeholder="t('form.notePlaceholder')" />
+    <BaseInput v-model="form.note" :label="t('form.noteOptional')" icon="solar:pen-bold"
+      :placeholder="t('form.notePlaceholder')" />
 
     <template v-if="!isEdit">
       <BaseSwitch v-model="form.isRecurring" :label="t('transaction.repeatMovement')" />
@@ -323,8 +325,8 @@ defineExpose({
           :day-error="errors.dayOfMonth" />
 
         <BaseInput v-model="form.endOn" :label="t('transaction.endDate')" type="date" icon="solar:calendar-bold" />
-        <p class="text-xs text-content-muted">
-          {{ form.endOn ? t('transaction.endsOn', { date: formatDateWithMonthName(form.endOn) }) : t('transaction.noEndDate') }}
+        <p v-if="form.endOn" class="text-xs text-content-muted">
+          {{ t('transaction.endsOn', { date: formatDateWithMonthName(form.endOn) }) }}
         </p>
       </div>
     </template>
@@ -343,8 +345,9 @@ defineExpose({
     </div>
   </form>
 
-  <BaseDialog v-model="showDeleteConfirm" variant="danger" :title="t('transactionForm.deleteTitle')" :confirm-text="t('transactionForm.confirmDelete')"
-    :cancel-text="t('common.cancel')" show-cancel @confirm="onDeleteConfirm">
+  <BaseDialog v-model="showDeleteConfirm" variant="danger" :title="t('transactionForm.deleteTitle')"
+    :confirm-text="t('transactionForm.confirmDelete')" :cancel-text="t('common.cancel')" show-cancel
+    @confirm="onDeleteConfirm">
     <p class="text-content">
       {{ t('transactionForm.deleteConfirmBody') }}
     </p>

@@ -199,7 +199,6 @@
     "nextFrom": "Next execution from",
     "nextTo": "Next execution to",
     "nextExecution": "Next execution",
-    "noEnd": "No end date",
     "end": "Ends on {date}",
     "kind": {
       "income": "Income",

@@ -199,7 +199,6 @@
     "nextFrom": "Próxima ejecución desde",
     "nextTo": "Próxima ejecución hasta",
     "nextExecution": "Próxima ejecución",
-    "noEnd": "Sin fecha de finalización",
     "end": "Finaliza el {date}",
     "kind": {
       "income": "Ingreso",

@@ -134,17 +134,17 @@ async function onSubmit() {
     // añade esas columnas (las frecuencias custom sí requieren la migración).
     const scheduleData = isCustom.value
       ? {
-          frequency: 'custom' as const,
-          start_on: form.startOn,
-          next_execution: customOccurrenceOnOrAfter(form.startOn, form.months, day),
-          months: normalizeMonths(form.months),
-          day_of_month: day,
-        }
+        frequency: 'custom' as const,
+        start_on: form.startOn,
+        next_execution: customOccurrenceOnOrAfter(form.startOn, form.months, day),
+        months: normalizeMonths(form.months),
+        day_of_month: day,
+      }
       : {
-          frequency: form.frequency,
-          start_on: form.startOn,
-          next_execution: form.nextExecution,
-        }
+        frequency: form.frequency,
+        start_on: form.startOn,
+        next_execution: form.nextExecution,
+      }
 
     if (isEdit.value) {
       await recurringTransactionsService.update(props.transaction!.id, {
@@ -268,9 +268,6 @@ defineExpose({
     <p v-if="form.endOn" class="text-xs text-content-muted">
       {{ t('transaction.endsOn', { date: formatDate(form.endOn) }) }}
     </p>
-    <p v-else class="text-xs text-content-muted">
-      {{ t('transaction.noEndDate') }}
-    </p>
 
     <BaseInput v-model="form.note" :label="t('form.noteOptional')" icon="solar:pen-bold"
       :placeholder="t('form.notePlaceholder')" />
@@ -282,14 +279,16 @@ defineExpose({
         {{ isEdit ? t('recurringForm.editButton') : t('recurringForm.createButton') }}
       </BaseButton>
 
-      <BaseButton v-if="isEdit" type="button" variant="danger" block :loading="deleting" @click="showDeleteConfirm = true">
+      <BaseButton v-if="isEdit" type="button" variant="danger" block :loading="deleting"
+        @click="showDeleteConfirm = true">
         {{ t('recurringForm.deleteButton') }}
       </BaseButton>
     </div>
   </form>
 
   <BaseDialog v-model="showDeleteConfirm" variant="danger" :title="t('recurringForm.deleteTitle')"
-    :confirm-text="t('recurringForm.deleteButton')" :cancel-text="t('common.cancel')" show-cancel @confirm="onDeleteConfirm">
+    :confirm-text="t('recurringForm.deleteButton')" :cancel-text="t('common.cancel')" show-cancel
+    @confirm="onDeleteConfirm">
     <p class="text-content">
       {{ t('recurringForm.deleteConfirm') }}
     </p>

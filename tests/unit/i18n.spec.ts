@@ -57,7 +57,6 @@ describe('i18n', () => {
     expect(t('transaction.endsOn', { date: '17 de Julio de 2026' })).toBe(
       'Finalizará el 17 de Julio de 2026',
     )
-    expect(t('transaction.noEndDate')).toBe('No tiene fecha de finalización.')
   })
 
   it('traduce textos de transacciones en inglés', () => {
@@ -66,7 +65,6 @@ describe('i18n', () => {
     expect(t('transaction.repeatMovement')).toBe('Repeat this transaction')
     expect(t('transaction.frequency')).toBe('Frequency')
     expect(t('transaction.endsOn', { date: 'July 17, 2026' })).toBe('Ends on July 17, 2026')
-    expect(t('transaction.noEndDate')).toBe('No end date.')
   })
 
   it('traduce textos de categorías en español', () => {
