@@ -16,6 +16,7 @@ const props = withDefaults(
     allLabel?: string
     teleport?: boolean
     closeOnClickOutside?: boolean
+    noItemMessage: string
   }>(),
   {
     showAllOption: false,
@@ -266,7 +267,7 @@ defineExpose({ focus, $el: buttonRef })
                 ">
                 <p v-if="search.trim() && !filteredOptions.length"
                   class="px-3 py-6 text-center text-sm text-content-subtle">
-                  {{ t('common.noResults') }}
+                  {{ noItemMessage || t('common.noResults') }}
                 </p>
 
                 <button v-else v-for="option in filteredOptions" :key="String(option.value)" type="button" class="

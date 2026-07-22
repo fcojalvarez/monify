@@ -300,8 +300,8 @@ defineExpose({
       :placeholder="t('form.selectMember')" :options="memberOptions" :error="errors.familyMemberId" />
 
     <BaseSelect v-if="categoryOptions.length" ref="categoryInputRef" v-model="form.categoryId"
-      :label="t('form.category')" :placeholder="t('form.selectCategory')" :options="categoryOptions"
-      :error="errors.categoryId" />
+      :no-item-message="`${t('common.noResults')} ${t('common.goToSettingsToCategories')}`" :label="t('form.category')"
+      :placeholder="t('form.selectCategory')" :options="categoryOptions" :error="errors.categoryId" />
     <p v-else class="rounded-field bg-surface-muted p-3 text-sm text-content-muted">
       {{ t('form.noCategories', { kind: form.kind === 'income' ? t('form.kindIncome') : t('form.kindExpense') }) }}
     </p>
