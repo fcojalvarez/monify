@@ -16,7 +16,7 @@ const props = withDefaults(
     allLabel?: string
     teleport?: boolean
     closeOnClickOutside?: boolean
-    noItemMessage: string
+    noItemMessage?: string
   }>(),
   {
     showAllOption: false,
