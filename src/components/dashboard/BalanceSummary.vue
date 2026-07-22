@@ -42,11 +42,14 @@ const cards = computed<CardId[]>(() => {
 })
 
 const totalCards = computed(() => cards.value.length)
+const totalBalance = computed(() => {
+  return props.summary.income - props.summary.expense
+})
 const bankBalance = computed(() => {
   if (props.cashEnabled) {
-    return props.summary.balance - props.cashPeriodNet
+    return totalBalance.value - props.cashPeriodNet
   }
-  return props.summary.balance
+  return totalBalance.value
 })
 const walletPreviewRef = ref<HTMLElement | HTMLElement[]>()
 // Antes de poder medir el ancho real, mostramos solo una cartera para no desplazar el +N fuera de la tarjeta.
@@ -221,7 +224,7 @@ onBeforeUnmount(() => walletPreviewObserver?.disconnect())
               <p class="text-sm text-white/70">{{ t('dashboard.balance', { period: props.periodLabel }) }}</p>
               <div class="mt-1 flex items-end justify-between">
                 <p class="text-3xl font-bold tracking-tight">
-                  {{ formatCurrency(props.summary.balance, { currency: props.summary.currency }) }}
+                  {{ formatCurrency(totalBalance, { currency: props.summary.currency }) }}
                 </p>
                 <div v-if="props.cashEnabled" class="mr-2 flex gap-4 pb-1 text-right">
                   <div>

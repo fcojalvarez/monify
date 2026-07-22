@@ -88,7 +88,7 @@ describe('BalanceSummary', () => {
       ...globalOptions,
       props: {
         ...defaultProps(),
-        summary: { ...summary, balance: 1150 },
+        summary: { ...summary, income: 2650, expense: 1500, balance: 1150 },
         cashEnabled: true,
         cash: 150,
         cashPeriodNet: 150,
@@ -106,7 +106,7 @@ describe('BalanceSummary', () => {
       // Hay 999 € de efectivo acumulado, pero en el periodo solo se han movido 40 €.
       props: {
         ...defaultProps(),
-        summary: { ...summary, balance: 1040 },
+        summary: { ...summary, income: 2540, expense: 1500, balance: 1040 },
         cashEnabled: true,
         cash: 999,
         cashPeriodNet: 40,
