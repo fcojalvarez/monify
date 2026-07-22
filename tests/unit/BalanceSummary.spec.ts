@@ -35,6 +35,7 @@ describe('BalanceSummary', () => {
     savings: [],
     savingsLoaded: true,
     cash: 0,
+    cashPeriodNet: 0,
     cashEnabled: false,
     members: [],
   })
@@ -85,12 +86,24 @@ describe('BalanceSummary', () => {
   it('muestra datos de efectivo cuando está activado', () => {
     const wrapper = mount(BalanceSummary, {
       ...globalOptions,
-      props: { ...defaultProps(), cashEnabled: true, cash: 150 },
+      props: { ...defaultProps(), cashEnabled: true, cash: 150, cashPeriodNet: 150 },
     })
 
     expect(wrapper.text()).toContain('Banco')
     expect(wrapper.text()).toContain('Efectivo')
     expect(wrapper.text()).toContain('1150,00')
+  })
+
+  it('la tarjeta de balance suma el efectivo del periodo, no el efectivo total', () => {
+    const wrapper = mount(BalanceSummary, {
+      ...globalOptions,
+      // Hay 999 € de efectivo acumulado, pero en el periodo solo se han movido 40 €.
+      props: { ...defaultProps(), cashEnabled: true, cash: 999, cashPeriodNet: 40 },
+    })
+
+    // Balance del periodo = balance bancario (1000) + neto de efectivo del periodo (40)
+    expect(wrapper.text()).toContain('1040,00')
+    expect(wrapper.text()).not.toContain('1999,00')
   })
 
   it('muestra una tarjeta de efectivo solo cuando su gestión está activada', async () => {

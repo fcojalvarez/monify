@@ -1,33 +1,32 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, defineAsyncComponent } from 'vue'
 import { useCashStore } from '@/stores/cash'
 import { useFamilyStore } from '@/stores/family'
 import { useUiStore } from '@/stores/ui'
-import { formatCurrency } from '@/utils/format'
+import { formatCurrency, formatDate, todayISO } from '@/utils/format'
+import { useI18n } from '@/i18n'
+import type { CashTransaction } from '@/services/cash.service'
 
 import BaseCard from '@/components/ui/BaseCard.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import BaseDialog from '@/components/ui/BaseDialog.vue'
 import BaseInput from '@/components/ui/BaseInput.vue'
+import BaseSheet from '@/components/ui/BaseSheet.vue'
+import BaseSpinner from '@/components/ui/BaseSpinner.vue'
+import EmptyState from '@/components/ui/EmptyState.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
+
+const CashMovementForm = defineAsyncComponent(() => import('@/components/cash/CashMovementForm.vue'))
 
 const cashStore = useCashStore()
 const familyStore = useFamilyStore()
 const ui = useUiStore()
+const { t } = useI18n()
 
 /**
  * Diálogo de movimiento
  */
 const showMovementDialog = ref(false)
-
-// Función auxiliar para obtener la fecha de hoy en formato local YYYY-MM-DD
-function getTodayString() {
-    const today = new Date()
-    const year = today.getFullYear()
-    const month = String(today.getMonth() + 1).padStart(2, '0')
-    const day = String(today.getDate()).padStart(2, '0')
-    return `${year}-${month}-${day}`
-}
 
 const movementForm = ref({
     amount: '',
@@ -35,7 +34,7 @@ const movementForm = ref({
     note: '',
     familyMemberId: '',
     createMainTx: false,
-    occurredAt: getTodayString()
+    occurredAt: todayISO()
 })
 
 const transferring = ref(false)
@@ -58,7 +57,7 @@ function openMovement(isDeposit: boolean, memberId: string) {
         note: '',
         familyMemberId: memberId,
         createMainTx: false,
-        occurredAt: getTodayString()
+        occurredAt: todayISO()
     }
 
     transferError.value = null
@@ -68,17 +67,29 @@ function openMovement(isDeposit: boolean, memberId: string) {
 /**
  * Carteras
  */
-const wallets = computed(() => {
-    const total = cashStore.balance
+const wallets = computed(() => familyStore.items)
 
-    return familyStore.items.map((member) => ({
-        ...member,
-        percentage:
-            total > 0
-                ? Math.round(((member.cash_balance ?? 0) / total) * 100)
-                : 0,
-    }))
-})
+/** Nombre del miembro asociado a un movimiento (la relación no está tipada en CashTransaction). */
+function txMemberName(tx: CashTransaction) {
+    return (tx as CashTransaction & { family_member?: { name?: string } }).family_member?.name ?? t('cash.general')
+}
+
+/**
+ * Edición de movimientos
+ */
+const showEditSheet = ref(false)
+const editingTransaction = ref<CashTransaction | undefined>()
+const editFormRef = ref<InstanceType<typeof CashMovementForm> | null>(null)
+
+function openEdit(transaction: CashTransaction) {
+    editingTransaction.value = transaction
+    showEditSheet.value = true
+}
+
+async function onMovementEdited() {
+    showEditSheet.value = false
+    await familyStore.fetchAll()
+}
 
 /**
  * Ejecutar movimiento
@@ -87,25 +98,24 @@ async function executeMovement() {
     const amount = Number(movementForm.value.amount)
 
     if (!amount || amount <= 0) {
-        transferError.value = 'El importe debe ser mayor que 0.'
+        transferError.value = t('cash.errors.amountPositive')
         return
     }
 
     if (!movementForm.value.familyMemberId) {
-        transferError.value = 'No se ha detectado el miembro de la familia.'
+        transferError.value = t('cash.errors.noMember')
         return
     }
 
-    // Corregido: Validamos contra el balance general de la caja de efectivo
+    // Validamos contra el balance general de la caja de efectivo
     if (!movementForm.value.isDeposit && balance.value < amount) {
-        transferError.value = 'No puedes retirar más efectivo del disponible en la caja.'
+        transferError.value = t('cash.errors.insufficient')
         return
     }
 
     transferError.value = null
     transferring.value = true
 
-    // Creamos el payload asegurando la compatibilidad de nombres de variables
     const payload = {
         amount,
         note: movementForm.value.note,
@@ -133,7 +143,7 @@ async function executeMovement() {
         transferError.value =
             error instanceof Error
                 ? error.message
-                : 'No se pudo registrar el movimiento.'
+                : t('cash.errors.generic')
     } finally {
         transferring.value = false
     }
@@ -163,11 +173,11 @@ onMounted(async () => {
                 <div class="flex items-center gap-3">
                     <div>
                         <h1 class="text-2xl font-bold text-content">
-                            Mi efectivo
+                            {{ t('cash.title') }}
                         </h1>
 
                         <p class="text-xs text-content-muted">
-                            Gestiona el dinero en metálico de toda la familia.
+                            {{ t('cash.subtitle') }}
                         </p>
                     </div>
                 </div>
@@ -179,7 +189,7 @@ onMounted(async () => {
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-sm text-white/70">
-                            Efectivo total
+                            {{ t('cash.totalCash') }}
                         </p>
 
                         <h2 class="mt-2 text-4xl font-bold">
@@ -195,7 +205,7 @@ onMounted(async () => {
                 <div class="mt-6 grid grid-cols-2 gap-3">
                     <div class="rounded-field bg-white/10 p-3">
                         <p class="text-xs text-white/70">
-                            Entradas
+                            {{ t('cash.income') }}
                         </p>
 
                         <p class="mt-1 text-lg font-semibold">
@@ -205,7 +215,7 @@ onMounted(async () => {
 
                     <div class="rounded-field bg-white/10 p-3">
                         <p class="text-xs text-white/70">
-                            Salidas
+                            {{ t('cash.expense') }}
                         </p>
 
                         <p class="mt-1 text-lg font-semibold">
@@ -219,15 +229,15 @@ onMounted(async () => {
             <section class="space-y-4">
                 <div class="flex items-center justify-between">
                     <h2 class="text-lg font-semibold text-content">
-                        Carteras
+                        {{ t('cash.wallets') }}
                     </h2>
 
                     <span class="text-xs text-content-subtle">
-                        {{ familyStore.items.length }} miembros
+                        {{ t('cash.membersCount', { count: familyStore.items.length }) }}
                     </span>
                 </div>
 
-                <div class="grid gap-4 md:grid-cols-2">
+                <div class="grid animate-fade-in gap-4 md:grid-cols-2">
                     <BaseCard v-for="member in wallets" :key="member.id" class="relative overflow-hidden">
                         <div class="absolute inset-x-0 top-0 h-1" :style="{ backgroundColor: member.color }" />
 
@@ -243,14 +253,14 @@ onMounted(async () => {
                                 </h3>
 
                                 <p class="text-xs text-content-subtle">
-                                    {{ member.is_self ? 'Tú' : 'Miembro de la familia' }}
+                                    {{ member.is_self ? t('cash.you') : t('cash.familyMember') }}
                                 </p>
                             </div>
                         </div>
 
                         <div class="mt-5">
                             <p class="text-xs uppercase tracking-wide text-content-muted">
-                                Disponible
+                                {{ t('cash.available') }}
                             </p>
 
                             <p class="mt-1 text-3xl font-bold text-content">
@@ -268,12 +278,12 @@ onMounted(async () => {
                         <div class="mt-6 grid grid-cols-2 gap-2">
                             <BaseButton @click="openMovement(true, member.id)">
                                 <AppIcon name="solar:add-circle-bold" :size="18" />
-                                Añadir
+                                {{ t('cash.add') }}
                             </BaseButton>
 
                             <BaseButton variant="secondary" @click="openMovement(false, member.id)">
                                 <AppIcon name="solar:minus-circle-bold" :size="18" />
-                                Retirar
+                                {{ t('cash.withdraw') }}
                             </BaseButton>
                         </div>
                     </BaseCard>
@@ -284,21 +294,23 @@ onMounted(async () => {
             <BaseCard class="space-y-4">
                 <div class="flex items-center justify-between">
                     <h2 class="font-semibold text-content">
-                        Historial
+                        {{ t('cash.history') }}
                     </h2>
 
                     <span class="text-xs text-content-subtle">
-                        {{ cashStore.transactions.length }} movimientos
+                        {{ t('cash.movementsCount', { count: cashStore.transactions.length }) }}
                     </span>
                 </div>
 
-                <div v-if="!cashStore.transactions.length" class="py-10 text-center text-content-subtle">
-                    Todavía no hay movimientos registrados.
-                </div>
+                <BaseSpinner v-if="cashStore.loading && !cashStore.transactions.length" />
 
-                <ul v-else class="divide-y divide-line">
+                <EmptyState v-else-if="!cashStore.transactions.length" icon="solar:wallet-money-linear"
+                    :title="t('cash.emptyHistory')" />
+
+                <ul v-else class="animate-fade-in divide-y divide-line">
                     <li v-for="tx in cashStore.transactions" :key="tx.id"
-                        class="flex items-center justify-between py-3">
+                        class="flex cursor-pointer items-center justify-between py-3 -mx-2 rounded-field px-2 transition-colors hover:bg-surface-muted"
+                        @click="openEdit(tx)">
                         <div class="flex items-center gap-3">
                             <span class="flex h-10 w-10 items-center justify-center rounded-full" :class="tx.amount > 0
                                 ? 'bg-income/10 text-income'
@@ -315,15 +327,15 @@ onMounted(async () => {
                                     {{
                                         tx.note ||
                                         (tx.amount > 0
-                                            ? 'Entrada de efectivo'
-                                            : 'Salida de efectivo')
+                                            ? t('cash.cashInflow')
+                                            : t('cash.cashOutflow'))
                                     }}
                                 </p>
 
                                 <div class="mt-1 flex flex-wrap items-center gap-2 text-xs text-content-subtle">
-                                    <span>{{ (tx as any).family_member?.name ?? 'General' }}</span>
+                                    <span>{{ txMemberName(tx) }}</span>
                                     <span>•</span>
-                                    <span>{{ tx.occurred_on }}</span>
+                                    <span>{{ formatDate(tx.occurred_on) }}</span>
                                 </div>
                             </div>
                         </div>
@@ -337,11 +349,11 @@ onMounted(async () => {
             </BaseCard>
         </main>
 
-        <!-- Diálogo -->
+        <!-- Diálogo de creación (ingreso / retirada) -->
         <BaseDialog v-model="showMovementDialog" variant="confirm" :title="movementForm.isDeposit
-            ? 'Añadir efectivo'
-            : 'Retirar efectivo'
-            " confirm-text="Confirmar" cancel-text="Cancelar" show-cancel :loading="transferring"
+            ? t('cash.addCashTitle')
+            : t('cash.withdrawCashTitle')
+            " :confirm-text="t('cash.confirm')" :cancel-text="t('common.cancel')" show-cancel :loading="transferring"
             @confirm="executeMovement">
             <form class="space-y-4" @submit.prevent>
 
@@ -353,34 +365,33 @@ onMounted(async () => {
                         <AppIcon :name="selectedMember.avatar_icon" :size="16" />
                     </div>
                     <div class="text-xs">
-                        <p class="text-content-subtle font-medium">Cartera afectada:</p>
+                        <p class="text-content-subtle font-medium">{{ t('cash.affectedWallet') }}</p>
                         <p class="font-bold text-content">{{ selectedMember.name }}</p>
                     </div>
                 </div>
 
                 <!-- Input de Fecha de Operación -->
-                <BaseInput v-model="movementForm.occurredAt" type="date" label="Fecha" icon="solar:calendar-bold"
-                    required />
+                <BaseInput v-model="movementForm.occurredAt" type="date" :label="t('cash.date')"
+                    icon="solar:calendar-bold" required />
 
-                <BaseInput v-model="movementForm.amount" type="number" label="Importe" icon="solar:tag-price-bold"
-                    placeholder="0,00" required />
+                <BaseInput v-model="movementForm.amount" type="number" :label="t('cash.amount')"
+                    icon="solar:tag-price-bold" :placeholder="t('cash.amountPlaceholder')" required />
 
-                <BaseInput v-model="movementForm.note" label="Concepto" icon="solar:pen-bold"
-                    placeholder="Ej. Sacado del cajero" />
+                <BaseInput v-model="movementForm.note" :label="t('cash.concept')" icon="solar:pen-bold"
+                    :placeholder="t('cash.conceptPlaceholder')" />
 
                 <label class="flex items-center justify-between rounded-card border border-line p-4 cursor-pointer">
                     <div>
                         <p class="text-sm font-medium text-content">
                             {{
                                 movementForm.isDeposit
-                                    ? 'Crear ingreso en Movimientos'
-                                    : 'Crear gasto en Movimientos'
+                                    ? t('cash.createIncomeMain')
+                                    : t('cash.createExpenseMain')
                             }}
                         </p>
 
                         <p class="text-xs text-content-subtle">
-                            Además del movimiento de efectivo, se añadirá una
-                            transacción normal.
+                            {{ t('cash.createMainHint') }}
                         </p>
                     </div>
 
@@ -392,5 +403,11 @@ onMounted(async () => {
                 </div>
             </form>
         </BaseDialog>
+
+        <!-- Hoja de edición de movimiento -->
+        <BaseSheet v-model="showEditSheet" :title="t('cash.edit.title')" :has-changes="editFormRef?.hasChanges">
+            <CashMovementForm v-if="editingTransaction" ref="editFormRef" :transaction="editingTransaction"
+                @saved="onMovementEdited" @cancel="showEditSheet = false" />
+        </BaseSheet>
     </div>
 </template>

@@ -6,11 +6,11 @@
         <div class="flex items-center gap-3">
           <div>
             <h1 class="text-2xl font-bold text-content">
-              Mis Ahorros
+              {{ t('savings.title') }}
             </h1>
 
             <p class="text-xs text-content-muted">
-              Gestiona tus ahorros bancarios y en efectivo
+              {{ t('savings.subtitle') }}
             </p>
           </div>
         </div>
@@ -20,7 +20,7 @@
             class="flex h-10 items-center gap-2 rounded-pill bg-primary-500 px-4 text-sm font-semibold text-white hover:bg-primary-600"
             @click="showAddDropdown = !showAddDropdown">
             <AppIcon name="solar:settings-bold" :size="18" />
-            gestionar
+            {{ t('savings.manage') }}
           </button>
 
           <div v-if="showAddDropdown" class="fixed inset-0 z-10" @click="showAddDropdown = false" />
@@ -31,14 +31,14 @@
               class="flex w-full items-center gap-2 rounded-field px-3 py-2 text-left text-sm hover:bg-surface-muted"
               @click="openGlobalTransfer(true); showAddDropdown = false">
               <AppIcon name="solar:arrow-right-up-linear" class="text-income" :size="16" />
-              Aportar ahorro
+              {{ t('savings.contribute') }}
             </button>
 
             <button
               class="flex w-full items-center gap-2 rounded-field px-3 py-2 text-left text-sm hover:bg-surface-muted"
               @click="openGlobalTransfer(false); showAddDropdown = false">
               <AppIcon name="solar:arrow-right-up-linear" class="rotate-180 text-expense" :size="16" />
-              Retirar ahorro
+              {{ t('savings.withdrawSaving') }}
             </button>
 
             <div class="my-1 h-px bg-line" />
@@ -47,7 +47,7 @@
               class="flex w-full items-center gap-2 rounded-field px-3 py-2 text-left text-sm hover:bg-surface-muted"
               @click="openAddGoal(); showAddDropdown = false">
               <AppIcon name="solar:target-bold" class="text-primary-500" :size="16" />
-              Nueva meta
+              {{ t('savings.newGoal') }}
             </button>
           </div>
         </div>
@@ -58,7 +58,7 @@
         <div class="flex items-center gap-2 text-white/70">
           <AppIcon name="solar:safe-2-bold" :size="20" />
           <span class="text-sm">
-            Ahorro total
+            {{ t('savings.totalSaving') }}
           </span>
         </div>
 
@@ -69,7 +69,7 @@
         <div class="mt-6 grid grid-cols-2 gap-3">
           <div class="rounded-field bg-white/10 p-4">
             <p class="text-xs uppercase text-white/70">
-              Banco
+              {{ t('savings.bank') }}
             </p>
 
             <p class="mt-1 text-xl font-bold">
@@ -79,7 +79,7 @@
 
           <div class="rounded-field bg-white/10 p-4">
             <p class="text-xs uppercase text-white/70">
-              Efectivo
+              {{ t('savings.cash') }}
             </p>
 
             <p class="mt-1 text-xl font-bold">
@@ -90,22 +90,14 @@
       </div>
 
       <!-- Lista de Metas -->
-      <div v-if="savingsStore.loading" class="py-12 text-center text-content-subtle">
-        Cargando...
-      </div>
+      <BaseSpinner v-if="savingsStore.loading" :message="t('savings.loading')" />
 
       <div v-else-if="!displayGoals.length"
-        class="rounded-card border border-dashed border-line bg-surface-raised py-8 text-center">
-        <p class="font-medium text-content">
-          No existen metas de ahorro activas.
-        </p>
-
-        <p class="mt-2 text-xs text-content-subtle">
-          Pulsa en Gestionar → Nueva meta para crear una.
-        </p>
+        class="rounded-card border border-dashed border-line bg-surface-raised">
+        <EmptyState icon="solar:target-linear" :title="t('savings.emptyGoals')" :hint="t('savings.emptyGoalsHint')" />
       </div>
 
-      <div v-else class="grid gap-4">
+      <div v-else class="grid animate-fade-in gap-4">
         <BaseCard v-for="goal in displayGoals" :key="goal.id" class="space-y-4 p-5">
           <div>
             <div class="flex items-start justify-between">
@@ -125,15 +117,15 @@
                       :class="goal.type === 'bank' ? 'bg-blue-500/10 text-blue-600' : 'bg-amber-500/10 text-amber-600'">
                       <AppIcon :name="goal.type === 'bank' ? 'solar:card-bold' : 'solar:wallet-money-bold'"
                         :size="10" />
-                      {{ goal.type === 'bank' ? 'Banco' : 'Efectivo' }}
+                      {{ goal.type === 'bank' ? t('savings.bank') : t('savings.cash') }}
                     </span>
                   </div>
 
                   <p class="mt-1 text-xs text-content-subtle">
                     {{
                       goal.target
-                        ? `Meta: ${formatCurrency(goal.target, { currency: ui.currency })}`
-                        : 'Ahorro libre'
+                        ? t('savings.goalTarget', { amount: formatCurrency(goal.target, { currency: ui.currency }) })
+                        : t('savings.freeSaving')
                     }}
                   </p>
                 </div>
@@ -141,11 +133,12 @@
 
               <div class="flex items-center gap-1">
                 <!-- Botón de Marcar como completada -->
-                <button v-if="goal.target && goal.balance >= goal.target" type="button" title="Marcar como completada"
+                <button v-if="goal.target && goal.balance >= goal.target" type="button"
+                  :title="t('savings.completeTitle')"
                   class="flex h-8 items-center gap-1 rounded-pill bg-income/10 px-2.5 text-xs font-semibold text-income hover:bg-income/20 transition"
                   @click="openCompleteGoal(goal)">
                   <AppIcon name="solar:check-circle-bold" :size="14" />
-                  Completar
+                  {{ t('savings.complete') }}
                 </button>
 
                 <button type="button"
@@ -185,7 +178,7 @@
             <!-- Balance plano si no tiene target -->
             <div v-else class="mt-5 flex items-center justify-between">
               <span class="text-xs text-content-subtle">
-                Balance
+                {{ t('savings.balance') }}
               </span>
 
               <span class="text-lg font-bold text-content">
@@ -197,13 +190,13 @@
           <div class="grid grid-cols-2 gap-3 border-t border-line pt-4">
             <BaseButton type="button" variant="secondary" @click="openGoalTransfer(goal, false)">
               <AppIcon name="solar:arrow-right-up-linear" class="mr-2 rotate-180" :size="16" />
-              Retirar
+              {{ t('savings.withdraw') }}
             </BaseButton>
 
             <BaseButton type="button" class="text-white hover:opacity-90" :style="{ backgroundColor: goal.color }"
               @click="openGoalTransfer(goal, true)">
               <AppIcon name="solar:arrow-right-up-linear" class="mr-2" :size="16" />
-              Aportar
+              {{ t('savings.contributeShort') }}
             </BaseButton>
           </div>
         </BaseCard>
@@ -212,15 +205,18 @@
       <!-- Historial -->
       <BaseCard as="section" class="space-y-4 p-5">
         <h2 class="text-sm font-semibold uppercase tracking-wide text-content-muted">
-          Historial de movimientos
+          {{ t('savings.historyTitle') }}
         </h2>
 
-        <div v-if="!savingsStore.transactions.length" class="py-8 text-center text-xs text-content-subtle">
-          Todavía no hay movimientos.
-        </div>
+        <BaseSpinner v-if="savingsStore.loading && !savingsStore.transactions.length" />
 
-        <ul v-else class="divide-y divide-line">
-          <li v-for="tx in savingsStore.transactions" :key="tx.id" class="flex items-center justify-between py-3">
+        <EmptyState v-else-if="!savingsStore.transactions.length" icon="solar:clock-circle-linear"
+          :title="t('savings.emptyHistory')" />
+
+        <ul v-else class="animate-fade-in divide-y divide-line">
+          <li v-for="tx in savingsStore.transactions" :key="tx.id"
+            class="flex cursor-pointer items-center justify-between py-3 -mx-2 rounded-field px-2 transition-colors hover:bg-surface-muted"
+            @click="openEditMovement(tx)">
             <div class="flex items-center gap-3">
               <span class="flex h-8 w-8 items-center justify-center rounded-full text-white"
                 :style="{ backgroundColor: getAccountColor(tx.savings_id) }">
@@ -234,15 +230,15 @@
                   {{
                     tx.note ||
                     (tx.amount > 0
-                      ? 'Aportación'
-                      : 'Retirada')
+                      ? t('savings.contributionNote')
+                      : t('savings.withdrawalNote'))
                   }}
                 </p>
 
                 <p class="text-xs text-content-subtle">
                   {{ getAccountName(tx.savings_id) }}
                   ·
-                  {{ tx.occurred_on }}
+                  {{ formatDate(tx.occurred_on) }}
                 </p>
               </div>
             </div>
@@ -257,96 +253,95 @@
     </main>
 
     <!-- Diálogo: Crear / Editar Meta -->
-    <BaseDialog v-model="showAddGoalDialog" :title="editingGoal ? 'Editar Meta de Ahorro' : 'Nueva Meta de Ahorro'">
+    <BaseDialog v-model="showAddGoalDialog"
+      :title="editingGoal ? t('savings.editGoalTitle') : t('savings.newGoalTitle')">
       <form @submit.prevent="saveGoal" class="space-y-4 pt-2">
-        <BaseInput v-model="goalForm.name" label="Nombre de la meta" placeholder="Ej. Fondo de emergencia" required />
+        <BaseInput v-model="goalForm.name" :label="t('savings.goalName')"
+          :placeholder="t('savings.goalNamePlaceholder')" required />
 
-        <BaseInput v-model="goalForm.target" label="Objetivo de ahorro (Opcional)" type="number" step="any"
-          placeholder="Ej. 5000" />
+        <BaseInput v-model="goalForm.target" :label="t('savings.goalTargetOptional')" type="number" step="any"
+          :placeholder="t('savings.goalTargetPlaceholder')" />
 
-        <BaseSelect v-model="goalForm.type" label="Ubicación del fondo" :options="savingTypeOptions" required />
+        <BaseSelect v-model="goalForm.type" :label="t('savings.fundLocation')" :options="savingTypeOptions" required />
 
         <div class="space-y-2">
-          <label class="text-xs font-semibold text-content-muted">Color identificador</label>
+          <label class="text-xs font-semibold text-content-muted">{{ t('savings.colorLabel') }}</label>
           <ColorPicker v-model="goalForm.color" />
         </div>
 
         <div class="flex justify-end gap-3 pt-4">
-          <BaseButton type="button" variant="secondary" @click="showAddGoalDialog = false">Cancelar</BaseButton>
-          <BaseButton type="submit" variant="primary">Guardar Meta</BaseButton>
+          <BaseButton type="button" variant="secondary" @click="showAddGoalDialog = false">{{ t('common.cancel') }}</BaseButton>
+          <BaseButton type="submit" variant="primary">{{ t('savings.saveGoal') }}</BaseButton>
         </div>
       </form>
     </BaseDialog>
 
     <!-- Diálogo: Confirmar Finalización (Completar Meta) -->
-    <BaseDialog v-model="showCompleteDialog" title="¿Completar meta de ahorro?">
+    <BaseDialog v-model="showCompleteDialog" :title="t('savings.completeQuestion')">
       <div class="space-y-4 pt-2">
         <p class="text-sm text-content-muted">
-          Si confirmas la finalización de <strong class="text-content">"{{ goalToComplete?.name }}"</strong>, esta meta
-          ya no se volverá a mostrar en la lista activa.
+          {{ t('savings.completeText1', { name: goalToComplete?.name ?? '' }) }}
         </p>
         <p class="text-sm text-content-muted">
-          Sus movimientos <strong class="text-content">seguirán estando disponibles en el historial</strong>. Si lo que
-          deseas es eliminar de forma permanente todo lo relacionado con ella, debes usar la opción de eliminar.
+          {{ t('savings.completeText2') }}
         </p>
         <div class="grid grid-cols-2 gap-3 w-full pt-4">
           <BaseButton type="button" variant="secondary" @click="showCompleteDialog = false">
-            Cancelar
+            {{ t('common.cancel') }}
           </BaseButton>
           <BaseButton type="button" variant="primary" @click="confirmCompleteGoal">
-            Confirmar
+            {{ t('savings.confirm') }}
           </BaseButton>
         </div>
       </div>
     </BaseDialog>
 
     <!-- Diálogo: Confirmar Eliminación -->
-    <BaseDialog v-model="showDeleteDialog" title="¿Eliminar meta de ahorro?">
+    <BaseDialog v-model="showDeleteDialog" :title="t('savings.deleteQuestion')">
       <div class="space-y-4 pt-2">
         <p class="text-sm text-content-muted">
-          Al eliminar la meta <strong class="text-content">"{{ goalToDelete?.name }}"</strong> se borrará de forma
-          permanente **todo lo relacionado con ella, incluyendo su historial de movimientos**.
+          {{ t('savings.deleteText1', { name: goalToDelete?.name ?? '' }) }}
         </p>
         <p class="text-sm text-content-muted">
-          Si solo quieres que la meta deje de mostrarse sin perder sus registros del historial, cancela esta acción y
-          márcala como **completada**.
+          {{ t('savings.deleteText2') }}
         </p>
         <div class="grid grid-cols-2 gap-3 w-full pt-4">
           <BaseButton type="button" variant="secondary" @click="showDeleteDialog = false">
-            Cancelar
+            {{ t('common.cancel') }}
           </BaseButton>
           <BaseButton type="button" variant="danger" @click="confirmDeleteGoal">
-            Confirmar
+            {{ t('savings.confirm') }}
           </BaseButton>
         </div>
       </div>
     </BaseDialog>
 
     <!-- Diálogo: Transferencias -->
-    <BaseDialog v-model="showTransferDialog" :title="transferForm.isDeposit ? 'Aportar Dinero' : 'Retirar Dinero'">
+    <BaseDialog v-model="showTransferDialog"
+      :title="transferForm.isDeposit ? t('savings.transferDepositTitle') : t('savings.transferWithdrawTitle')">
       <form @submit.prevent="executeTransfer" class="space-y-4 pt-2">
 
-        <BaseSelect v-if="transferForm.isGlobal" v-model="transferForm.type" label="Ubicación del fondo"
+        <BaseSelect v-if="transferForm.isGlobal" v-model="transferForm.type" :label="t('savings.fundLocation')"
           :options="savingTypeOptions" required />
 
         <p v-else class="text-xs text-content-muted">
-          Cuenta: <span class="font-bold text-content">{{ getAccountName(transferAccount?.id ?? '') }}</span>
+          {{ t('savings.account') }}: <span class="font-bold text-content">{{ getAccountName(transferAccount?.id ?? '') }}</span>
         </p>
 
-        <BaseInput v-model="transferForm.amount" label="Importe" type="number" step="any" placeholder="0.00" required
-          min="0.01" />
+        <BaseInput v-model="transferForm.amount" :label="t('savings.amount')" type="number" step="any"
+          placeholder="0.00" required min="0.01" />
 
-        <BaseInput v-model="transferForm.note" label="Nota / Concepto" placeholder="Ej. Ahorro mensual" />
+        <BaseInput v-model="transferForm.note" :label="t('savings.noteLabel')"
+          :placeholder="t('savings.transferNotePlaceholder')" />
 
-        <BaseSelect v-model="transferForm.familyMemberId" label="Miembro de la familia" :options="memberOptions"
+        <BaseSelect v-model="transferForm.familyMemberId" :label="t('savings.member')" :options="memberOptions"
           required />
 
         <div class="flex items-start gap-2 py-1">
           <input id="createMainTx" type="checkbox" v-model="transferForm.createMainTx"
             class="mt-1 rounded border-line text-primary-500 focus:ring-primary-500" />
           <label for="createMainTx" class="text-xs text-content-muted select-none">
-            Reflejar movimiento en la cuenta principal de transacciones (como {{ transferForm.isDeposit ? 'gasto' :
-              'ingreso' }})
+            {{ t('savings.reflectMain', { kind: transferForm.isDeposit ? t('savings.kindExpense') : t('savings.kindIncome') }) }}
           </label>
         </div>
 
@@ -356,14 +351,20 @@
 
         <div class="grid grid-cols-2 gap-3 w-full pt-4">
           <BaseButton type="button" variant="secondary" :disabled="transferring" @click="showTransferDialog = false">
-            Cancelar
+            {{ t('common.cancel') }}
           </BaseButton>
           <BaseButton type="submit" variant="primary" :loading="transferring">
-            Confirmar
+            {{ t('savings.confirm') }}
           </BaseButton>
         </div>
       </form>
     </BaseDialog>
+
+    <!-- Hoja de edición de movimiento de ahorro -->
+    <BaseSheet v-model="showEditSheet" :title="t('savings.edit.title')" :has-changes="editFormRef?.hasChanges">
+      <SavingsMovementForm v-if="editingMovement" ref="editFormRef" :transaction="editingMovement"
+        @saved="onMovementEdited" @cancel="showEditSheet = false" />
+    </BaseSheet>
   </div>
 </template>
 
@@ -374,22 +375,29 @@ import { useSavingsStore } from '@/stores/savings'
 import { useFamilyStore } from '@/stores/family'
 import { useUiStore } from '@/stores/ui'
 
-import { formatCurrency } from '@/utils/format'
+import { formatCurrency, formatDate } from '@/utils/format'
+import { savingsAccountLabel, savingsAccountColor } from '@/utils/savings'
+import { useI18n } from '@/i18n'
 
 import BaseCard from '@/components/ui/BaseCard.vue'
 import BaseInput from '@/components/ui/BaseInput.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import BaseDialog from '@/components/ui/BaseDialog.vue'
 import BaseSelect from '@/components/ui/BaseSelect.vue'
+import BaseSheet from '@/components/ui/BaseSheet.vue'
+import BaseSpinner from '@/components/ui/BaseSpinner.vue'
+import EmptyState from '@/components/ui/EmptyState.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
 
 const ColorPicker = defineAsyncComponent(() => import('@/components/ui/ColorPicker.vue'))
+const SavingsMovementForm = defineAsyncComponent(() => import('@/components/savings/SavingsMovementForm.vue'))
 
-import type { Savings } from '@/types'
+import type { Savings, SavingsTransaction } from '@/types'
 
 const savingsStore = useSavingsStore()
 const familyStore = useFamilyStore()
 const ui = useUiStore()
+const { t } = useI18n()
 
 // Estado
 const showAddGoalDialog = ref(false)
@@ -423,10 +431,15 @@ const transferForm = ref({
 const transferError = ref<string | null>(null)
 const transferring = ref(false)
 
-const savingTypeOptions = [
-  { value: 'bank', label: 'Banco' },
-  { value: 'cash', label: 'Efectivo' },
-]
+// Edición de movimientos
+const showEditSheet = ref(false)
+const editingMovement = ref<SavingsTransaction | undefined>()
+const editFormRef = ref<InstanceType<typeof SavingsMovementForm> | null>(null)
+
+const savingTypeOptions = computed(() => [
+  { value: 'bank', label: t('savings.bank') },
+  { value: 'cash', label: t('savings.cash') },
+])
 
 // Computados
 const bankSavingsBalance = computed(() => savingsStore.bankBalance)
@@ -555,7 +568,7 @@ async function executeTransfer() {
       (s) => s.name === 'general' && s.type === transferForm.value.type
     )
     if (!generalAccount) {
-      transferError.value = 'No se ha encontrado el fondo base correspondiente.'
+      transferError.value = t('savings.errors.fundNotFound')
       return
     }
     targetSavingsId = generalAccount.id
@@ -567,14 +580,14 @@ async function executeTransfer() {
   const amount = Number(transferForm.value.amount)
 
   if (!transferForm.value.amount || isNaN(amount) || amount <= 0) {
-    transferError.value = 'Introduce un importe válido.'
+    transferError.value = t('savings.errors.invalidAmount')
     return
   }
 
   if (!transferForm.value.isDeposit) {
     const currentAccount = savingsStore.items.find((s) => s.id === targetSavingsId)
     if (currentAccount && amount > currentAccount.balance) {
-      transferError.value = 'No puedes retirar más dinero del disponible.'
+      transferError.value = t('savings.errors.cannotWithdrawMore')
       return
     }
   }
@@ -594,26 +607,27 @@ async function executeTransfer() {
 
     showTransferDialog.value = false
   } catch (error) {
-    transferError.value = error instanceof Error ? error.message : 'No se pudo realizar la operación.'
+    transferError.value = error instanceof Error ? error.message : t('savings.errors.generic')
   } finally {
     transferring.value = false
   }
 }
 
-// Helpers
-function getAccountName(id: string) {
-  const account = savingsStore.items.find((s) => s.id === id)
-  if (!account) return 'Ahorro'
-
-  if (account.name === 'general') {
-    return account.type === 'bank' ? 'Ahorro Banco' : 'Ahorro Efectivo'
-  }
-  return account.name
+// Edición de movimientos
+function openEditMovement(tx: SavingsTransaction) {
+  editingMovement.value = tx
+  showEditSheet.value = true
 }
 
-function getAccountColor(id: string) {
-  return savingsStore.items.find((s) => s.id === id)?.color ?? '#8b5cf6'
+async function onMovementEdited() {
+  showEditSheet.value = false
 }
+
+// Helpers (delegan en las utilidades compartidas de etiquetas de cuenta)
+const getAccountName = (id: string) =>
+  savingsAccountLabel(savingsStore.items.find((s) => s.id === id))
+const getAccountColor = (id: string) =>
+  savingsAccountColor(savingsStore.items.find((s) => s.id === id))
 
 onMounted(async () => {
   await Promise.all([

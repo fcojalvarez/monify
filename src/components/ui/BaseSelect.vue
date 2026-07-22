@@ -36,6 +36,22 @@ const search = ref('')
 const searchInput = ref<HTMLInputElement | null>(null)
 const buttonRef = ref<HTMLButtonElement | null>(null)
 
+/**
+ * Destino del Teleport del desplegable.
+ *
+ * Por defecto es `<body>`, pero si el select vive dentro de un `<dialog>` abierto con
+ * `showModal()` (que el navegador promociona al "top layer"), un teleport a `<body>`
+ * quedaría PINTADO POR DEBAJO de ese diálogo — no se podrían elegir opciones. En ese
+ * caso teletransportamos el desplegable DENTRO del propio `<dialog>`, de modo que
+ * comparta su top layer y quede siempre por encima del contenido del formulario.
+ */
+const teleportTarget = ref<string | HTMLElement>('body')
+
+function resolveTeleportTarget(): string | HTMLElement {
+  if (!props.teleport) return 'body'
+  return buttonRef.value?.closest('dialog') ?? 'body'
+}
+
 const hasError = computed(() => !!props.error)
 
 const allOptions = computed<Option<T>[]>(() => {
@@ -119,6 +135,7 @@ function onTouchEnd() {
 }
 
 function onOpenHandle() {
+  teleportTarget.value = resolveTeleportTarget()
   open.value = true
   search.value = ''
   if (showSearch.value) {
@@ -177,10 +194,10 @@ defineExpose({ focus, $el: buttonRef })
       {{ error }}
     </p>
 
-    <Teleport :disabled="!teleport" to="body">
+    <Teleport :disabled="!teleport" :to="teleportTarget">
       <Transition enter-active-class="transition-opacity duration-200"
         leave-active-class="transition-opacity duration-150" enter-from-class="opacity-0" leave-to-class="opacity-0">
-        <div v-if="open" @click.self.stop="handleOverlayClick" :class="[
+        <div v-if="open" data-testid="select-overlay" @click.self.stop="handleOverlayClick" :class="[
           teleport
             ? 'fixed inset-0 z-[999999] flex items-end justify-center bg-secondary-950/50 backdrop-blur-sm md:items-center'
             : 'absolute left-0 top-full z-[100] mt-2 w-full'

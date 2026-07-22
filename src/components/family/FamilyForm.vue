@@ -40,7 +40,7 @@ async function onSubmit() {
   error.value = null
   serverError.value = null
   if (!form.name.trim()) {
-    error.value = 'Ponle un nombre'
+    error.value = t('family.errorName')
     return
   }
   saving.value = true
@@ -50,7 +50,7 @@ async function onSubmit() {
     else await family.create(payload)
     emit('saved')
   } catch (e) {
-    serverError.value = e instanceof Error ? e.message : 'No se pudo guardar.'
+    serverError.value = e instanceof Error ? e.message : t('family.genericSaveError')
   } finally {
     saving.value = false
   }
@@ -98,14 +98,14 @@ defineExpose({
 
     <BaseInput
       v-model="form.name"
-      label="Nombre"
+      :label="t('family.nameLabel')"
       icon="solar:user-bold"
-      placeholder="p.ej. Ana, Papá…"
+      :placeholder="t('family.namePlaceholder')"
       :error="error"
     />
 
     <div>
-      <span class="field-label">Avatar</span>
+      <span class="field-label">{{ t('family.avatarLabel') }}</span>
       <div class="grid grid-cols-6 gap-2">
         <button
           v-for="avatar in AVATARS"
@@ -125,7 +125,7 @@ defineExpose({
     </div>
 
     <div>
-      <span class="field-label">Color</span>
+      <span class="field-label">{{ t('family.colorLabel') }}</span>
       <ColorPicker v-model="form.color" />
     </div>
 
@@ -142,7 +142,6 @@ defineExpose({
   </form>
 
   <BaseDialog
-    v-slot:default
     v-model="showConfirmDialog"
     variant="danger"
     :title="t('common.unsavedChanges')"

@@ -22,7 +22,10 @@ export const useRecurringTransactionsStore = defineStore('recurringTransactions'
         let execution = recurring.next_execution
         while (execution <= currentDate && (!recurring.end_on || execution <= recurring.end_on)) {
           count += await recurringTransactionsService.createOccurrence(recurring, execution)
-          execution = nextRecurringDate(execution, recurring.frequency)
+          execution = nextRecurringDate(execution, recurring.frequency, {
+            months: recurring.months,
+            dayOfMonth: recurring.day_of_month,
+          })
         }
         await recurringTransactionsService.update(recurring.id, {
           next_execution: execution,

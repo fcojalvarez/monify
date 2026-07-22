@@ -4,12 +4,14 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { isValidEmail, validatePassword } from '@/utils/validation'
 import { ROUTE_NAMES } from '@/constants'
+import { useI18n } from '@/i18n'
 import BaseInput from '@/components/ui/BaseInput.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
 
 const auth = useAuthStore()
 const router = useRouter()
+const { t } = useI18n()
 
 const form = reactive({ name: '', email: '', password: '' })
 const errors = reactive<{ name?: string; email?: string; password?: string }>({})
@@ -17,8 +19,8 @@ const serverError = ref<string | null>(null)
 const done = ref(false)
 
 function validate(): boolean {
-  errors.name = form.name.trim() ? undefined : 'Dinos cómo te llamas'
-  errors.email = isValidEmail(form.email) ? undefined : 'Introduce un email válido'
+  errors.name = form.name.trim() ? undefined : t('auth.errors.nameRequired')
+  errors.email = isValidEmail(form.email) ? undefined : t('auth.errors.invalidEmail')
   errors.password = validatePassword(form.password) ?? undefined
   return !errors.name && !errors.email && !errors.password
 }
@@ -31,7 +33,7 @@ async function onSubmit() {
     done.value = true
   } catch (error) {
     serverError.value =
-      error instanceof Error ? error.message : 'No se pudo completar el registro.'
+      error instanceof Error ? error.message : t('auth.errors.registerFailed')
   }
 }
 </script>
@@ -43,37 +45,37 @@ async function onSubmit() {
       <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary-100 text-primary-600">
         <AppIcon name="solar:letter-opened-bold" :size="28" />
       </div>
-      <h2 class="mt-4 text-xl font-bold text-content">Revisa tu correo</h2>
+      <h2 class="mt-4 text-xl font-bold text-content">{{ t('auth.register.successTitle') }}</h2>
       <p class="mt-1 text-sm text-content-muted">
-        Te hemos enviado un enlace de confirmación a <strong>{{ form.email }}</strong>.
+        {{ t('auth.register.confirmationPrefix') }} <strong>{{ form.email }}</strong>{{ t('auth.register.confirmationSuffix') }}
       </p>
       <BaseButton class="mt-6" block variant="secondary" @click="router.push({ name: ROUTE_NAMES.login })">
-        Volver al inicio de sesión
+        {{ t('auth.common.backToLogin') }}
       </BaseButton>
     </div>
 
     <!-- Formulario -->
     <template v-else>
-      <h2 class="text-xl font-bold text-content">Crea tu cuenta</h2>
-      <p class="mt-1 text-sm text-content-muted">Empieza a controlar tus finanzas hoy.</p>
+      <h2 class="text-xl font-bold text-content">{{ t('auth.register.title') }}</h2>
+      <p class="mt-1 text-sm text-content-muted">{{ t('auth.register.subtitle') }}</p>
 
       <form class="mt-6 space-y-4" novalidate @submit.prevent="onSubmit">
-        <BaseInput v-model="form.name" label="Nombre" icon="solar:user-bold" placeholder="Tu nombre" autocomplete="name"
+        <BaseInput v-model="form.name" :label="t('auth.register.nameLabel')" icon="solar:user-bold" :placeholder="t('auth.register.namePlaceholder')" autocomplete="name"
           :error="errors.name" />
-        <BaseInput v-model="form.email" label="Email" type="email" icon="solar:letter-bold"
-          placeholder="tucorreo@ejemplo.com" autocomplete="email" :error="errors.email" />
-        <BaseInput v-model="form.password" label="Contraseña" type="password" icon="solar:lock-password-bold"
-          placeholder="Mínimo 8 caracteres" autocomplete="new-password" :error="errors.password" />
+        <BaseInput v-model="form.email" :label="t('auth.fields.emailLabel')" type="email" icon="solar:letter-bold"
+          :placeholder="t('auth.fields.emailPlaceholder')" autocomplete="email" :error="errors.email" />
+        <BaseInput v-model="form.password" :label="t('auth.fields.passwordLabel')" type="password" icon="solar:lock-password-bold"
+          :placeholder="t('auth.register.passwordPlaceholder')" autocomplete="new-password" :error="errors.password" />
 
         <p v-if="serverError" class="text-sm font-medium text-expense">{{ serverError }}</p>
 
-        <BaseButton type="submit" block size="lg" :loading="auth.loading">Crear cuenta</BaseButton>
+        <BaseButton type="submit" block size="lg" :loading="auth.loading">{{ t('auth.register.submit') }}</BaseButton>
       </form>
 
       <p class="mt-6 text-center text-sm text-content-muted">
-        ¿Ya tienes cuenta?
+        {{ t('auth.register.hasAccount') }}
         <RouterLink :to="{ name: ROUTE_NAMES.login }" class="font-semibold text-primary-600 hover:text-primary-700">
-          Inicia sesión
+          {{ t('auth.register.loginLink') }}
         </RouterLink>
       </p>
     </template>

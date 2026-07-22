@@ -7,9 +7,13 @@ import { useFamilyStore } from '@/stores/family'
 import { filterRecurringTransactions } from '@/utils/recurring-filters'
 import type { RecurringFrequencyFilter, RecurringKindFilter } from '@/utils/recurring-filters'
 import { useI18n } from '@/i18n'
+import { useMemberOptions, useKindOptions, useCategoryOptions } from '@/composables/useEntityOptions'
 import BaseCard from '@/components/ui/BaseCard.vue'
 import BaseSheet from '@/components/ui/BaseSheet.vue'
 import BaseSelect from '@/components/ui/BaseSelect.vue'
+import FilterPanel from '@/components/ui/FilterPanel.vue'
+import BaseSpinner from '@/components/ui/BaseSpinner.vue'
+import EmptyState from '@/components/ui/EmptyState.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
 import RecurringItem from '@/components/transactions/RecurringItem.vue'
 
@@ -26,7 +30,6 @@ const error = ref(false)
 const searchQuery = ref('')
 const isSearchOpen = ref(false)
 const searchInputRef = ref<HTMLInputElement | null>(null)
-const isShowFilters = ref(false)
 const activeMemberId = ref('')
 const activeKind = ref<RecurringKindFilter>('all')
 const activeCategoryId = ref('')
@@ -38,29 +41,12 @@ const showForm = ref(false)
 const editingItem = ref<RecurringTransaction>()
 const recurringFormRef = ref<InstanceType<typeof RecurringForm> | null>(null)
 
-const filteredCategories = computed(() => {
-  if (activeKind.value === 'all') return categories.items
-  return categories.items.filter(category => category.kind === activeKind.value)
+const memberOptions = useMemberOptions({ include: true })
+const kindOptions = useKindOptions({ include: true })
+const categoryOptions = useCategoryOptions(() => activeKind.value, {
+  include: true,
+  label: t('recurringList.allCategories'),
 })
-
-const memberOptions = computed(() => [
-  { value: '', label: t('common.all') },
-  ...family.items.map(member => ({ value: member.id, label: member.name })),
-])
-
-const kindOptions = computed(() => [
-  { value: 'all', label: t('common.all') },
-  { value: 'expense', label: t('recurringList.kind.expense') },
-  { value: 'income', label: t('recurringList.kind.income') },
-])
-
-const categoryOptions = computed(() => [
-  { value: '', label: t('recurringList.allCategories') },
-  ...filteredCategories.value.map(category => ({
-    value: category.id,
-    label: category.name,
-  })),
-])
 
 const frequencyOptions = computed(() => [
   { value: 'all', label: t('common.all') },
@@ -68,6 +54,7 @@ const frequencyOptions = computed(() => [
   { value: 'weekly', label: t('recurringList.frequencies.weekly') },
   { value: 'monthly', label: t('recurringList.frequencies.monthly') },
   { value: 'yearly', label: t('recurringList.frequencies.yearly') },
+  { value: 'custom', label: t('recurringList.frequencies.custom') },
 ])
 
 const filteredItems = computed(() =>
@@ -189,79 +176,46 @@ function closeSearch() {
         </button>
       </div>
 
-      <BaseCard class="space-y-4 p-5">
-        <div class="flex cursor-pointer items-center justify-between" @click="isShowFilters = !isShowFilters">
-          <div class="flex items-center">
-            <AppIcon :name="`solar:alt-arrow-${isShowFilters ? 'up' : 'down'}-linear`" :size="18"
-              class="mr-2 text-content-muted" />
-            <span class="text-sm font-semibold text-content">
-              {{ t('recurringList.filters') }}
-            </span>
+      <FilterPanel @clear="clearFilters">
+        <div class="grid grid-cols-2 gap-3 border-t border-line pt-4">
+          <div>
+            <label class="field-label">
+              {{ t('recurringList.nextFrom') }}
+            </label>
+            <input v-model="filterNextFrom" type="date"
+              class="h-10 w-full rounded-field border border-line bg-surface px-3 text-sm text-content focus-visible:ring-primary-500">
           </div>
 
-          <button v-if="isShowFilters" type="button"
-            class="text-xs font-semibold text-primary-500 transition-colors hover:text-primary-600"
-            @click.stop="clearFilters">
-            {{ t('recurringList.clearFilters') }}
-          </button>
+          <div>
+            <label class="field-label">
+              {{ t('recurringList.nextTo') }}
+            </label>
+            <input v-model="filterNextTo" type="date"
+              class="h-10 w-full rounded-field border border-line bg-surface px-3 text-sm text-content focus-visible:ring-primary-500">
+          </div>
         </div>
 
-        <section v-if="isShowFilters" class="space-y-3">
-          <div class="grid grid-cols-2 gap-3 border-t border-line pt-4">
-            <div>
-              <label class="field-label">
-                {{ t('recurringList.nextFrom') }}
-              </label>
-              <input v-model="filterNextFrom" type="date"
-                class="h-10 w-full rounded-field border border-line bg-surface px-3 text-sm text-content focus-visible:ring-primary-500">
-            </div>
-
-            <div>
-              <label class="field-label">
-                {{ t('recurringList.nextTo') }}
-              </label>
-              <input v-model="filterNextTo" type="date"
-                class="h-10 w-full rounded-field border border-line bg-surface px-3 text-sm text-content focus-visible:ring-primary-500">
-            </div>
-          </div>
-
-          <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <BaseSelect v-model="activeMemberId" :label="t('recurringList.member')" :options="memberOptions" />
-            <BaseSelect v-model="activeKind" :label="t('recurringList.flowType')" :options="kindOptions" />
-            <BaseSelect v-model="activeCategoryId" :label="t('recurringList.category')" :options="categoryOptions" />
-            <BaseSelect v-model="activeFrequency" :label="t('transaction.frequency')" :options="frequencyOptions" />
-          </div>
-        </section>
-      </BaseCard>
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <BaseSelect v-model="activeMemberId" :label="t('recurringList.member')" :options="memberOptions" />
+          <BaseSelect v-model="activeKind" :label="t('recurringList.flowType')" :options="kindOptions" />
+          <BaseSelect v-model="activeCategoryId" :label="t('recurringList.category')" :options="categoryOptions" />
+          <BaseSelect v-model="activeFrequency" :label="t('transaction.frequency')" :options="frequencyOptions" />
+        </div>
+      </FilterPanel>
 
       <BaseCard as="section" class="p-4">
         <h2 class="mb-4 text-sm font-semibold text-content-muted">
           {{ t('recurringList.results') }}
         </h2>
 
-        <div v-if="loading" class="py-10 text-center text-sm text-content-subtle">
-          Cargando…
-        </div>
+        <BaseSpinner v-if="loading" />
 
-        <div v-else-if="error" class="py-10 text-center text-sm text-content-subtle">
-          {{ t('recurringList.empty') }}
-        </div>
+        <EmptyState v-else-if="error || !items.length" icon="solar:repeat-bold-duotone"
+          :title="t('recurringList.empty')" />
 
-        <div v-else-if="!items.length" class="py-10 text-center">
-          <AppIcon name="solar:repeat-bold-duotone" :size="40" class="mx-auto text-content-subtle" />
-          <p class="mt-2 text-sm text-content-muted">
-            {{ t('recurringList.empty') }}
-          </p>
-        </div>
+        <EmptyState v-else-if="!filteredItems.length" icon="solar:magnifer-linear" :title="t('common.noResults')" />
 
-        <div v-else-if="!filteredItems.length" class="py-10 text-center">
-          <AppIcon name="solar:magnifer-linear" :size="40" class="mx-auto text-content-subtle" />
-          <p class="mt-2 text-sm text-content-muted">
-            {{ t('common.noResults') }}
-          </p>
-        </div>
-
-        <ul v-else class="divide-y divide-line">
+        <ul v-else class="animate-fade-in divide-y divide-line">
           <RecurringItem v-for="item in filteredItems" :key="item.id" :transaction="item" class="cursor-pointer"
             @click="openEdit(item)" />
         </ul>
@@ -270,9 +224,9 @@ function closeSearch() {
 
     <button
       class="fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] right-4 md:right-[calc(50vw-20rem)] flex h-14 items-center gap-2 rounded-pill bg-primary-500 px-6 font-semibold text-white shadow-primary-glow transition-transform active:scale-95"
-      aria-label="Añadir movimiento recurrente" @click="openNew">
+      :aria-label="t('recurringList.addAria')" @click="openNew">
       <AppIcon name="solar:add-circle-bold" :size="22" />
-      Añadir
+      {{ t('common.add') }}
     </button>
 
     <BaseSheet v-model="showForm"

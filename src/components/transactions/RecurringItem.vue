@@ -2,7 +2,8 @@
 import { computed } from 'vue'
 import type { RecurringTransaction } from '@/services/recurring-transactions.service'
 import { formatCurrency, formatDate } from '@/utils/format'
-import { useI18n } from '@/i18n'
+import { formatMonthList } from '@/utils/recurring'
+import { useI18n, getIntlLocale } from '@/i18n'
 import AppIcon from '@/components/ui/AppIcon.vue'
 import { useCategoriesStore } from '@/stores/categories'
 
@@ -19,6 +20,18 @@ const endDateLabel = computed(() =>
     ? t('recurringList.end', { date: formatDate(props.transaction.end_on) })
     : t('recurringList.noEnd'),
 )
+
+const scheduleLabel = computed(() => {
+  if (props.transaction.frequency === 'custom') {
+    const day = props.transaction.day_of_month
+    const monthsLabel = formatMonthList(props.transaction.months, getIntlLocale())
+    const parts = [t('recurringList.frequencies.custom')]
+    if (day) parts.push(t('recurringForm.dayShort', { day }))
+    if (monthsLabel) parts.push(monthsLabel)
+    return parts.join(' · ')
+  }
+  return t(`recurringList.frequencies.${props.transaction.frequency}`)
+})
 
 function handleClick() {
   emit('click', props.transaction)
@@ -47,7 +60,7 @@ function handleClick() {
       </div>
 
       <p class="text-xs text-content-subtle">
-        {{ t(`recurringList.frequencies.${transaction.frequency}`) }}
+        {{ scheduleLabel }}
         ·
         {{ endDateLabel }}
       </p>

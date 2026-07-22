@@ -1,9 +1,9 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 
-import { supabase } from '@/lib/supabase'
 import { cashService, type Cash, type CashTransaction } from '@/services/cash.service'
 import { transactionsService } from '@/services/transactions.service'
+import { signedAmount } from '@/utils/format'
 import { useTransactionsStore } from './transactions'
 import { useCategoriesStore } from './categories'
 
@@ -13,6 +13,15 @@ export interface CashMovementPayload {
   familyMemberId?: string | null
   shouldCreateMainTransaction?: boolean
   occurredAt?: string
+}
+
+export interface CashTransactionEditPayload {
+  /** Importe absoluto (siempre positivo); el signo lo determina `isDeposit`. */
+  amount: number
+  isDeposit: boolean
+  note?: string | null
+  familyMemberId?: string | null
+  occurredOn?: string
 }
 
 export const useCashStore = defineStore('cash', () => {
@@ -70,6 +79,21 @@ export const useCashStore = defineStore('cash', () => {
   }
 
   /**
+   * Neto de efectivo (entradas − salidas) dentro de un rango de fechas inclusivo
+   * (formato YYYY-MM-DD). Se usa para reflejar el efectivo del periodo activo.
+   */
+  function netForRange(from: string, to: string) {
+    let net = 0
+    for (const tx of transactions.value) {
+      const day = (tx.occurred_on ?? '').slice(0, 10)
+      if (day >= from && day <= to) {
+        net += tx.amount
+      }
+    }
+    return net
+  }
+
+  /**
    * Cuenta
    */
   async function fetch() {
@@ -112,49 +136,18 @@ export const useCashStore = defineStore('cash', () => {
   }
 
   /**
-   * Busca la categoría "Efectivo" para un tipo específico ('income' o 'expense').
-   * Si no existe, la crea al vuelo.
+   * Devuelve el id de la categoría "Efectivo" para un tipo dado, creándola si no existe.
+   * Delega en el store de categorías (que encapsula el acceso al servicio).
    */
   async function getOrCreateCashCategoryId(kind: 'income' | 'expense'): Promise<string> {
     const categoriesStore = useCategoriesStore()
-    const categoriesList = categoriesStore.items // 👈 Corregido para no usar rawItems
-
-    // 1. Buscar si ya existe la categoría "Efectivo" que coincida con el tipo (kind) requerido
-    const existingCategory = categoriesList.find(
-      (c: any) => c.name.toLowerCase() === 'efectivo' && c.kind === kind,
-    )
-
-    if (existingCategory) {
-      return existingCategory.id
-    }
-
-    // 2. Si no existe para ese tipo, la creamos en la base de datos
-    const { data: newCategory, error } = await supabase
-      .from('categories')
-      .insert({
-        name: 'Efectivo',
-        color: kind === 'income' ? '#10b981' : '#f43f5e', // Verde para ingresos, Rosa/Rojo para gastos
-        icon: 'solar:wallet-money-bold',
-        kind: kind, // Guardamos 'income' o 'expense' según corresponda
-      })
-      .select()
-      .single()
-
-    if (error) {
-      console.error(`Error al auto-crear la categoría de Efectivo (${kind}):`, error)
-
-      // Salvavidas: si falla, intentamos devolver una del mismo tipo que ya exista
-      const fallbackSameKind = categoriesList.find((c: any) => c.kind === kind)
-      if (fallbackSameKind) return fallbackSameKind.id
-
-      if (categoriesList.length > 0) return categoriesList[0].id
-      throw new Error('No se pudo encontrar ni crear una categoría para el movimiento.')
-    }
-
-    // 3. Insertamos la categoría creada directamente en items
-    categoriesStore.items.push(newCategory)
-
-    return newCategory.id
+    const category = await categoriesStore.getOrCreate({
+      name: 'Efectivo',
+      kind,
+      icon: 'solar:wallet-money-bold',
+      color: kind === 'income' ? '#10b981' : '#f43f5e',
+    })
+    return category.id
   }
 
   /**
@@ -170,6 +163,7 @@ export const useCashStore = defineStore('cash', () => {
       amount: payload.amount,
       note: payload.note,
       familyMemberId: payload.familyMemberId!,
+      occurredOn: payload.occurredAt,
     })
 
     // 2. Si se marca el check, crear el ingreso principal en las transacciones generales
@@ -208,6 +202,7 @@ export const useCashStore = defineStore('cash', () => {
       amount: payload.amount,
       note: payload.note,
       familyMemberId: payload.familyMemberId!,
+      occurredOn: payload.occurredAt,
     })
 
     // 2. Si se marca el check, crear el gasto principal en las transacciones generales
@@ -230,6 +225,28 @@ export const useCashStore = defineStore('cash', () => {
       await transactionsStore.fetch()
     }
 
+    await refresh()
+  }
+
+  /**
+   * Editar un movimiento de efectivo existente.
+   */
+  async function updateTransaction(id: string, payload: CashTransactionEditPayload) {
+    await cashService.updateTransaction(id, {
+      amount: signedAmount(payload.amount, payload.isDeposit),
+      note: payload.note ?? null,
+      family_member_id: payload.familyMemberId ?? undefined,
+      occurred_on: payload.occurredOn,
+    })
+
+    await refresh()
+  }
+
+  /**
+   * Eliminar un movimiento de efectivo existente.
+   */
+  async function deleteTransaction(id: string) {
+    await cashService.deleteTransaction(id)
     await refresh()
   }
 
@@ -264,6 +281,7 @@ export const useCashStore = defineStore('cash', () => {
     totalExpense,
 
     memberBalance,
+    netForRange,
 
     fetch,
     fetchTransactions,
@@ -271,6 +289,8 @@ export const useCashStore = defineStore('cash', () => {
 
     deposit,
     withdraw,
+    updateTransaction,
+    deleteTransaction,
     setBalance,
 
     $reset,

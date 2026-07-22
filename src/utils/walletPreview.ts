@@ -12,7 +12,7 @@ export function getVisibleWalletCount(
   let visibleCount = 0
 
   // Primero intentamos mostrar todas las carteras sin el indicador
-  for (const [index, walletWidth] of walletWidths.entries()) {
+  for (const walletWidth of walletWidths) {
     const walletGap = visibleCount > 0 ? gap : 0
 
     if (usedWidth + walletGap + walletWidth > availableWidth) break

@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase'
 import type { Tables, TablesInsert, TablesUpdate } from '@/types/database.types'
+import { todayISO } from '@/utils/format'
 
 export type Cash = Tables<'cash'>
 export type CashInsert = TablesInsert<'cash'>
@@ -114,7 +115,7 @@ export const cashService = {
       amount: Math.abs(options.amount), // Nos aseguramos de que el ingreso sume
       note: options.note ?? null,
       family_member_id: options.familyMemberId!,
-      occurred_on: options.occurredOn ?? new Date().toISOString(),
+      occurred_on: options.occurredOn ?? todayISO(),
     })
 
     return this.update(cashId, {
@@ -140,12 +141,67 @@ export const cashService = {
       amount: -targetAmount,
       note: options.note ?? null,
       family_member_id: options.familyMemberId,
-      occurred_on: options.occurredOn ?? new Date().toISOString(),
+      occurred_on: options.occurredOn ?? todayISO(),
     })
 
     return this.update(cashId, {
       balance: cash.balance - targetAmount,
     })
+  },
+
+  /**
+   * Recalcula el saldo de una caja como la suma de todos sus movimientos.
+   * Es idempotente: fija el valor absoluto correcto, por lo que es seguro
+   * aunque exista (o no) un trigger que ajuste el saldo en la BD.
+   */
+  async recalcBalance(cashId: string) {
+    const { data, error } = await supabase
+      .from('cash_transactions')
+      .select('amount')
+      .eq('cash_id', cashId)
+
+    if (error) throw error
+
+    const balance = (data ?? []).reduce((sum, row) => sum + row.amount, 0)
+    return this.setBalance(cashId, balance)
+  },
+
+  /**
+   * Edita un movimiento de efectivo y recalcula el saldo de su caja.
+   */
+  async updateTransaction(
+    id: string,
+    values: TablesUpdate<'cash_transactions'>,
+  ) {
+    const { data, error } = await supabase
+      .from('cash_transactions')
+      .update(values)
+      .eq('id', id)
+      .select('*, family_member:family_members(*)')
+      .single()
+
+    if (error) throw error
+
+    await this.recalcBalance(data.cash_id)
+    return data
+  },
+
+  /**
+   * Elimina un movimiento de efectivo y recalcula el saldo de su caja.
+   */
+  async deleteTransaction(id: string) {
+    const { data: existing, error: fetchError } = await supabase
+      .from('cash_transactions')
+      .select('cash_id')
+      .eq('id', id)
+      .single()
+
+    if (fetchError) throw fetchError
+
+    const { error } = await supabase.from('cash_transactions').delete().eq('id', id)
+    if (error) throw error
+
+    await this.recalcBalance(existing.cash_id)
   },
 
   async delete(id: string) {

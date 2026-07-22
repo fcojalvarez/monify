@@ -43,6 +43,30 @@ describe('stores de categorías y personas', () => {
     expect(store.getById('category-1')?.name).toBe('Comida')
   })
 
+  it('getOrCreate devuelve la categoría existente (sin distinguir mayúsculas) sin crear otra', async () => {
+    vi.mocked(categoriesService.list).mockResolvedValue([category({ name: 'Ahorros', kind: 'expense' })])
+    const store = useCategoriesStore()
+
+    const result = await store.getOrCreate({ name: 'ahorros', kind: 'expense' })
+
+    expect(result.id).toBe('category-1')
+    expect(categoriesService.create).not.toHaveBeenCalled()
+  })
+
+  it('getOrCreate crea la categoría cuando no existe para ese tipo', async () => {
+    vi.mocked(categoriesService.list).mockResolvedValue([category({ name: 'Ahorros', kind: 'expense' })])
+    vi.mocked(categoriesService.create).mockResolvedValue(category({ id: 'category-2', name: 'Ahorros', kind: 'income' }))
+    const store = useCategoriesStore()
+
+    const result = await store.getOrCreate({ name: 'Ahorros', kind: 'income', icon: 'solar:safe-2-linear', color: '#8b5cf6' })
+
+    expect(categoriesService.create).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'Ahorros', kind: 'income', icon: 'solar:safe-2-linear', color: '#8b5cf6' }),
+    )
+    expect(result.id).toBe('category-2')
+    expect(store.items).toHaveLength(2)
+  })
+
   it('sincroniza altas, cambios y bajas de categorías con el estado local', async () => {
     const store = useCategoriesStore()
     vi.mocked(categoriesService.create).mockResolvedValue(category())

@@ -1,8 +1,9 @@
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
 import CashView from '@/views/dashboard/CashView.vue'
 import SavingsView from '@/views/dashboard/SavingsView.vue'
+import { setLocale } from '@/i18n'
 
 const dialogStub = { props: ['modelValue', 'title'], template: '<div v-if="modelValue" class="dialog" :data-title="title"><slot /></div>' }
 const cardStub = { template: '<section class="card"><slot /></section>' }
@@ -18,6 +19,8 @@ const mountWith = (component: any, initialState: Record<string, any>) => mount(c
 })
 
 describe('vistas de efectivo y ahorros', () => {
+  beforeEach(() => setLocale('es'))
+
   it('muestra las carteras de efectivo y abre el diálogo de ingreso para una persona', async () => {
     const wrapper = mountWith(CashView, {
       ui: { currency: 'EUR' },

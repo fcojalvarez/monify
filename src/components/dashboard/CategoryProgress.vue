@@ -3,8 +3,10 @@ import { computed } from 'vue'
 import type { CategoryUsage } from '@/types'
 import { formatCurrency } from '@/utils/format'
 import AppIcon from '@/components/ui/AppIcon.vue'
+import { useI18n } from '@/i18n'
 
 const props = defineProps<{ usage: CategoryUsage }>()
+const { t } = useI18n()
 
 const barWidth = computed(() => Math.min(props.usage.percentage, 100))
 const barColor = computed(() => {
@@ -42,7 +44,7 @@ const barColor = computed(() => {
         />
       </div>
       <p v-if="usage.isOverLimit" class="mt-1 text-xs font-medium text-expense">
-        Límite superado en {{ formatCurrency(usage.spent - (usage.limit ?? 0)) }}
+        {{ t('misc.categoryLimitExceeded', { amount: formatCurrency(usage.spent - (usage.limit ?? 0)) }) }}
       </p>
     </div>
   </div>

@@ -2,7 +2,6 @@
 import { computed, onMounted, ref, defineAsyncComponent } from 'vue'
 import { storeToRefs } from 'pinia'
 import type { TransactionWithRelations } from '@/types'
-import { useAuthStore } from '@/stores/auth'
 import { useProfileStore } from '@/stores/profile'
 import { useTransactionsStore } from '@/stores/transactions'
 import { useSavingsStore } from '@/stores/savings'
@@ -16,6 +15,8 @@ import CategoryProgress from '@/components/dashboard/CategoryProgress.vue'
 import TransactionItem from '@/components/transactions/TransactionItem.vue'
 import BaseCard from '@/components/ui/BaseCard.vue'
 import BaseSheet from '@/components/ui/BaseSheet.vue'
+import BaseSpinner from '@/components/ui/BaseSpinner.vue'
+import EmptyState from '@/components/ui/EmptyState.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
 import {
   currentPeriodRange,
@@ -25,7 +26,6 @@ import { useI18n } from '@/i18n'
 
 const TransactionForm = defineAsyncComponent(() => import('@/components/transactions/TransactionForm.vue'))
 
-const auth = useAuthStore()
 const profile = useProfileStore()
 const categories = useCategoriesStore()
 const family = useFamilyStore()
@@ -46,6 +46,12 @@ const activeFilter = ref<DashboardPeriod>('day')
 
 const filterLabel = computed(() => t(`dashboard.movements.${activeFilter.value}`))
 const balancePeriodLabel = computed(() => t(`dashboard.period.${activeFilter.value}`))
+
+/** Neto de efectivo (entradas − salidas) del periodo activo para la tarjeta de balance. */
+const cashPeriodNet = computed(() => {
+  const { from, to } = currentPeriodRange(activeFilter.value)
+  return cashStore.netForRange(from, to)
+})
 
 const filteredItems = computed(() => items.value)
 
@@ -72,7 +78,7 @@ async function onTransactionSaved() {
   showTransaction.value = false
   await fetchTransactions()
   if (profile.cashEnabled) {
-    await cashStore.fetch()
+    await cashStore.refresh()
     await family.fetchAll(true)
   }
 }
@@ -109,14 +115,14 @@ function dismissSavingsPrompt() {
 }
 
 onMounted(async () => {
-  const promises: Promise<any>[] = [
+  const promises: Promise<unknown>[] = [
     categories.fetchAll(),
     family.fetchAll(),
     fetchTransactions(),
   ]
 
   if (profile.cashEnabled) {
-    promises.push(cashStore.fetch())
+    promises.push(cashStore.refresh())
   }
 
   await Promise.all(promises)
@@ -148,11 +154,11 @@ onMounted(async () => {
 
           <div>
             <h3 class="font-bold text-sm leading-snug text-content">
-              ¡Nueva función de ahorros!
+              {{ t('dashboard.savingsPromptTitle') }}
             </h3>
 
             <p class="text-xs mt-0.5 text-content-muted leading-normal">
-              Organiza tus ahorros, fija metas y aparta dinero de tu cuenta principal de forma muy sencilla.
+              {{ t('dashboard.savingsPromptText') }}
             </p>
           </div>
         </div>
@@ -161,25 +167,26 @@ onMounted(async () => {
           <button type="button"
             class="text-xs font-semibold px-3 py-1.5 rounded-field text-content hover:bg-surface-muted transition-colors"
             @click="dismissSavingsPrompt">
-            No, gracias
+            {{ t('dashboard.savingsPromptDismiss') }}
           </button>
 
           <button type="button"
             class="text-xs font-semibold px-3 py-1.5 rounded-field bg-primary-500 text-white hover:bg-primary-600 transition-colors shadow-sm"
             @click="activateSavings">
-            Activar ahorros
+            {{ t('dashboard.savingsPromptActivate') }}
           </button>
         </div>
       </div>
 
       <BalanceSummary :summary="summary" :period-label="balancePeriodLabel" :savings="savings" :cash="cash"
-        :savings-loaded="savingsLoaded" :cash-enabled="cashEnabled" :members="family.items" />
+        :cash-period-net="cashPeriodNet" :savings-loaded="savingsLoaded" :cash-enabled="cashEnabled"
+        :members="family.items" />
 
       <div v-if="family.items.length > 0" class="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
         <button class="shrink-0 rounded-pill px-4 py-2 text-sm font-medium transition-colors"
           :class="activeMember === null ? 'bg-primary-500 text-white' : 'bg-surface-muted text-content-muted hover:bg-line'"
           @click="selectMember(null)">
-          Todos
+          {{ t('dashboard.allMembers') }}
         </button>
 
         <button v-for="member in family.items" :key="member.id"
@@ -193,7 +200,7 @@ onMounted(async () => {
 
       <BaseCard v-if="limitedUsage.length" as="section">
         <h2 class="mb-4 text-sm font-semibold text-content-muted">
-          Límites por categoría
+          {{ t('dashboard.categoryLimits') }}
         </h2>
 
         <div class="space-y-4">
@@ -221,19 +228,12 @@ onMounted(async () => {
           </div>
         </div>
 
-        <div v-if="loading" class="py-10 text-center text-sm text-content-subtle">
-          Cargando…
-        </div>
+        <BaseSpinner v-if="loading" />
 
-        <div v-else-if="!filteredItems.length" class="py-10 text-center">
-          <AppIcon name="solar:wallet-money-bold-duotone" :size="40" class="mx-auto text-content-subtle" />
+        <EmptyState v-else-if="!filteredItems.length" icon="solar:wallet-money-bold-duotone"
+          :title="t('dashboard.emptyPeriod')" />
 
-          <p class="mt-2 text-sm text-content-muted">
-            Aún no hay movimientos en este periodo.
-          </p>
-        </div>
-
-        <ul v-else class="divide-y divide-line">
+        <ul v-else class="animate-fade-in divide-y divide-line">
           <TransactionItem v-for="transaction in filteredItems" :key="transaction.id" :transaction="transaction"
             class="cursor-pointer" @click="openEditTransaction(transaction)" />
         </ul>
@@ -242,12 +242,13 @@ onMounted(async () => {
 
     <button
       class="fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] right-4 md:right-[calc(50vw-20rem)] flex h-14 items-center gap-2 rounded-pill bg-primary-500 px-6 font-semibold text-white shadow-primary-glow transition-transform active:scale-95"
-      aria-label="Añadir movimiento" @click="openNewTransaction">
+      :aria-label="t('dashboard.addAria')" @click="openNewTransaction">
       <AppIcon name="solar:add-circle-bold" :size="22" />
-      Añadir
+      {{ t('common.add') }}
     </button>
 
-    <BaseSheet v-model="showTransaction" :title="editingTransaction ? 'Editar movimiento' : 'Nuevo movimiento'"
+    <BaseSheet v-model="showTransaction"
+      :title="editingTransaction ? t('dashboard.editMovement') : t('dashboard.newMovement')"
       :has-changes="transactionFormRef?.hasChanges">
       <TransactionForm ref="transactionFormRef" :transaction="editingTransaction" @saved="onTransactionSaved"
         @cancel="showTransaction = false" />

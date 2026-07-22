@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { RouterView } from 'vue-router'
+import { useI18n } from '@/i18n'
 import AppLogo from '@/components/ui/AppLogo.vue'
+
+const { t } = useI18n()
 </script>
 
 <template>
@@ -17,8 +20,8 @@ import AppLogo from '@/components/ui/AppLogo.vue'
       />
       <div class="relative mx-auto w-full max-w-md px-6">
         <AppLogo :size="44" class="[&_span]:text-white" />
-        <h1 class="mt-6 text-2xl font-bold text-white">Tus finanzas, claras.</h1>
-        <p class="mt-1 text-sm text-white/80">Controla gastos e ingresos, en familia.</p>
+        <h1 class="mt-6 text-2xl font-bold text-white">{{ t('auth.layout.title') }}</h1>
+        <p class="mt-1 text-sm text-white/80">{{ t('auth.layout.subtitle') }}</p>
       </div>
     </div>
 

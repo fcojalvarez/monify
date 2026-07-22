@@ -66,11 +66,11 @@ function similarity(first: string, second: string) {
 }
 
 function validate(): boolean {
-  errors.name = form.name.trim() ? undefined : 'Ponle un nombre'
+  errors.name = form.name.trim() ? undefined : t('categories.errorName')
   if (form.hasLimit) {
     errors.limit = isPositiveAmount(parseAmount(form.limit))
       ? undefined
-      : 'El límite debe ser mayor que 0'
+      : t('categories.errorLimit')
   } else {
     errors.limit = undefined
   }
@@ -93,7 +93,7 @@ async function saveCategory() {
     else await categories.create(payload)
     emit('saved')
   } catch (error) {
-    serverError.value = error instanceof Error ? error.message : 'No se pudo guardar.'
+    serverError.value = error instanceof Error ? error.message : t('categories.genericSaveError')
   } finally {
     saving.value = false
   }
@@ -159,24 +159,24 @@ defineExpose({
         :style="{ backgroundColor: form.color }">
         <AppIcon :name="form.icon" :size="24" />
       </span>
-      <span class="text-sm text-content-muted">Así se verá tu categoría</span>
+      <span class="text-sm text-content-muted">{{ t('categories.previewCaption') }}</span>
     </div>
 
     <SegmentedControl v-model="form.kind" :options="[
-      { value: 'expense', label: 'Gasto' },
-      { value: 'income', label: 'Ingreso' },
+      { value: 'expense', label: t('categories.kindExpense') },
+      { value: 'income', label: t('categories.kindIncome') },
     ]" />
 
-    <BaseInput v-model="form.name" label="Nombre" icon="solar:tag-bold" placeholder="p.ej. Ocio, Nómina…"
-      :error="errors.name" />
+    <BaseInput v-model="form.name" :label="t('categories.nameLabel')" icon="solar:tag-bold"
+      :placeholder="t('categories.namePlaceholder')" :error="errors.name" />
 
     <div>
-      <span class="field-label">Icono</span>
+      <span class="field-label">{{ t('categories.iconLabel') }}</span>
       <IconPicker v-model="form.icon" :color="form.color" />
     </div>
 
     <div>
-      <span class="field-label">Color</span>
+      <span class="field-label">{{ t('categories.colorLabel') }}</span>
       <ColorPicker v-model="form.color" />
     </div>
 
@@ -197,8 +197,8 @@ defineExpose({
       </label>
 
       <div v-if="form.hasLimit" class="mt-3">
-        <BaseInput v-model="form.limit" type="number" icon="solar:tag-price-bold" placeholder="0,00"
-          :error="errors.limit" />
+        <BaseInput v-model="form.limit" type="number" icon="solar:tag-price-bold"
+          :placeholder="t('categories.limitPlaceholder')" :error="errors.limit" />
       </div>
     </div>
 
@@ -214,7 +214,7 @@ defineExpose({
     </div>
   </form>
 
-  <BaseDialog v-slot:default v-model="showConfirmDialog" variant="danger" :title="t('common.unsavedChanges')"
+  <BaseDialog v-model="showConfirmDialog" variant="danger" :title="t('common.unsavedChanges')"
     :confirm-text="t('common.discard')" :cancel-text="t('common.keepEditing')" show-cancel @confirm="emit('cancel')">
     <p class="text-content">
       {{ t('common.unsavedChangesMessage') }}
@@ -228,7 +228,7 @@ defineExpose({
       <strong>{{duplicateMatches.map(category => category.name).join(', ')}}</strong>.
     </p>
     <p class="mt-2 text-sm text-content-subtle">
-      {{ duplicateMatches.length === 1 ? t('common.reviewOne') : t('common.reviewMany') }} antes de crear
+      {{ duplicateMatches.length === 1 ? t('common.reviewOne') : t('common.reviewMany') }} {{ t('categories.beforeCreating') }}
       {{ t('common.duplicateWarning') }}.
     </p>
   </BaseDialog>

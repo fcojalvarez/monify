@@ -4,7 +4,7 @@ import type { Savings, SavingsTransaction } from '@/types'
 import { savingsService } from '@/services/savings.service'
 import { useTransactionsStore } from './transactions'
 import { useCategoriesStore } from './categories'
-import { todayISO } from '@/utils/format'
+import { todayISO, signedAmount } from '@/utils/format'
 
 export interface TransferPayload {
   savingsId: string
@@ -133,13 +133,45 @@ export const useSavingsStore = defineStore('savings', () => {
   }
 
   async function complete(id: string) {
-    return await update(id, { status: 'completed' } as any)
+    return await update(id, { status: 'completed' })
   }
 
   async function remove(id: string) {
     await savingsService.remove(id)
     items.value = items.value.filter((s) => s.id !== id)
     transactions.value = transactions.value.filter((t) => t.savings_id !== id)
+  }
+
+  /**
+   * Editar un movimiento de ahorro existente.
+   * `amount` es el importe absoluto; el signo lo determina `isDeposit`.
+   */
+  async function updateTransaction(
+    id: string,
+    payload: { amount: number; isDeposit: boolean; note?: string | null; occurredOn?: string },
+  ) {
+    const updated = await savingsService.updateTransaction(id, {
+      amount: signedAmount(payload.amount, payload.isDeposit),
+      note: payload.note?.trim() || null,
+      occurred_on: payload.occurredOn,
+    })
+
+    const index = transactions.value.findIndex((t) => t.id === id)
+    if (index !== -1) {
+      transactions.value[index] = updated
+    }
+
+    await fetchAll()
+    return updated
+  }
+
+  /**
+   * Eliminar un movimiento de ahorro existente.
+   */
+  async function deleteTransaction(id: string) {
+    await savingsService.deleteTransaction(id)
+    transactions.value = transactions.value.filter((t) => t.id !== id)
+    await fetchAll()
   }
 
   async function transfer(payload: TransferPayload) {
@@ -156,7 +188,7 @@ export const useSavingsStore = defineStore('savings', () => {
     const transactionsStore = useTransactionsStore()
 
     const mainTxKind = isDeposit ? 'expense' : 'income'
-    const savingsAmount = isDeposit ? amount : -amount
+    const savingsAmount = signedAmount(amount, isDeposit)
 
     const savingsAccount = items.value.find((s) => s.id === savingsId)
 
@@ -173,20 +205,12 @@ export const useSavingsStore = defineStore('savings', () => {
       : savingsAccount.name
 
     if (shouldCreateMainTransaction) {
-      await categoriesStore.fetchAll()
-
-      let category = categoriesStore.items.find(
-        (c) => c.name.toLowerCase() === 'ahorros' && c.kind === mainTxKind,
-      )
-
-      if (!category) {
-        category = await categoriesStore.create({
-          name: 'Ahorros',
-          icon: 'solar:safe-2-linear',
-          color: '#8b5cf6',
-          kind: mainTxKind,
-        })
-      }
+      const category = await categoriesStore.getOrCreate({
+        name: 'Ahorros',
+        kind: mainTxKind,
+        icon: 'solar:safe-2-linear',
+        color: '#8b5cf6',
+      })
 
       const defaultNote = isDeposit ? `Aportación a ${accountName}` : `Retirada de ${accountName}`
 
@@ -239,6 +263,8 @@ export const useSavingsStore = defineStore('savings', () => {
     complete,
     remove,
     transfer,
+    updateTransaction,
+    deleteTransaction,
     getByType,
     $reset,
   }

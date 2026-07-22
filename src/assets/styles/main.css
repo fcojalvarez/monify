@@ -73,3 +73,16 @@
     @apply mt-1.5 text-xs text-content-subtle;
   }
 }
+
+/* ─────────────────────────────────────────────────────────────
+   Accesibilidad: respeta la preferencia de movimiento reducido.
+   Desactiva las animaciones de entrada de la app (las transiciones
+   de ruta y del diálogo ya lo respetan en sus propias hojas).
+   ───────────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-in,
+  .animate-slide-up,
+  .animate-scale-in {
+    animation: none !important;
+  }
+}

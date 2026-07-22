@@ -18,6 +18,7 @@ import BaseDialog from '@/components/ui/BaseDialog.vue'
 import BaseSheet from '@/components/ui/BaseSheet.vue'
 import SegmentedControl from '@/components/ui/SegmentedControl.vue'
 import BaseSelect from '@/components/ui/BaseSelect.vue'
+import BaseSwitch from '@/components/ui/BaseSwitch.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
 import { localeOptions, type AppLocale, useI18n } from '@/i18n'
 
@@ -52,7 +53,7 @@ async function saveProfile() {
 
   try {
     if (!name.value.trim()) {
-      throw new Error('El nombre no puede estar vacío.')
+      throw new Error(t('profile.errors.nameEmpty'))
     }
 
     await auth.updateProfile(name.value.trim())
@@ -61,7 +62,7 @@ async function saveProfile() {
     profileError.value =
       error instanceof Error
         ? error.message
-        : 'No se pudo actualizar el perfil.'
+        : t('profile.errors.profileUpdateFailed')
   } finally {
     profileSaving.value = false
   }
@@ -81,11 +82,11 @@ async function changePassword() {
 
   try {
     if (newPassword.value.length < 6) {
-      throw new Error('La contraseña debe tener al menos 6 caracteres.')
+      throw new Error(t('profile.errors.passwordMinLength'))
     }
 
     if (newPassword.value !== confirmPassword.value) {
-      throw new Error('Las contraseñas no coinciden.')
+      throw new Error(t('profile.errors.passwordMismatch'))
     }
 
     await auth.updatePassword(newPassword.value)
@@ -97,7 +98,7 @@ async function changePassword() {
     passwordError.value =
       error instanceof Error
         ? error.message
-        : 'No se pudo cambiar la contraseña.'
+        : t('profile.errors.passwordUpdateFailed')
   } finally {
     passwordSaving.value = false
   }
@@ -112,15 +113,22 @@ async function exportToCSV() {
   try {
     const list = await transactionsService.list({})
 
-    const headers = ['Fecha', 'Tipo', 'Importe', 'Nota', 'Categoria', 'Miembro']
+    const headers = [
+      t('profile.csv.date'),
+      t('profile.csv.type'),
+      t('profile.csv.amount'),
+      t('profile.csv.note'),
+      t('profile.csv.category'),
+      t('profile.csv.member'),
+    ]
 
-    const rows = list.map((t) => [
-      t.occurred_on,
-      t.kind === 'income' ? 'Ingreso' : 'Gasto',
-      t.amount,
-      t.note || '',
-      t.category?.name || '',
-      t.family_member?.name || '',
+    const rows = list.map((tx) => [
+      tx.occurred_on,
+      tx.kind === 'income' ? t('form.income') : t('form.expense'),
+      tx.amount,
+      tx.note || '',
+      tx.category?.name || '',
+      tx.family_member?.name || '',
     ])
 
     const csvContent = [
@@ -140,7 +148,7 @@ async function exportToCSV() {
     link.setAttribute('href', url)
     link.setAttribute(
       'download',
-      `monify_movimientos_${new Date().toISOString().slice(0, 10)}.csv`,
+      `monify_${t('profile.csv.filenamePrefix')}_${new Date().toISOString().slice(0, 10)}.csv`,
     )
 
     document.body.appendChild(link)
@@ -173,7 +181,7 @@ async function confirmClearData() {
     clearError.value =
       error instanceof Error
         ? error.message
-        : 'No se pudieron eliminar los movimientos.'
+        : t('profile.errors.clearFailed')
   } finally {
     clearing.value = false
   }
@@ -239,7 +247,7 @@ onMounted(() => {
       <div class="flex items-center gap-3">
         <RouterLink :to="{ name: ROUTE_NAMES.dashboard }"
           class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-muted text-content-muted hover:bg-line transition-colors"
-          title="Volver al Dashboard">
+          :title="t('profile.backToDashboard')">
           <AppIcon name="solar:arrow-left-bold" :size="20" />
         </RouterLink>
         <div>
@@ -253,19 +261,19 @@ onMounted(() => {
       <!-- Sección 1: Datos Personales -->
       <BaseCard as="section" class="order-3 p-5 space-y-4">
         <h2 class="text-sm font-semibold text-content-muted uppercase tracking-wide">
-          Datos Personales
+          {{ t('profile.personalData') }}
         </h2>
 
         <form @submit.prevent="saveProfile" class="space-y-4">
-          <BaseInput label="Email" :model-value="auth.user?.email || ''" disabled icon="solar:letter-bold"
+          <BaseInput :label="t('profile.email')" :model-value="auth.user?.email || ''" disabled icon="solar:letter-bold"
             class="opacity-75" />
 
-          <BaseInput v-model="name" label="Nombre completo" icon="solar:user-bold" placeholder="Introduce tu nombre"
+          <BaseInput v-model="name" :label="t('profile.fullName')" icon="solar:user-bold" :placeholder="t('profile.namePlaceholder')"
             required />
 
           <div v-if="profileSuccess"
             class="rounded-field bg-primary-50 dark:bg-primary-500/15 p-3 text-sm text-primary-600 dark:text-primary-400">
-            ¡Perfil actualizado correctamente!
+            {{ t('profile.profileUpdatedSuccess') }}
           </div>
 
           <div v-if="profileError" class="rounded-field bg-expense-light p-3 text-sm text-expense">
@@ -274,7 +282,7 @@ onMounted(() => {
 
           <div class="flex justify-end pt-1">
             <BaseButton type="submit" :loading="profileSaving">
-              Guardar nombre
+              {{ t('profile.saveName') }}
             </BaseButton>
           </div>
         </form>
@@ -283,19 +291,19 @@ onMounted(() => {
       <!-- Sección 2: Seguridad -->
       <BaseCard as="section" class="order-4 p-5 space-y-4">
         <h2 class="text-sm font-semibold text-content-muted uppercase tracking-wide">
-          Seguridad
+          {{ t('profile.security') }}
         </h2>
 
         <form @submit.prevent="changePassword" class="space-y-4">
-          <BaseInput v-model="newPassword" label="Nueva contraseña" type="password" icon="solar:lock-password-bold"
-            placeholder="Mínimo 6 caracteres" required />
+          <BaseInput v-model="newPassword" :label="t('profile.newPassword')" type="password" icon="solar:lock-password-bold"
+            :placeholder="t('profile.minCharsPlaceholder')" required />
 
-          <BaseInput v-model="confirmPassword" label="Confirmar nueva contraseña" type="password"
-            icon="solar:lock-password-bold" placeholder="Repite la contraseña" required />
+          <BaseInput v-model="confirmPassword" :label="t('profile.confirmNewPassword')" type="password"
+            icon="solar:lock-password-bold" :placeholder="t('profile.repeatPasswordPlaceholder')" required />
 
           <div v-if="passwordSuccess"
             class="rounded-field bg-primary-50 dark:bg-primary-500/15 p-3 text-sm text-primary-600 dark:text-primary-400">
-            ¡Contraseña actualizada correctamente!
+            {{ t('profile.passwordUpdatedSuccess') }}
           </div>
 
           <div v-if="passwordError" class="rounded-field bg-expense-light p-3 text-sm text-expense">
@@ -304,7 +312,7 @@ onMounted(() => {
 
           <div class="flex justify-end pt-1">
             <BaseButton type="submit" :loading="passwordSaving">
-              Actualizar contraseña
+              {{ t('profile.updatePassword') }}
             </BaseButton>
           </div>
         </form>
@@ -342,47 +350,19 @@ onMounted(() => {
             }))" />
           </div>
 
-          <label class="flex cursor-pointer items-center justify-between">
-            <span class="text-sm font-medium text-content">
-              {{ t('settings.savings') }}
-            </span>
+          <BaseSwitch v-model="savingsEnabled" :label="t('settings.savings')" />
 
-            <div class="relative shrink-0 ml-4">
-              <input v-model="savingsEnabled" type="checkbox" class="sr-only" />
-
-              <span class="relative block h-6 w-11 rounded-pill transition-colors"
-                :class="savingsEnabled ? 'bg-primary-500' : 'bg-line'">
-                <span class="absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white transition-transform duration-200"
-                  :class="savingsEnabled ? 'translate-x-5' : 'translate-x-0'" />
-              </span>
-            </div>
-          </label>
-
-          <label class="flex cursor-pointer items-center justify-between">
-            <span class="text-sm font-medium text-content">
-              {{ t('settings.cash') }}
-            </span>
-
-            <div class="relative shrink-0 ml-4">
-              <input v-model="cashEnabled" type="checkbox" class="sr-only" />
-
-              <span class="relative block h-6 w-11 rounded-pill transition-colors"
-                :class="cashEnabled ? 'bg-primary-500' : 'bg-line'">
-                <span class="absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white transition-transform duration-200"
-                  :class="cashEnabled ? 'translate-x-5' : 'translate-x-0'" />
-              </span>
-            </div>
-          </label>
+          <BaseSwitch v-model="cashEnabled" :label="t('settings.cash')" />
         </div>
       </BaseCard>
 
       <BaseCard as="section" class="order-2 p-5 space-y-4">
         <div>
           <h2 class="text-sm font-semibold text-content-muted uppercase tracking-wide">
-            Organización
+            {{ t('profile.organization') }}
           </h2>
           <p class="mt-1 text-xs text-content-subtle">
-            Configura las opciones que usas con menos frecuencia.
+            {{ t('profile.organizationSubtitle') }}
           </p>
         </div>
 
@@ -395,8 +375,8 @@ onMounted(() => {
                 <AppIcon name="solar:users-group-rounded-bold" :size="18" />
               </span>
               <span>
-                <span class="block text-sm font-semibold text-content">Personas</span>
-                <span class="block text-xs text-content-subtle">Añade o edita los miembros de tu familia.</span>
+                <span class="block text-sm font-semibold text-content">{{ t('profile.people') }}</span>
+                <span class="block text-xs text-content-subtle">{{ t('profile.peopleDescription') }}</span>
               </span>
             </span>
             <AppIcon name="solar:alt-arrow-right-linear" :size="18" class="shrink-0 text-content-subtle" />
@@ -410,8 +390,8 @@ onMounted(() => {
                 <AppIcon name="solar:tag-bold" :size="18" />
               </span>
               <span>
-                <span class="block text-sm font-semibold text-content">Categorías</span>
-                <span class="block text-xs text-content-subtle">Gestiona las categorías de ingresos y gastos.</span>
+                <span class="block text-sm font-semibold text-content">{{ t('profile.categories') }}</span>
+                <span class="block text-xs text-content-subtle">{{ t('profile.categoriesDescription') }}</span>
               </span>
             </span>
             <AppIcon name="solar:alt-arrow-right-linear" :size="18" class="shrink-0 text-content-subtle" />
@@ -436,49 +416,49 @@ onMounted(() => {
       <!-- Administración de datos -->
       <BaseCard as="section" class="order-5 p-5 space-y-4">
         <h2 class="text-sm font-semibold text-content-muted uppercase tracking-wide">
-          Administración de datos
+          {{ t('profile.dataAdministration') }}
         </h2>
 
         <p class="text-xs text-content-subtle">
-          Realiza copias de seguridad de tus movimientos o limpia el histórico de tu cuenta.
+          {{ t('profile.dataAdministrationSubtitle') }}
         </p>
 
         <div class="space-y-3 pt-2">
           <div
             class="flex flex-col gap-3 rounded-field border border-line p-3.5 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <p class="text-sm font-semibold text-content">Exportar movimientos</p>
+              <p class="text-sm font-semibold text-content">{{ t('profile.exportMovements') }}</p>
               <p class="text-xs text-content-subtle">
-                Descarga todos tus registros de ingresos y gastos en formato CSV.
+                {{ t('profile.exportMovementsDescription') }}
               </p>
             </div>
 
             <BaseButton type="button" variant="secondary" class="flex shrink-0 items-center justify-center gap-2"
               :loading="exporting" @click="exportToCSV">
               <AppIcon name="solar:download-bold" :size="16" />
-              Descargar CSV
+              {{ t('profile.downloadCsv') }}
             </BaseButton>
           </div>
 
           <div
             class="flex flex-col gap-3 rounded-field border border-expense/20 bg-expense-light/10 p-3.5 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <p class="text-sm font-semibold text-content">Borrar movimientos</p>
+              <p class="text-sm font-semibold text-content">{{ t('profile.deleteMovements') }}</p>
               <p class="text-xs text-content-subtle">
-                Elimina de forma permanente todo tu histórico de transacciones.
+                {{ t('profile.deleteMovementsDescription') }}
               </p>
             </div>
 
             <BaseButton type="button" variant="danger" class="flex shrink-0 items-center justify-center gap-2"
               @click="showClearDialog = true">
               <AppIcon name="solar:trash-bin-trash-bold" :size="16" />
-              Borrar todo
+              {{ t('profile.deleteAll') }}
             </BaseButton>
           </div>
 
           <div v-if="clearSuccess"
             class="rounded-field bg-primary-50 p-3 text-sm text-primary-600 dark:bg-primary-500/15 dark:text-primary-400">
-            ¡Historial de movimientos eliminado con éxito!
+            {{ t('profile.clearSuccessMessage') }}
           </div>
 
           <div v-if="clearError" class="rounded-field bg-expense-light p-3 text-sm text-expense">
@@ -489,48 +469,47 @@ onMounted(() => {
 
       <div class="order-6 space-y-1 py-2 text-center">
         <p v-if="joinedDate" class="text-xs text-content-subtle">
-          Miembro de Monify desde:
+          {{ t('profile.memberSince') }}
           <strong class="text-content-muted">{{ joinedDate }}</strong>
         </p>
 
         <p class="text-[10px] uppercase tracking-widest text-content-subtle/60">
-          Monify v0.1.0 • Desarrollado con Supabase & Vue
+          {{ t('profile.footer') }}
         </p>
       </div>
     </main>
 
-    <BaseDialog v-model="showClearDialog" variant="danger" title="¿Borrar todos tus movimientos?"
-      confirm-text="Sí, borrar todo" cancel-text="Cancelar" show-cancel :loading="clearing" @confirm="confirmClearData">
+    <BaseDialog v-model="showClearDialog" variant="danger" :title="t('profile.clearDialog.title')"
+      :confirm-text="t('profile.clearDialog.confirmText')" :cancel-text="t('common.cancel')" show-cancel :loading="clearing" @confirm="confirmClearData">
       <p class="text-content">
-        ¿Estás completamente seguro de que deseas eliminar
-        <strong>todos tus movimientos registrados</strong>?
+        {{ t('profile.clearDialog.bodyPart1') }}
+        <strong>{{ t('profile.clearDialog.bodyStrong') }}</strong>?
       </p>
 
       <p class="mt-2 text-sm text-content-subtle">
-        Esta acción es definitiva y eliminará permanentemente todos tus ingresos y
-        gastos de la base de datos. No se puede deshacer.
+        {{ t('profile.clearDialog.warning') }}
       </p>
     </BaseDialog>
 
-    <BaseSheet v-model="showCategories" title="Categorías" :has-changes="categoryManagerRef?.hasChanges">
+    <BaseSheet v-model="showCategories" :title="t('profile.categories')" :has-changes="categoryManagerRef?.hasChanges">
       <template #actions>
         <button v-if="categoryManagerRef?.view === 'list'" type="button"
           class="inline-flex h-7 items-center gap-2 rounded-full border border-primary-500 px-3 text-sm font-medium text-primary-500 transition-colors hover:bg-surface-muted"
-          aria-label="Nueva categoría" @click="categoryManagerRef?.openForm()">
+          :aria-label="t('profile.newCategory')" @click="categoryManagerRef?.openForm()">
           <AppIcon name="solar:add-circle-bold" :size="20" />
-          <span>Añadir</span>
+          <span>{{ t('common.add') }}</span>
         </button>
       </template>
       <CategoryManager ref="categoryManagerRef" />
     </BaseSheet>
 
-    <BaseSheet v-model="showFamily" title="Personas" :has-changes="familyManagerRef?.hasChanges">
+    <BaseSheet v-model="showFamily" :title="t('profile.people')" :has-changes="familyManagerRef?.hasChanges">
       <template #actions>
         <button v-if="familyManagerRef?.view === 'list'" type="button"
           class="inline-flex h-7 items-center gap-2 rounded-full border border-primary-500 px-3 text-sm font-medium text-primary-500 transition-colors hover:bg-surface-muted"
-          aria-label="Añadir persona" @click="familyManagerRef?.openForm()">
+          :aria-label="t('profile.addPerson')" @click="familyManagerRef?.openForm()">
           <AppIcon name="solar:add-circle-bold" :size="20" />
-          <span>Añadir</span>
+          <span>{{ t('common.add') }}</span>
         </button>
       </template>
       <FamilyManager ref="familyManagerRef" />

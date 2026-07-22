@@ -5,12 +5,18 @@ import { useCategoriesStore } from '@/stores/categories'
 import { formatCurrency } from '@/utils/format'
 import CategoryForm from './CategoryForm.vue'
 import BaseDialog from '@/components/ui/BaseDialog.vue'
+import BaseSpinner from '@/components/ui/BaseSpinner.vue'
+import EmptyState from '@/components/ui/EmptyState.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
+import { useI18n } from '@/i18n'
 
 const categories = useCategoriesStore()
+const { t } = useI18n()
 
 type Mode = { view: 'list' } | { view: 'form'; category?: Category }
 const mode = ref<Mode>({ view: 'list' })
+
+const sections = ['expense', 'income'] as const
 
 const grouped = computed(() => ({
   expense: categories.items.filter((c) => c.kind === 'expense'),
@@ -59,54 +65,60 @@ defineExpose({
   </div>
 
   <div v-else class="space-y-5">
-    <template v-for="section in ['expense', 'income'] as const" :key="section">
-      <div v-if="grouped[section].length">
-        <h3 class="mb-2 text-xs font-semibold uppercase tracking-wide text-content-subtle">
-          {{ section === 'expense' ? 'Gastos' : 'Ingresos' }}
-        </h3>
+    <BaseSpinner v-if="categories.loading && !categories.items.length" />
 
-        <ul class="space-y-1">
-          <li v-for="category in grouped[section]" :key="category.id"
-            class="flex items-center gap-3 rounded-field p-2 hover:bg-surface-muted">
-            <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-white"
-              :style="{ backgroundColor: category.color }">
-              <AppIcon :name="category.icon" :size="18" />
-            </span>
+    <EmptyState v-else-if="!categories.items.length" icon="solar:tag-linear" :title="t('categories.empty')" />
 
-            <div class="min-w-0 flex-1">
-              <p class="truncate text-sm font-medium text-content">
-                {{ category.name }}
-              </p>
+    <template v-else>
+      <template v-for="section in sections" :key="section">
+        <div v-if="grouped[section].length">
+          <h3 class="mb-2 text-xs font-semibold uppercase tracking-wide text-content-subtle">
+            {{ section === 'expense' ? t('categories.expenseSection') : t('categories.incomeSection') }}
+          </h3>
 
-              <p v-if="category.monthly_limit" class="text-xs text-content-subtle">
-                Límite {{ formatCurrency(category.monthly_limit) }}
-              </p>
-            </div>
+          <ul class="space-y-1">
+            <li v-for="category in grouped[section]" :key="category.id"
+              class="flex items-center gap-3 rounded-field p-2 hover:bg-surface-muted">
+              <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-white"
+                :style="{ backgroundColor: category.color }">
+                <AppIcon :name="category.icon" :size="18" />
+              </span>
 
-            <button class="flex h-8 w-8 items-center justify-center rounded-full text-content-muted hover:bg-line"
-              aria-label="Editar" @click="mode = { view: 'form', category }">
-              <AppIcon name="solar:pen-2-linear" :size="18" />
-            </button>
+              <div class="min-w-0 flex-1">
+                <p class="truncate text-sm font-medium text-content">
+                  {{ category.name }}
+                </p>
 
-            <button class="flex h-8 w-8 items-center justify-center rounded-full text-expense hover:bg-expense-light"
-              aria-label="Eliminar" @click="onDelete(category)">
-              <AppIcon name="solar:trash-bin-trash-linear" :size="18" />
-            </button>
-          </li>
-        </ul>
-      </div>
+                <p v-if="category.monthly_limit" class="text-xs text-content-subtle">
+                  {{ t('categories.limitAmount', { amount: formatCurrency(category.monthly_limit) }) }}
+                </p>
+              </div>
+
+              <button class="flex h-8 w-8 items-center justify-center rounded-full text-content-muted hover:bg-line"
+                :aria-label="t('categories.editAria')" @click="mode = { view: 'form', category }">
+                <AppIcon name="solar:pen-2-linear" :size="18" />
+              </button>
+
+              <button class="flex h-8 w-8 items-center justify-center rounded-full text-expense hover:bg-expense-light"
+                :aria-label="t('categories.deleteAria')" @click="onDelete(category)">
+                <AppIcon name="solar:trash-bin-trash-linear" :size="18" />
+              </button>
+            </li>
+          </ul>
+        </div>
+      </template>
     </template>
   </div>
 
-  <BaseDialog v-model="showDeleteDialog" variant="danger" title="Eliminar categoría" confirm-text="Eliminar" show-cancel
-    @confirm="confirmDelete">
+  <BaseDialog v-model="showDeleteDialog" variant="danger" :title="t('categories.deleteTitle')"
+    :confirm-text="t('categories.deleteAria')" show-cancel @confirm="confirmDelete">
     <p class="text-content">
-      ¿Seguro que quieres eliminar la categoría
+      {{ t('categories.deleteConfirmPrefix') }}
       <strong>{{ categoryToDelete?.name }}</strong>?
     </p>
 
     <p class="mt-2 text-sm text-content-subtle">
-      Esta acción no se puede deshacer.
+      {{ t('categories.deleteHint') }}
     </p>
   </BaseDialog>
 </template>
