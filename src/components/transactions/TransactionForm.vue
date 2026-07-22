@@ -6,12 +6,14 @@ import { useMemberOptions, useCategoryOptions } from '@/composables/useEntityOpt
 import { useTransactionsStore } from '@/stores/transactions'
 import { parseAmount, isPositiveAmount } from '@/utils/validation'
 import { todayISO, formatDateWithMonthName } from '@/utils/format'
+import { customOccurrenceOnOrAfter, normalizeMonths } from '@/utils/recurring'
 import BaseInput from '@/components/ui/BaseInput.vue'
 import BaseSelect from '@/components/ui/BaseSelect.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import BaseDialog from '@/components/ui/BaseDialog.vue'
 import BaseSwitch from '@/components/ui/BaseSwitch.vue'
 import SegmentedControl from '@/components/ui/SegmentedControl.vue'
+import CustomMonthsField from '@/components/transactions/CustomMonthsField.vue'
 import { useRecurringTransactionsStore } from '@/stores/recurring-transactions'
 import { useI18n } from '@/i18n'
 
@@ -38,19 +40,25 @@ function defaultDate() {
   return todayISO()
 }
 
+const initialDate = props.transaction?.occurred_on ?? defaultDate()
+
 const form = reactive({
   kind: (props.transaction?.kind ?? 'expense') as CategoryKind,
   gross: props.transaction ? String(props.transaction.gross) : '',
   amount: props.transaction ? String(props.transaction.amount) : '',
   categoryId: props.transaction?.category_id ?? '',
   familyMemberId: props.transaction?.family_member_id ?? family.self?.id ?? '',
-  occurredOn: props.transaction?.occurred_on ?? defaultDate(),
+  occurredOn: initialDate,
   note: props.transaction?.note ?? '',
   isCash: props.transaction?.payment_method === 'cash',
   isRecurring: false,
-  frequency: 'monthly' as 'daily' | 'weekly' | 'monthly' | 'yearly',
+  frequency: 'monthly' as 'daily' | 'weekly' | 'monthly' | 'yearly' | 'custom',
   endOn: '',
+  months: [] as number[],
+  dayOfMonth: String(Number(initialDate.split('-')[2]) || 1),
 })
+
+const isCustomRecurring = computed(() => form.isRecurring && form.frequency === 'custom')
 
 const errors = reactive<Record<string, string | undefined>>({})
 const serverError = ref<string | null>(null)
@@ -137,6 +145,13 @@ function validate(): boolean {
     }
   }
 
+  if (isCustomRecurring.value) {
+    const day = Number(form.dayOfMonth)
+    errors.months = form.months.length ? undefined : t('recurringForm.errorMonths')
+    errors.dayOfMonth = Number.isFinite(day) && day >= 1 && day <= 31 ? undefined : t('recurringForm.errorDay')
+    if (errors.months || errors.dayOfMonth) return false
+  }
+
   return true
 }
 async function onSubmit() {
@@ -167,13 +182,27 @@ async function onSubmit() {
       })
     } else {
       if (form.isRecurring) {
+        const day = Number(form.dayOfMonth)
+        // months/day_of_month solo se envían para el modo personalizado (requiere migración SQL).
+        const scheduleData = form.frequency === 'custom'
+          ? {
+              frequency: 'custom' as const,
+              start_on: form.occurredOn,
+              next_execution: customOccurrenceOnOrAfter(form.occurredOn, form.months, day),
+              months: normalizeMonths(form.months),
+              day_of_month: day,
+            }
+          : {
+              frequency: form.frequency,
+              start_on: form.occurredOn,
+              next_execution: form.occurredOn,
+            }
+
         await recurringTransactions.create({
           ...baseData,
           gross,
-          frequency: form.frequency,
-          start_on: form.occurredOn,
-          next_execution: form.occurredOn,
           end_on: form.endOn || null,
+          ...scheduleData,
         })
 
         await recurringTransactions.sync()
@@ -225,6 +254,8 @@ const initialForm = {
   isRecurring: form.isRecurring,
   frequency: form.frequency,
   endOn: form.endOn,
+  months: JSON.stringify(form.months),
+  dayOfMonth: form.dayOfMonth,
 }
 
 const hasChanges = computed(() => {
@@ -239,7 +270,9 @@ const hasChanges = computed(() => {
     form.isCash !== initialForm.isCash ||
     form.isRecurring !== initialForm.isRecurring ||
     form.frequency !== initialForm.frequency ||
-    form.endOn !== initialForm.endOn
+    form.endOn !== initialForm.endOn ||
+    JSON.stringify(form.months) !== initialForm.months ||
+    form.dayOfMonth !== initialForm.dayOfMonth
   )
 })
 
@@ -282,7 +315,13 @@ defineExpose({
         <BaseSelect v-model="form.frequency" :label="t('transaction.frequency')" :options="[
           { value: 'daily', label: t('recurringList.frequencies.daily') }, { value: 'weekly', label: t('recurringList.frequencies.weekly') },
           { value: 'monthly', label: t('recurringList.frequencies.monthly') }, { value: 'yearly', label: t('recurringList.frequencies.yearly') },
+          { value: 'custom', label: t('recurringList.frequencies.custom') },
         ]" />
+
+        <CustomMonthsField v-if="form.frequency === 'custom'" v-model:months="form.months"
+          v-model:day-of-month="form.dayOfMonth" :start-on="form.occurredOn" :months-error="errors.months"
+          :day-error="errors.dayOfMonth" />
+
         <BaseInput v-model="form.endOn" :label="t('transaction.endDate')" type="date" icon="solar:calendar-bold" />
         <p class="text-xs text-content-muted">
           {{ form.endOn ? t('transaction.endsOn', { date: formatDateWithMonthName(form.endOn) }) : t('transaction.noEndDate') }}

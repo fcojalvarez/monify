@@ -10,11 +10,12 @@ import BaseButton from '@/components/ui/BaseButton.vue'
 import BaseDialog from '@/components/ui/BaseDialog.vue'
 import BaseSwitch from '@/components/ui/BaseSwitch.vue'
 import SegmentedControl from '@/components/ui/SegmentedControl.vue'
+import CustomMonthsField from '@/components/transactions/CustomMonthsField.vue'
 import { recurringTransactionsService } from '@/services/recurring-transactions.service'
 import { useRecurringTransactionsStore } from '@/stores/recurring-transactions'
 import { todayISO, formatDate } from '@/utils/format'
 import { customOccurrenceOnOrAfter, normalizeMonths } from '@/utils/recurring'
-import { useI18n, getIntlLocale } from '@/i18n'
+import { useI18n } from '@/i18n'
 
 const props = defineProps<{ transaction?: RecurringTransaction }>()
 const emit = defineEmits<{ saved: []; cancel: [] }>()
@@ -62,31 +63,6 @@ const frequencyOptions = computed(() => [
   { value: 'yearly', label: t('recurringList.frequencies.yearly') },
   { value: 'custom', label: t('recurringList.frequencies.custom') },
 ])
-
-// Rejilla de meses con nombres cortos localizados.
-const monthButtons = computed(() => {
-  const formatter = new Intl.DateTimeFormat(getIntlLocale(), { month: 'short' })
-  return Array.from({ length: 12 }, (_, index) => ({
-    value: index + 1,
-    label: formatter.format(new Date(Date.UTC(2000, index, 1))),
-  }))
-})
-
-function toggleMonth(month: number) {
-  const position = form.months.indexOf(month)
-  if (position === -1) {
-    form.months.push(month)
-  } else {
-    form.months.splice(position, 1)
-  }
-}
-
-// Vista previa de la próxima ejecución para el modo personalizado.
-const customNextExecution = computed(() => {
-  const day = Number(form.dayOfMonth)
-  if (!form.months.length || !Number.isFinite(day) || day < 1) return ''
-  return customOccurrenceOnOrAfter(form.startOn || today, form.months, day)
-})
 
 watch(
   () => form.kind,
@@ -279,31 +255,8 @@ defineExpose({
     <BaseSelect v-model="form.frequency" :label="t('transaction.frequency')" :options="frequencyOptions" />
 
     <!-- Calendario personalizado: meses concretos + día -->
-    <div v-if="isCustom" class="space-y-3 rounded-field border border-line p-3">
-      <div>
-        <label class="field-label">{{ t('recurringForm.selectMonths') }}</label>
-        <div class="mt-2 grid grid-cols-4 gap-2">
-          <button v-for="month in monthButtons" :key="month.value" type="button" :data-month="month.value"
-            class="h-9 rounded-field text-sm font-medium capitalize transition-colors"
-            :class="form.months.includes(month.value)
-              ? 'bg-primary-500 text-white'
-              : 'bg-surface-muted text-content-muted hover:bg-line'"
-            @click="toggleMonth(month.value)">
-            {{ month.label }}
-          </button>
-        </div>
-        <p v-if="errors.months" class="mt-1 text-xs text-expense">{{ errors.months }}</p>
-      </div>
-
-      <BaseInput v-model="form.dayOfMonth" :label="t('recurringForm.dayOfMonth')" type="number" min="1" max="31"
-        icon="solar:calendar-bold" :error="errors.dayOfMonth" />
-
-      <p class="text-xs text-content-muted">{{ t('recurringForm.customHint') }}</p>
-
-      <p v-if="customNextExecution" class="text-xs font-medium text-content">
-        {{ t('recurringForm.nextOccurrence', { date: formatDate(customNextExecution) }) }}
-      </p>
-    </div>
+    <CustomMonthsField v-if="isCustom" v-model:months="form.months" v-model:day-of-month="form.dayOfMonth"
+      :start-on="form.startOn" :months-error="errors.months" :day-error="errors.dayOfMonth" />
 
     <BaseInput v-model="form.startOn" :label="t('recurringForm.startDate')" type="date" icon="solar:calendar-bold"
       :error="errors.startOn" />

@@ -5,6 +5,7 @@ import { nextTick } from 'vue'
 import TransactionForm from '@/components/transactions/TransactionForm.vue'
 import BaseDialog from '@/components/ui/BaseDialog.vue'
 import { useTransactionsStore } from '@/stores/transactions'
+import { useRecurringTransactionsStore } from '@/stores/recurring-transactions'
 import type { Category, FamilyMember } from '@/types'
 
 const category: Partial<Category> = {
@@ -113,6 +114,45 @@ describe('TransactionForm', () => {
     )
 
     expect(wrapper.emitted('saved')).toBeTruthy()
+  })
+
+  it('permite crear una recurrencia personalizada (meses concretos + día) desde el formulario', async () => {
+    const { wrapper } = mountForm()
+    const recurring = useRecurringTransactionsStore()
+    ;(recurring.create as ReturnType<typeof vi.fn>).mockResolvedValue({ id: 'r-new' })
+    ;(recurring.sync as ReturnType<typeof vi.fn>).mockResolvedValue(0)
+
+    await wrapper.find('input[type="number"]').setValue('320') // importe
+    const selects = wrapper.findAll('select')
+    await selects[0].setValue('mem-1') // miembro
+    await selects[1].setValue('cat-1') // categoría
+
+    // Activa "repetir movimiento" (segundo checkbox tras ¿Efectivo?)
+    const checkboxes = wrapper.findAll('input[type="checkbox"]')
+    await checkboxes[checkboxes.length - 1].setValue(true)
+    await nextTick()
+
+    // Frecuencia = personalizado (tercer select)
+    const selectsWithFreq = wrapper.findAll('select')
+    await selectsWithFreq[2].setValue('custom')
+    await nextTick()
+
+    // Elige los meses 6, 8, 10 y 12
+    for (const month of [6, 8, 10, 12]) {
+      await wrapper.find(`button[data-month="${month}"]`).trigger('click')
+    }
+
+    // Día del mes (último input numérico)
+    const numberInputs = wrapper.findAll('input[type="number"]')
+    await numberInputs[numberInputs.length - 1].setValue('5')
+
+    await wrapper.find('form').trigger('submit.prevent')
+
+    await vi.waitFor(() => expect(recurring.create).toHaveBeenCalledTimes(1))
+    const payload = (recurring.create as ReturnType<typeof vi.fn>).mock.calls[0][0]
+    expect(payload).toMatchObject({ frequency: 'custom', months: [6, 8, 10, 12], day_of_month: 5 })
+    expect(payload.next_execution).toMatch(/^\d{4}-\d{2}-\d{2}$/)
+    expect(recurring.sync).toHaveBeenCalledTimes(1)
   })
 
   it('muestra el botón de eliminar y elimina al confirmar', async () => {
