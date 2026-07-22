@@ -292,6 +292,8 @@ export type Database = {
           last_synced_at: string | null
           created_at: string
           updated_at: string
+          months: number[] | null
+          day_of_month: number | null
         }
         Insert: {
           id?: string
@@ -311,6 +313,8 @@ export type Database = {
           last_synced_at?: string | null
           created_at?: string
           updated_at?: string
+          months?: number[] | null
+          day_of_month?: number | null
         }
         Update: {
           id?: string
@@ -330,6 +334,8 @@ export type Database = {
           last_synced_at?: string | null
           created_at?: string
           updated_at?: string
+          months?: number[] | null
+          day_of_month?: number | null
         }
         Relationships: [
           {
@@ -466,7 +472,7 @@ export type Database = {
       category_kind: 'income' | 'expense'
       payment_method: 'bank' | 'cash'
       saving_type: 'bank' | 'cash'
-      recurring_frequency: 'daily' | 'weekly' | 'monthly' | 'yearly'
+      recurring_frequency: 'daily' | 'weekly' | 'monthly' | 'yearly' | 'custom'
     }
     CompositeTypes: {
       [_ in never]: never
@@ -591,7 +597,7 @@ export const Constants = {
       category_kind: ['income', 'expense'],
       payment_method: ['bank', 'cash'],
       saving_type: ['bank', 'cash'],
-      recurring_frequency: ['daily', 'weekly', 'monthly', 'yearly'],
+      recurring_frequency: ['daily', 'weekly', 'monthly', 'yearly', 'custom'],
     },
   },
 } as const

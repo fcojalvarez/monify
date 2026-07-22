@@ -1,7 +1,15 @@
 import { describe, it, expect } from 'vitest'
-import { formatCurrency, monthRange, todayISO, formatDate, formatDateWithMonthName } from '@/utils/format'
+import { formatCurrency, monthRange, todayISO, formatDate, formatDateWithMonthName, signedAmount } from '@/utils/format'
 
 describe('format utils', () => {
+  it('signedAmount aplica el signo según la dirección y normaliza el valor', () => {
+    expect(signedAmount(50, true)).toBe(50)
+    expect(signedAmount(50, false)).toBe(-50)
+    // Normaliza el signo de entrada
+    expect(signedAmount(-50, true)).toBe(50)
+    expect(signedAmount(-50, false)).toBe(-50)
+  })
+
   it('formatCurrency usa EUR por defecto', () => {
     const result = formatCurrency(1234.5)
     expect(result).toContain('€')

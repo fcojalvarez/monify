@@ -62,6 +62,15 @@ export function formatDateWithMonthName(
   return formatDate(isoDate, { day: 'numeric', month: 'long', year: 'numeric' }, locale)
 }
 
+/**
+ * Devuelve el importe con el signo correcto según la dirección del movimiento:
+ * positivo para una entrada/aportación, negativo para una salida/retirada.
+ * El valor de entrada puede venir con cualquier signo (se normaliza con abs).
+ */
+export function signedAmount(amount: number, isDeposit: boolean): number {
+  return isDeposit ? Math.abs(amount) : -Math.abs(amount)
+}
+
 /** Devuelve la fecha de hoy como YYYY-MM-DD (sin desfase de zona horaria). */
 export function todayISO(): string {
   const now = new Date()

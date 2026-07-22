@@ -30,6 +30,32 @@ export const useCategoriesStore = defineStore('categories', () => {
     return created
   }
 
+  /**
+   * Devuelve la categoría que coincide con `name` (sin distinguir mayúsculas) y `kind`,
+   * creándola si no existe. Centraliza la lógica de "categoría automática" que usan
+   * los movimientos de efectivo y ahorros para reflejarse en la cuenta principal.
+   */
+  async function getOrCreate(payload: {
+    name: string
+    kind: CategoryKind
+    icon?: string
+    color?: string
+  }) {
+    await fetchAll()
+
+    const existing = items.value.find(
+      (c) => c.name.toLowerCase() === payload.name.toLowerCase() && c.kind === payload.kind,
+    )
+    if (existing) return existing
+
+    return create({
+      name: payload.name,
+      kind: payload.kind,
+      icon: payload.icon,
+      color: payload.color,
+    })
+  }
+
   async function update(id: string, changes: TablesUpdate<'categories'>) {
     const updated = await categoriesService.update(id, changes)
     const index = items.value.findIndex((c) => c.id === id)
@@ -51,6 +77,7 @@ export const useCategoriesStore = defineStore('categories', () => {
     getById,
     fetchAll,
     create,
+    getOrCreate,
     update,
     remove,
   }

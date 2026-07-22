@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue'
 import type { CategoryKind, TransactionWithRelations } from '@/types'
-import { useCategoriesStore } from '@/stores/categories'
 import { useFamilyStore } from '@/stores/family'
+import { useMemberOptions, useCategoryOptions } from '@/composables/useEntityOptions'
 import { useTransactionsStore } from '@/stores/transactions'
 import { parseAmount, isPositiveAmount } from '@/utils/validation'
 import { todayISO, formatDateWithMonthName } from '@/utils/format'
@@ -10,6 +10,7 @@ import BaseInput from '@/components/ui/BaseInput.vue'
 import BaseSelect from '@/components/ui/BaseSelect.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import BaseDialog from '@/components/ui/BaseDialog.vue'
+import BaseSwitch from '@/components/ui/BaseSwitch.vue'
 import SegmentedControl from '@/components/ui/SegmentedControl.vue'
 import { useRecurringTransactionsStore } from '@/stores/recurring-transactions'
 import { useI18n } from '@/i18n'
@@ -17,7 +18,6 @@ import { useI18n } from '@/i18n'
 const props = defineProps<{ transaction?: TransactionWithRelations }>()
 const emit = defineEmits<{ saved: []; cancel: [] }>()
 
-const categories = useCategoriesStore()
 const family = useFamilyStore()
 const transactions = useTransactionsStore()
 const recurringTransactions = useRecurringTransactionsStore()
@@ -56,19 +56,13 @@ const errors = reactive<Record<string, string | undefined>>({})
 const serverError = ref<string | null>(null)
 const saving = ref(false)
 
-const grossInputRef = ref<{ focus: () => void; $el?: { scrollIntoView?: (options?: any) => void } } | null>(null)
-const amountInputRef = ref<{ focus: () => void; $el?: { scrollIntoView?: (options?: any) => void } } | null>(null)
-const familyMemberInputRef = ref<{ focus: () => void; $el?: { scrollIntoView?: (options?: any) => void } } | null>(null)
-const categoryInputRef = ref<{ focus: () => void; $el?: { scrollIntoView?: (options?: any) => void } } | null>(null)
+const grossInputRef = ref<{ focus: () => void; $el?: { scrollIntoView?: (options?: ScrollIntoViewOptions) => void } } | null>(null)
+const amountInputRef = ref<{ focus: () => void; $el?: { scrollIntoView?: (options?: ScrollIntoViewOptions) => void } } | null>(null)
+const familyMemberInputRef = ref<{ focus: () => void; $el?: { scrollIntoView?: (options?: ScrollIntoViewOptions) => void } } | null>(null)
+const categoryInputRef = ref<{ focus: () => void; $el?: { scrollIntoView?: (options?: ScrollIntoViewOptions) => void } } | null>(null)
 
-const categoryOptions = computed(() =>
-  categories.items
-    .filter((c) => c.kind === form.kind)
-    .map((c) => ({ value: c.id, label: c.name })),
-)
-const memberOptions = computed(() =>
-  family.items.map((m) => ({ value: m.id, label: m.name })),
-)
+const categoryOptions = useCategoryOptions(() => form.kind)
+const memberOptions = useMemberOptions()
 
 watch(
   () => form.kind,
@@ -103,14 +97,14 @@ function validate(): boolean {
   const amount = parseAmount(form.amount)
 
   if (form.kind === 'income') {
-    errors.gross = isPositiveAmount(parseAmount(form.gross)) ? undefined : 'Introduce un importe mayor que 0'
+    errors.gross = isPositiveAmount(parseAmount(form.gross)) ? undefined : t('form.errorAmount')
   } else {
     errors.gross = undefined
   }
 
-  errors.amount = isPositiveAmount(amount) ? undefined : 'Introduce un importe mayor que 0'
-  errors.categoryId = form.categoryId ? undefined : 'Elige una categoría'
-  errors.familyMemberId = (!form.isCash || form.familyMemberId) ? undefined : 'Elige un miembro'
+  errors.amount = isPositiveAmount(amount) ? undefined : t('form.errorAmount')
+  errors.categoryId = form.categoryId ? undefined : t('form.errorCategory')
+  errors.familyMemberId = (!form.isCash || form.familyMemberId) ? undefined : t('form.errorMember')
 
   if (errors.amount || errors.categoryId || errors.familyMemberId || errors.gross) {
     focusFirstError()
@@ -135,7 +129,7 @@ function validate(): boolean {
     }
 
     if (form.kind === 'expense' && currentBalance - amount < 0) {
-      const errMsg = `No hay esa cantidad en la cartera de ${selectedMember?.name ?? 'esta persona'}`
+      const errMsg = t('transactionForm.insufficientWallet', { name: selectedMember?.name ?? t('transactionForm.thisPerson') })
       errors.familyMemberId = errMsg
       serverError.value = errMsg
       focusFirstError()
@@ -196,7 +190,7 @@ async function onSubmit() {
 
     emit('saved')
   } catch (error) {
-    serverError.value = error instanceof Error ? error.message : 'No se pudo guardar.'
+    serverError.value = error instanceof Error ? error.message : t('form.genericSaveError')
   } finally {
     saving.value = false
   }
@@ -213,7 +207,7 @@ async function onDeleteConfirm() {
     await transactions.remove(props.transaction.id)
     emit('saved')
   } catch (error) {
-    serverError.value = error instanceof Error ? error.message : 'No se pudo eliminar.'
+    serverError.value = error instanceof Error ? error.message : t('form.genericDeleteError')
   } finally {
     deleting.value = false
   }
@@ -257,54 +251,33 @@ defineExpose({
 <template>
   <form class="space-y-4" novalidate @submit.prevent="onSubmit">
     <SegmentedControl v-model="form.kind" :options="[
-      { value: 'expense', label: 'Gasto' },
-      { value: 'income', label: 'Ingreso' },
+      { value: 'expense', label: t('form.expense') },
+      { value: 'income', label: t('form.income') },
     ]" />
 
-    <div class="flex items-center justify-between py-1">
-      <span class="text-sm font-medium text-content">¿Efectivo?</span>
-      <label class="relative cursor-pointer shrink-0 ml-4">
-        <input v-model="form.isCash" type="checkbox" class="sr-only" />
-        <span class="relative block h-6 w-11 rounded-pill transition-colors duration-200"
-          :class="form.isCash ? 'bg-primary-500' : 'bg-line'">
-          <span class="absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white transition-transform duration-200"
-            :class="form.isCash ? 'translate-x-5' : 'translate-x-0'" />
-        </span>
-      </label>
-    </div>
+    <BaseSwitch v-model="form.isCash" :label="t('form.isCash')" />
 
-    <BaseInput v-if="form.kind === 'income'" ref="grossInputRef" v-model="form.gross" label="Importe bruto" type="number"
-      icon="solar:tag-price-bold" placeholder="0,00" :error="errors.gross" />
+    <BaseInput v-if="form.kind === 'income'" ref="grossInputRef" v-model="form.gross" :label="t('form.grossAmount')" type="number"
+      icon="solar:tag-price-bold" :placeholder="t('form.amountPlaceholder')" :error="errors.gross" />
 
-    <BaseInput ref="amountInputRef" v-model="form.amount" label="Importe" type="number" icon="solar:tag-price-bold" placeholder="0,00"
+    <BaseInput ref="amountInputRef" v-model="form.amount" :label="t('form.amount')" type="number" icon="solar:tag-price-bold" :placeholder="t('form.amountPlaceholder')"
       :error="errors.amount" />
 
-    <BaseSelect ref="familyMemberInputRef" v-model="form.familyMemberId" label="Pertenece a" placeholder="Selecciona un miembro"
+    <BaseSelect ref="familyMemberInputRef" v-model="form.familyMemberId" :label="t('form.belongsTo')" :placeholder="t('form.selectMember')"
       :options="memberOptions" :error="errors.familyMemberId" />
 
-    <BaseSelect v-if="categoryOptions.length" ref="categoryInputRef" v-model="form.categoryId" label="Categoría"
-      placeholder="Selecciona una categoría" :options="categoryOptions" :error="errors.categoryId" />
+    <BaseSelect v-if="categoryOptions.length" ref="categoryInputRef" v-model="form.categoryId" :label="t('form.category')"
+      :placeholder="t('form.selectCategory')" :options="categoryOptions" :error="errors.categoryId" />
     <p v-else class="rounded-field bg-surface-muted p-3 text-sm text-content-muted">
-      No tienes categorías de {{ form.kind === 'income' ? 'ingreso' : 'gasto' }} todavía. Puedes crearlas en
-      Gestionar cuenta → Organización → Categorías.
+      {{ t('form.noCategories', { kind: form.kind === 'income' ? t('form.kindIncome') : t('form.kindExpense') }) }}
     </p>
 
-    <BaseInput v-model="form.occurredOn" label="Fecha" type="date" icon="solar:calendar-bold" />
+    <BaseInput v-model="form.occurredOn" :label="t('form.date')" type="date" icon="solar:calendar-bold" />
 
-    <BaseInput v-model="form.note" label="Nota (opcional)" icon="solar:pen-bold" placeholder="Descripción breve" />
+    <BaseInput v-model="form.note" :label="t('form.noteOptional')" icon="solar:pen-bold" :placeholder="t('form.notePlaceholder')" />
 
     <template v-if="!isEdit">
-      <div class="flex items-center justify-between py-1">
-        <span class="text-sm font-medium text-content">{{ t('transaction.repeatMovement') }}</span>
-        <label class="relative cursor-pointer shrink-0 ml-4">
-          <input v-model="form.isRecurring" type="checkbox" class="sr-only" />
-          <span class="relative block h-6 w-11 rounded-pill transition-colors duration-200"
-            :class="form.isRecurring ? 'bg-primary-500' : 'bg-line'">
-            <span class="absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white transition-transform duration-200"
-              :class="form.isRecurring ? 'translate-x-5' : 'translate-x-0'" />
-          </span>
-        </label>
-      </div>
+      <BaseSwitch v-model="form.isRecurring" :label="t('transaction.repeatMovement')" />
       <div v-if="form.isRecurring" class="space-y-3 rounded-field border border-line p-3">
         <BaseSelect v-model="form.frequency" :label="t('transaction.frequency')" :options="[
           { value: 'daily', label: t('recurringList.frequencies.daily') }, { value: 'weekly', label: t('recurringList.frequencies.weekly') },
@@ -321,20 +294,20 @@ defineExpose({
 
     <div class="flex flex-col gap-3 pt-1">
       <BaseButton type="submit" block :loading="saving" :disabled="!categoryOptions.length">
-        {{ isEdit ? 'Guardar' : 'Añadir' }}
+        {{ isEdit ? t('transactionForm.save') : t('transactionForm.add') }}
       </BaseButton>
 
       <BaseButton v-if="isEdit" type="button" variant="danger" block :loading="deleting"
         @click="showDeleteConfirm = true">
-        Eliminar movimiento
+        {{ t('transactionForm.deleteMovement') }}
       </BaseButton>
     </div>
   </form>
 
-  <BaseDialog v-model="showDeleteConfirm" variant="danger" title="Eliminar movimiento" confirm-text="Eliminar"
-    cancel-text="Cancelar" show-cancel @confirm="onDeleteConfirm">
+  <BaseDialog v-model="showDeleteConfirm" variant="danger" :title="t('transactionForm.deleteTitle')" :confirm-text="t('transactionForm.confirmDelete')"
+    :cancel-text="t('common.cancel')" show-cancel @confirm="onDeleteConfirm">
     <p class="text-content">
-      ¿Estás seguro de que deseas eliminar este movimiento? Esta acción no se puede deshacer.
+      {{ t('transactionForm.deleteConfirmBody') }}
     </p>
   </BaseDialog>
 </template>

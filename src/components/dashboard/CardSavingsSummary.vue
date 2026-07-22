@@ -2,11 +2,14 @@
 import { computed } from 'vue'
 import type { Savings } from '@/types'
 import { formatCurrency } from '@/utils/format'
+import { useI18n } from '@/i18n'
 
 const props = defineProps<{
     savings: Savings[]
     currency: string
 }>()
+
+const { t } = useI18n()
 
 const totalSavings = computed(() =>
     props.savings.reduce((sum, saving) => sum + saving.balance, 0)
@@ -44,7 +47,7 @@ const visualProgress = computed(() => Math.min(mainGoalProgress.value, 100))
 <template>
     <section class="md:w-11/12 m-auto px-2">
         <p class="text-sm text-white/70">
-            Ahorros
+            {{ t('misc.savingsCardTitle') }}
         </p>
 
         <div class="mt-1 flex items-end justify-between">
@@ -54,13 +57,13 @@ const visualProgress = computed(() => Math.min(mainGoalProgress.value, 100))
 
             <div class="flex gap-4 pb-1 text-right mr-2">
                 <div>
-                    <p class="text-[9px] uppercase text-white/60">Banco</p>
+                    <p class="text-[9px] uppercase text-white/60">{{ t('misc.savingsCardBank') }}</p>
                     <p class="text-sm font-semibold">
                         {{ formatCurrency(bankSavings, { currency }) }}
                     </p>
                 </div>
                 <div>
-                    <p class="text-[9px] uppercase text-white/60">Efectivo</p>
+                    <p class="text-[9px] uppercase text-white/60">{{ t('misc.savingsCardCash') }}</p>
                     <p class="text-sm font-semibold">
                         {{ formatCurrency(cashSavings, { currency }) }}
                     </p>
@@ -71,7 +74,7 @@ const visualProgress = computed(() => Math.min(mainGoalProgress.value, 100))
         <template v-if="mainGoal">
             <div class="mt-5">
                 <div class="mb-2 flex items-center justify-between text-xs text-white/60">
-                    <span>Meta principal</span>
+                    <span>{{ t('misc.savingsCardMainGoal') }}</span>
                     <span>{{ mainGoalProgress }}%</span>
                 </div>
 
@@ -97,11 +100,11 @@ const visualProgress = computed(() => Math.min(mainGoalProgress.value, 100))
         <template v-else>
             <div class="mt-5 rounded-field bg-white/10 p-4">
                 <p class="truncate text-sm text-white/80">
-                    Todo tu dinero está destinado al ahorro.
+                    {{ t('misc.savingsCardAllSaved') }}
                 </p>
 
                 <p class="truncate mt-1 text-xs text-white/60">
-                    Crea una meta para hacer seguimiento de tus objetivos.
+                    {{ t('misc.savingsCardCreateGoalHint') }}
                 </p>
             </div>
         </template>

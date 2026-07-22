@@ -2,6 +2,7 @@
 import { computed, ref } from 'vue'
 import BaseSheet from '@/components/ui/BaseSheet.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
+import { useI18n } from '@/i18n'
 
 const props = defineProps<{
   modelValue: Date
@@ -11,23 +12,25 @@ const emit = defineEmits<{
   'update:modelValue': [value: Date]
 }>()
 
+const { t } = useI18n()
+
 const showPicker = ref(false)
 const pickerYear = ref(props.modelValue.getFullYear())
 
-const months = [
-  'Enero',
-  'Febrero',
-  'Marzo',
-  'Abril',
-  'Mayo',
-  'Junio',
-  'Julio',
-  'Agosto',
-  'Septiembre',
-  'Octubre',
-  'Noviembre',
-  'Diciembre',
-]
+const months = computed(() => [
+  t('misc.month.january'),
+  t('misc.month.february'),
+  t('misc.month.march'),
+  t('misc.month.april'),
+  t('misc.month.may'),
+  t('misc.month.june'),
+  t('misc.month.july'),
+  t('misc.month.august'),
+  t('misc.month.september'),
+  t('misc.month.october'),
+  t('misc.month.november'),
+  t('misc.month.december'),
+])
 
 const currentMonthLabel = computed(() => {
   const label = props.modelValue.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })
@@ -81,7 +84,7 @@ function openPicker() {
     <!-- Botón anterior -->
     <button
       class="flex h-10 w-10 items-center justify-center rounded-full text-content-muted hover:bg-surface-muted hover:text-content transition-colors active:scale-95"
-      aria-label="Mes anterior"
+      :aria-label="t('misc.monthSelectorPrevAria')"
       type="button"
       @click="prevMonth"
     >
@@ -108,12 +111,12 @@ function openPicker() {
         @click="goToCurrentMonth"
       >
         <AppIcon name="solar:restart-bold" :size="14" />
-        Hoy
+        {{ t('misc.monthSelectorToday') }}
       </button>
 
       <button
         class="flex h-10 w-10 items-center justify-center rounded-full text-content-muted hover:bg-surface-muted hover:text-content transition-colors active:scale-95"
-        aria-label="Mes siguiente"
+        :aria-label="t('misc.monthSelectorNextAria')"
         type="button"
         @click="nextMonth"
       >
@@ -122,7 +125,7 @@ function openPicker() {
     </div>
 
     <!-- BaseSheet para el selector histórico -->
-    <BaseSheet v-model="showPicker" title="Seleccionar periodo">
+    <BaseSheet v-model="showPicker" :title="t('misc.monthSelectorTitle')">
       <div class="space-y-6">
         <!-- Selector de Año -->
         <div class="flex items-center justify-between rounded-field bg-surface-muted p-1">

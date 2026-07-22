@@ -132,6 +132,31 @@ describe('RecurringItem', () => {
     expect(wrapper.text()).toContain(t('recurringList.frequencies.daily'))
   })
 
+  it('muestra el calendario personalizado con día y meses', () => {
+    const transaction = {
+      id: 'recurring-custom',
+      kind: 'expense' as const,
+      amount: 320,
+      note: 'IBI',
+      category_id: 'cat-1',
+      frequency: 'custom' as const,
+      next_execution: '2026-08-05',
+      end_on: null,
+      months: [6, 8, 10, 12],
+      day_of_month: 5,
+    }
+
+    const wrapper = mount(RecurringItem, {
+      props: { transaction: transaction as any },
+    })
+
+    expect(wrapper.text()).toContain(t('recurringList.frequencies.custom'))
+    expect(wrapper.text()).toContain('día 5')
+    // Meses cortos en español
+    expect(wrapper.text()).toContain('jun')
+    expect(wrapper.text()).toContain('dic')
+  })
+
   it('emite el evento click al hacer click en el item', async () => {
     const transaction = {
       id: 'recurring-1',

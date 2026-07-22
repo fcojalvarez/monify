@@ -88,7 +88,6 @@ describe('BottomNavigation', () => {
     expect(wrapper.text()).toContain('Efectivo')
     
     // El icono de efectivo para USD debe ser dollar-bold
-    const icon = wrapper.find('.icon-stub')
     expect(wrapper.html()).toContain('solar:dollar-bold')
   })
 

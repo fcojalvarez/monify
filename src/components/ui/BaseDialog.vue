@@ -138,3 +138,44 @@ function onBackdrop(event: MouseEvent) {
         </div>
     </dialog>
 </template>
+
+<style scoped>
+/* Entrada suave del diálogo (el <dialog> nativo aparece de golpe por defecto). */
+dialog[open] {
+    animation: dialog-in 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+dialog[open]::backdrop {
+    animation: backdrop-in 0.2s ease-out;
+}
+
+@keyframes dialog-in {
+    from {
+        opacity: 0;
+        transform: translateY(8px) scale(0.97);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes backdrop-in {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+    dialog[open],
+    dialog[open]::backdrop {
+        animation: none;
+    }
+}
+</style>

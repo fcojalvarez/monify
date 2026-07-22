@@ -1,4 +1,10 @@
 import { vi } from 'vitest'
+import { setLocale } from '@/i18n'
+
+// El idioma canónico de la app es el español; fijamos el locale por defecto en los
+// tests para que las aserciones sobre texto en español sigan siendo estables tras la
+// migración a i18n. Los tests que necesiten inglés llaman a setLocale('en') explícitamente.
+setLocale('es')
 
 // jsdom no implementa matchMedia — lo necesita el store de UI (tema) y las view transitions.
 Object.defineProperty(window, 'matchMedia', {

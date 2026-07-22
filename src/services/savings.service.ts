@@ -7,6 +7,7 @@ export type SavingsUpdate = TablesUpdate<'savings'>
 
 export type SavingsTransaction = Tables<'savings_transactions'>
 export type SavingsTransactionInsert = TablesInsert<'savings_transactions'>
+export type SavingsTransactionUpdate = TablesUpdate<'savings_transactions'>
 
 export const savingsService = {
   /**
@@ -101,5 +102,60 @@ export const savingsService = {
 
     if (error) throw error
     return data
+  },
+
+  /**
+   * Recalcula el saldo de una hucha como la suma de todos sus movimientos.
+   * Es idempotente (fija el valor absoluto correcto), por lo que es seguro
+   * aunque exista un trigger en la BD que ajuste el saldo automáticamente.
+   */
+  async recalcBalance(savingsId: string): Promise<void> {
+    const { data, error } = await supabase
+      .from('savings_transactions')
+      .select('amount')
+      .eq('savings_id', savingsId)
+
+    if (error) throw error
+
+    const balance = (data ?? []).reduce((sum, row) => sum + row.amount, 0)
+    await this.update(savingsId, { balance })
+  },
+
+  /**
+   * Edita un movimiento de ahorro y recalcula el saldo de su hucha.
+   */
+  async updateTransaction(
+    id: string,
+    values: SavingsTransactionUpdate,
+  ): Promise<SavingsTransaction> {
+    const { data, error } = await supabase
+      .from('savings_transactions')
+      .update(values)
+      .eq('id', id)
+      .select()
+      .single()
+
+    if (error) throw error
+
+    await this.recalcBalance(data.savings_id)
+    return data
+  },
+
+  /**
+   * Elimina un movimiento de ahorro y recalcula el saldo de su hucha.
+   */
+  async deleteTransaction(id: string): Promise<void> {
+    const { data: existing, error: fetchError } = await supabase
+      .from('savings_transactions')
+      .select('savings_id')
+      .eq('id', id)
+      .single()
+
+    if (fetchError) throw fetchError
+
+    const { error } = await supabase.from('savings_transactions').delete().eq('id', id)
+    if (error) throw error
+
+    await this.recalcBalance(existing.savings_id)
   },
 }

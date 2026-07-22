@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 
 describe('usePlatform', () => {
   let originalUserAgent: string
@@ -10,6 +10,13 @@ describe('usePlatform', () => {
     originalUserAgent = window.navigator.userAgent
     originalVendor = window.navigator.vendor
     originalMaxTouchPoints = window.navigator.maxTouchPoints
+  })
+
+  // Restauramos el navigator entre tests para no filtrar mutaciones a otros ficheros.
+  afterEach(() => {
+    Object.defineProperty(window.navigator, 'userAgent', { value: originalUserAgent, configurable: true, writable: true })
+    Object.defineProperty(window.navigator, 'vendor', { value: originalVendor, configurable: true, writable: true })
+    Object.defineProperty(window.navigator, 'maxTouchPoints', { value: originalMaxTouchPoints, configurable: true, writable: true })
   })
 
   const setNavigator = (ua: string, vendor = '', maxTouchPoints = 0) => {

@@ -171,6 +171,54 @@ describe('RecurringForm', () => {
     expect(wrapper.emitted('saved')).toBeTruthy()
   })
 
+  it('crea una recurrencia personalizada con meses concretos y día del mes', async () => {
+    const { wrapper, store } = mountForm()
+    ;(store.create as ReturnType<typeof vi.fn>).mockResolvedValue({ id: 'new-recurring' })
+    ;(store.sync as ReturnType<typeof vi.fn>).mockResolvedValue(0)
+
+    await wrapper.find('input[type="number"]').setValue('320')
+
+    const selects = wrapper.findAll('select')
+    await selects[0].setValue('mem-1') // miembro
+    await selects[1].setValue('cat-1') // categoría
+    await selects[2].setValue('custom') // frecuencia
+
+    // Selecciona los meses 6, 8, 10 y 12
+    for (const month of [6, 8, 10, 12]) {
+      await wrapper.find(`button[data-month="${month}"]`).trigger('click')
+    }
+
+    // El input de día del mes es el segundo number (tras el importe)
+    const numberInputs = wrapper.findAll('input[type="number"]')
+    await numberInputs[numberInputs.length - 1].setValue('5')
+
+    await wrapper.find('form').trigger('submit.prevent')
+
+    await vi.waitFor(() => expect(store.create).toHaveBeenCalledTimes(1))
+    const payload = (store.create as ReturnType<typeof vi.fn>).mock.calls[0][0]
+    expect(payload).toMatchObject({
+      frequency: 'custom',
+      months: [6, 8, 10, 12],
+      day_of_month: 5,
+    })
+    expect(payload.next_execution).toMatch(/^\d{4}-\d{2}-\d{2}$/)
+    expect(store.sync).toHaveBeenCalledTimes(1)
+  })
+
+  it('no crea la recurrencia personalizada si no se elige ningún mes', async () => {
+    const { wrapper, store } = mountForm()
+
+    await wrapper.find('input[type="number"]').setValue('100')
+    const selects = wrapper.findAll('select')
+    await selects[0].setValue('mem-1')
+    await selects[1].setValue('cat-1')
+    await selects[2].setValue('custom')
+
+    await wrapper.find('form').trigger('submit.prevent')
+
+    expect(store.create).not.toHaveBeenCalled()
+  })
+
   it('elimina la recurrencia al confirmar en el diálogo', async () => {
     const { wrapper } = mountForm({ transaction: recurringTransaction })
     ;(recurringTransactionsService.remove as ReturnType<typeof vi.fn>).mockResolvedValue(undefined)

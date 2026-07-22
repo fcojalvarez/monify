@@ -3,10 +3,12 @@ import { onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { ROUTE_NAMES } from '@/constants'
+import { useI18n } from '@/i18n'
 import AppLogo from '@/components/ui/AppLogo.vue'
 
 const auth = useAuthStore()
 const router = useRouter()
+const { t } = useI18n()
 
 /**
  * Aterrizaje tras el redirect de Supabase (confirmación de email / reset).
@@ -21,6 +23,6 @@ onMounted(async () => {
 <template>
   <div class="flex min-h-dvh flex-col items-center justify-center gap-4 bg-surface">
     <AppLogo :size="52" :with-wordmark="false" class="animate-scale-in" />
-    <p class="text-sm text-content-muted">Verificando tu sesión…</p>
+    <p class="text-sm text-content-muted">{{ t('auth.callback.verifying') }}</p>
   </div>
 </template>

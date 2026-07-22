@@ -5,10 +5,12 @@ import { useProfileStore } from '@/stores/profile'
 import { useUiStore } from '@/stores/ui'
 import { ROUTE_NAMES } from '@/constants'
 import AppIcon from '@/components/ui/AppIcon.vue'
+import { useI18n } from '@/i18n'
 
 const route = useRoute()
 const profile = useProfileStore()
 const ui = useUiStore()
+const { t } = useI18n()
 
 const currentRouteName = computed(() => route.name)
 
@@ -17,35 +19,35 @@ const navigationItems = computed(() => {
   const items = [
     {
       name: ROUTE_NAMES.dashboard,
-      label: 'Inicio',
+      label: t('nav.home'),
       icon: 'solar:home-bold',
       activeIcon: 'solar:home-bold',
       show: true,
     },
     {
       name: ROUTE_NAMES.charts,
-      label: 'Gráficas',
+      label: t('nav.charts'),
       icon: 'solar:chart-square-bold',
       activeIcon: 'solar:chart-square-bold',
       show: true,
     },
     {
       name: ROUTE_NAMES.savings,
-      label: 'Ahorros',
+      label: t('nav.savings'),
       icon: 'solar:safe-square-bold',
       activeIcon: 'solar:safe-square-bold',
       show: profile.savingsEnabled,
     },
     {
       name: ROUTE_NAMES.cash,
-      label: 'Efectivo',
+      label: t('nav.cash'),
       icon: ui.currency === 'EUR' ? 'solar:euro-bold' : 'solar:dollar-bold',
       activeIcon: ui.currency === 'EUR' ? 'solar:euro-bold' : 'solar:dollar-bold',
       show: profile.cashEnabled,
     },
     {
       name: ROUTE_NAMES.history,
-      label: 'Historial',
+      label: t('nav.history'),
       icon: 'solar:bill-list-bold',
       activeIcon: 'solar:bill-list-bold',
       show: true,

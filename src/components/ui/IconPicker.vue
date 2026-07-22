@@ -4,7 +4,7 @@ import { SUGGESTED_ICONS } from '@/constants'
 import AppIcon from './AppIcon.vue'
 import { useI18n } from '@/i18n'
 
-const props = defineProps<{ modelValue: string; color?: string }>()
+defineProps<{ modelValue: string; color?: string }>()
 const emit = defineEmits<{ 'update:modelValue': [value: string] }>()
 
 const { t } = useI18n()
@@ -52,17 +52,17 @@ function applyCustom() {
     <div v-if="showCustom" class="mt-3 flex gap-2">
       <input v-model="custom"
         class="h-10 flex-1 rounded-field border border-line bg-surface-muted px-3 text-sm text-content placeholder:text-content-subtle focus:border-primary-400 focus:outline-none"
-        placeholder="p.ej. mdi:cash o 💸" @keydown.enter.prevent="applyCustom" />
+        :placeholder="t('misc.iconPickerCustomPlaceholder')" @keydown.enter.prevent="applyCustom" />
       <button type="button" class="rounded-field bg-surface-muted px-4 text-sm font-semibold text-content hover:bg-line"
         @click="applyCustom">
         {{ t('common.use') }}
       </button>
     </div>
     <p class="helper-text">
-      Usa cualquier icono de
+      {{ t('misc.iconPickerHintBefore') }}
       <a href="https://solar-icons.vercel.app/icons?style=bold" target="_blank" rel="noopener" class="underline">Solar
         icons</a>
-      (formato <code>set:nombre</code>) o un emoji.
+      {{ t('misc.iconPickerHintFormat') }} <code>set:{{ t('misc.iconPickerFormatPlaceholder') }}</code>{{ t('misc.iconPickerHintSuffix') }}
     </p>
   </div>
 </template>

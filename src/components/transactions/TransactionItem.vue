@@ -22,7 +22,7 @@ const isRecurring = computed(() => !!props.transaction.recurring_transaction_id)
     <div class="min-w-0 flex-1">
       <div class="flex items-center gap-2">
         <p class="truncate text-sm font-medium text-content">
-          {{ transaction.category?.name ?? 'Sin categoría' }}
+          {{ transaction.category?.name ?? t('transaction.noCategory') }}
         </p>
         <span v-if="isRecurring"
           class="inline-flex shrink-0 items-center gap-1 rounded-full bg-primary-500/10 px-2 py-0.5 text-xs font-medium text-primary-500">
