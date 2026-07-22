@@ -105,7 +105,7 @@ function validate(): boolean {
   const amount = parseAmount(form.amount)
 
   if (form.kind === 'income') {
-    errors.gross = isPositiveAmount(parseAmount(form.gross)) ? undefined : t('form.errorAmount')
+    errors.gross = isPositiveAmount(parseAmount(form.gross || form.amount)) ? undefined : t('form.errorAmount')
   } else {
     errors.gross = undefined
   }
