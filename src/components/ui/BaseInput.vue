@@ -46,15 +46,15 @@ defineExpose({ focus, $el: inputRef })
 <template>
   <div>
     <label v-if="label" :for="id" class="field-label">
-      {{ label }}
+      {{ label }} <slot name="label-slot"></slot>
     </label>
 
     <div class="relative">
       <AppIcon v-if="icon" :name="icon" :size="18"
         class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-content-subtle" />
 
-      <input ref="inputRef" :id="id" :value="modelValue" :type="inputType" :placeholder="placeholder" :autocomplete="autocomplete"
-        :required="required" :aria-invalid="hasError" :class="[
+      <input ref="inputRef" :id="id" :value="modelValue" :type="inputType" :placeholder="placeholder"
+        :autocomplete="autocomplete" :required="required" :aria-invalid="hasError" :class="[
           'h-12 w-full rounded-field bg-surface-muted text-content placeholder:text-content-subtle',
           'border transition-colors duration-200 focus:bg-surface-raised focus:outline-none',
           icon ? 'pl-11' : 'pl-4',

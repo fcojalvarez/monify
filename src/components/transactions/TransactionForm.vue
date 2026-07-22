@@ -183,7 +183,6 @@ async function onSubmit() {
     } else {
       if (form.isRecurring) {
         const day = Number(form.dayOfMonth)
-        // months/day_of_month solo se envían para el modo personalizado (requiere migración SQL).
         const scheduleData = form.frequency === 'custom'
           ? {
             frequency: 'custom' as const,
@@ -291,7 +290,12 @@ defineExpose({
     <BaseSwitch v-model="form.isCash" :label="t('form.isCash')" />
 
     <BaseInput v-if="form.kind === 'income'" ref="grossInputRef" v-model="form.gross" :label="t('form.grossAmount')"
-      type="number" icon="solar:tag-price-bold" :placeholder="t('form.amountPlaceholder')" :error="errors.gross" />
+      type="number" icon="solar:tag-price-bold" :placeholder="t('form.amountPlaceholder')" :error="errors.gross"
+      class="relative">
+      <template v-slot:label-slot>
+        <span class="text-xs text-content-subtle">({{ t('common.optional') }})</span>
+      </template>
+    </BaseInput>
 
     <BaseInput ref="amountInputRef" v-model="form.amount" :label="t('form.amount')" type="number"
       icon="solar:tag-price-bold" :placeholder="t('form.amountPlaceholder')" :error="errors.amount" />
@@ -308,8 +312,12 @@ defineExpose({
 
     <BaseInput v-model="form.occurredOn" :label="t('form.date')" type="date" icon="solar:calendar-bold" />
 
-    <BaseInput v-model="form.note" :label="t('form.noteOptional')" icon="solar:pen-bold"
-      :placeholder="t('form.notePlaceholder')" />
+    <BaseInput v-model="form.note" :label="t('form.note')" icon="solar:pen-bold"
+      :placeholder="t('form.notePlaceholder')">
+      <template v-slot:label-slot>
+        <span class="text-xs text-content-subtle">({{ t('common.optional') }})</span>
+      </template>
+    </BaseInput>
 
     <template v-if="!isEdit">
       <BaseSwitch v-model="form.isRecurring" :label="t('transaction.repeatMovement')" />
@@ -324,7 +332,11 @@ defineExpose({
           v-model:day-of-month="form.dayOfMonth" :start-on="form.occurredOn" :months-error="errors.months"
           :day-error="errors.dayOfMonth" />
 
-        <BaseInput v-model="form.endOn" :label="t('transaction.endDate')" type="date" icon="solar:calendar-bold" />
+        <BaseInput v-model="form.endOn" :label="t('transaction.endDate')" type="date" icon="solar:calendar-bold">
+          <template v-slot:label-slot>
+            <span class="text-xs text-content-subtle">({{ t('common.optional') }})</span>
+          </template>
+        </BaseInput>
         <p v-if="form.endOn" class="text-xs text-content-muted">
           {{ t('transaction.endsOn', { date: formatDateWithMonthName(form.endOn) }) }}
         </p>

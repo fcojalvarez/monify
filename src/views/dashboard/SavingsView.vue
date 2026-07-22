@@ -92,8 +92,7 @@
       <!-- Lista de Metas -->
       <BaseSpinner v-if="savingsStore.loading" :message="t('savings.loading')" />
 
-      <div v-else-if="!displayGoals.length"
-        class="rounded-card border border-dashed border-line bg-surface-raised">
+      <div v-else-if="!displayGoals.length" class="rounded-card border border-dashed border-line bg-surface-raised">
         <EmptyState icon="solar:target-linear" :title="t('savings.emptyGoals')" :hint="t('savings.emptyGoalsHint')" />
       </div>
 
@@ -124,7 +123,7 @@
                   <p class="mt-1 text-xs text-content-subtle">
                     {{
                       goal.target
-                        ? t('savings.goalTarget', { amount: formatCurrency(goal.target, { currency: ui.currency }) })
+                        ? t('savings.goalTargetAmount', { amount: formatCurrency(goal.target, { currency: ui.currency }) })
                         : t('savings.freeSaving')
                     }}
                   </p>
@@ -259,8 +258,12 @@
         <BaseInput v-model="goalForm.name" :label="t('savings.goalName')"
           :placeholder="t('savings.goalNamePlaceholder')" required />
 
-        <BaseInput v-model="goalForm.target" :label="t('savings.goalTargetOptional')" type="number" step="any"
-          :placeholder="t('savings.goalTargetPlaceholder')" />
+        <BaseInput v-model="goalForm.target" :label="t('savings.goalTarget')" type="number" step="any"
+          :placeholder="t('savings.goalTargetPlaceholder')">
+          <template v-slot:label-slot>
+            <span class="text-xs text-content-subtle">({{ t('common.optional') }})</span>
+          </template>
+        </BaseInput>
 
         <BaseSelect v-model="goalForm.type" :label="t('savings.fundLocation')" :options="savingTypeOptions" required />
 
@@ -270,7 +273,8 @@
         </div>
 
         <div class="flex justify-end gap-3 pt-4">
-          <BaseButton type="button" variant="secondary" @click="showAddGoalDialog = false">{{ t('common.cancel') }}</BaseButton>
+          <BaseButton type="button" variant="secondary" @click="showAddGoalDialog = false">{{ t('common.cancel') }}
+          </BaseButton>
           <BaseButton type="submit" variant="primary">{{ t('savings.saveGoal') }}</BaseButton>
         </div>
       </form>
@@ -325,7 +329,8 @@
           :options="savingTypeOptions" required />
 
         <p v-else class="text-xs text-content-muted">
-          {{ t('savings.account') }}: <span class="font-bold text-content">{{ getAccountName(transferAccount?.id ?? '') }}</span>
+          {{ t('savings.account') }}: <span class="font-bold text-content">{{ getAccountName(transferAccount?.id ?? '')
+          }}</span>
         </p>
 
         <BaseInput v-model="transferForm.amount" :label="t('savings.amount')" type="number" step="any"
@@ -341,7 +346,10 @@
           <input id="createMainTx" type="checkbox" v-model="transferForm.createMainTx"
             class="mt-1 rounded border-line text-primary-500 focus:ring-primary-500" />
           <label for="createMainTx" class="text-xs text-content-muted select-none">
-            {{ t('savings.reflectMain', { kind: transferForm.isDeposit ? t('savings.kindExpense') : t('savings.kindIncome') }) }}
+            {{ t('savings.reflectMain', {
+              kind: transferForm.isDeposit ? t('savings.kindExpense') :
+                t('savings.kindIncome')
+            }) }}
           </label>
         </div>
 
