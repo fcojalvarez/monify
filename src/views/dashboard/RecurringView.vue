@@ -181,6 +181,7 @@ function closeSearch() {
           <div>
             <label class="field-label">
               {{ t('recurringList.nextFrom') }}
+              <span class="text-xs text-content-subtle">({{ t('history.to').toLowerCase() }})</span>
             </label>
             <input v-model="filterNextFrom" type="date"
               class="h-10 w-full rounded-field border border-line bg-surface px-3 text-sm text-content focus-visible:ring-primary-500">
@@ -189,6 +190,7 @@ function closeSearch() {
           <div>
             <label class="field-label">
               {{ t('recurringList.nextTo') }}
+              <span class="text-xs text-content-subtle">({{ t('history.from').toLowerCase() }})</span>
             </label>
             <input v-model="filterNextTo" type="date"
               class="h-10 w-full rounded-field border border-line bg-surface px-3 text-sm text-content focus-visible:ring-primary-500">
@@ -229,11 +231,9 @@ function closeSearch() {
       {{ t('common.add') }}
     </button>
 
-    <BaseSheet v-model="showForm"
-      :title="editingItem ? t('recurringForm.title') : t('recurringForm.createTitle')"
+    <BaseSheet v-model="showForm" :title="editingItem ? t('recurringForm.title') : t('recurringForm.createTitle')"
       :has-changes="recurringFormRef?.hasChanges">
-      <RecurringForm ref="recurringFormRef" :transaction="editingItem" @saved="onSaved"
-        @cancel="showForm = false" />
+      <RecurringForm ref="recurringFormRef" :transaction="editingItem" @saved="onSaved" @cancel="showForm = false" />
     </BaseSheet>
   </div>
 </template>

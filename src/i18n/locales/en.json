@@ -196,8 +196,8 @@
     "flowType": "Flow type",
     "category": "Category",
     "allCategories": "All",
-    "nextFrom": "Next execution from",
-    "nextTo": "Next execution to",
+    "nextFrom": "Next execution",
+    "nextTo": "Next execution",
     "nextExecution": "Next execution",
     "end": "Ends on {date}",
     "kind": {

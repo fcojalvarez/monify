@@ -196,8 +196,8 @@
     "flowType": "Tipo de flujo",
     "category": "Categoría",
     "allCategories": "Todas",
-    "nextFrom": "Próxima ejecución desde",
-    "nextTo": "Próxima ejecución hasta",
+    "nextFrom": "Próxima ejecución",
+    "nextTo": "Próxima ejecución",
     "nextExecution": "Próxima ejecución",
     "end": "Finaliza el {date}",
     "kind": {
