@@ -11,6 +11,7 @@ import { customOccurrenceOnOrAfter, normalizeMonths } from '@/utils/recurring'
 import { useCategoryOptions, useMemberOptions } from '@/composables/useEntityOptions'
 import BaseDialog from '@/components/ui/BaseDialog.vue'
 import BaseInput from '@/components/ui/BaseInput.vue'
+import BaseDateInput from '@/components/ui/BaseDateInput.vue'
 import BaseSelect from '@/components/ui/BaseSelect.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import BaseSwitch from '@/components/ui/BaseSwitch.vue'
@@ -390,7 +391,7 @@ watch(() => props.modelValue, (isOpen) => {
 
             <div class="grid grid-cols-2 gap-3">
               <BaseInput v-model="form.amount" :label="t('form.amount')" type="number" placeholder="0.00" />
-              <BaseInput v-model="form.occurredOn" :label="t('form.date')" type="date" />
+              <BaseDateInput v-model="form.occurredOn" :label="t('form.date')" />
             </div>
 
             <BaseSelect v-model="form.categoryId" :label="t('form.category')" :options="categoryOptions"
@@ -419,11 +420,11 @@ watch(() => props.modelValue, (isOpen) => {
               <CustomMonthsField v-if="form.frequency === 'custom'" v-model:months="form.months"
                 v-model:day-of-month="form.dayOfMonth" :start-on="form.occurredOn" />
 
-              <BaseInput v-model="form.endOn" :label="t('transaction.endDate')" type="date" icon="solar:calendar-bold">
+              <BaseDateInput v-model="form.endOn" :label="t('transaction.endDate')" icon="solar:calendar-bold">
                 <template v-slot:label-slot>
                   <span class="text-xs text-content-subtle">({{ t('common.optional') }})</span>
                 </template>
-              </BaseInput>
+              </BaseDateInput>
 
               <p v-if="form.endOn" class="text-xs text-content-muted">
                 {{ t('transaction.endsOn', { date: formatDateWithMonthName(form.endOn) }) }}
