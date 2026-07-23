@@ -484,8 +484,7 @@ watch(() => props.modelValue, (isOpen) => {
       <!-- Result / Editing State -->
       <div v-else class="space-y-4 animate-fade-in">
         <!-- Error Banner -->
-        <div v-if="errorMsg"
-          class="rounded-field bg-expense-light/50 border border-expense/30 p-3 text-sm text-expense font-medium">
+        <div v-if="errorMsg" class="rounded-field border border-expense/30 p-3 text-sm text-expense font-medium">
           {{ errorMsg }}
         </div>
 
@@ -529,19 +528,14 @@ watch(() => props.modelValue, (isOpen) => {
           <!-- Unrecognized Fields Warn Banners -->
           <div v-if="hasParsed && unrecognized.length > 0" class="space-y-1.5 animate-fade-in">
             <div v-if="unrecognized.includes('amount')"
-              class="rounded-field bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/30 p-2.5 text-xs text-amber-800 dark:text-amber-300 leading-snug">
+              class="rounded-field  dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/30 p-2.5 text-xs text-amber-800 dark:text-amber-300 leading-snug">
               <AppIcon name="solar:info-circle-bold" :size="14" class="inline mr-1 text-amber-500" />
               No hemos podido detectar el importe en tu mensaje de voz. Por favor, introdúcelo manualmente.
             </div>
             <div v-if="unrecognized.includes('category')"
-              class="rounded-field bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/30 p-2.5 text-xs text-amber-800 dark:text-amber-300 leading-snug">
+              class="rounded-field  dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/30 p-2.5 text-xs text-amber-800 dark:text-amber-300 leading-snug">
               <AppIcon name="solar:info-circle-bold" :size="14" class="inline mr-1 text-amber-500" />
               No se reconoció una categoría exacta. Hemos seleccionado una por defecto; puedes cambiarla si lo deseas.
-            </div>
-            <div v-if="unrecognized.includes('familyMember')"
-              class="rounded-field bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/30 p-2.5 text-xs text-amber-800 dark:text-amber-300 leading-snug">
-              <AppIcon name="solar:info-circle-bold" :size="14" class="inline mr-1 text-amber-500" />
-              No detectamos a qué miembro de la familia pertenece. Hemos seleccionado a ti por defecto; puedes cambiarlo.
             </div>
           </div>
 
@@ -551,11 +545,13 @@ watch(() => props.modelValue, (isOpen) => {
               <h4 class="font-bold text-sm text-content-muted">
                 {{ t('voice.summaryTitle') }}
               </h4>
-              <span v-if="usedAI" class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-pill text-[10px] font-bold bg-violet-100 text-violet-700 dark:bg-violet-950/60 dark:text-violet-300">
+              <span v-if="usedAI"
+                class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-pill text-[10px] font-bold bg-violet-100 text-violet-700 dark:bg-violet-950/60 dark:text-violet-300">
                 <span>Procesado por IA</span>
                 <AppIcon name="solar:stars-bold" :size="10" />
               </span>
-              <span v-else class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-pill text-[10px] font-bold bg-surface-muted text-content-muted">
+              <span v-else
+                class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-pill text-[10px] font-bold bg-surface-muted text-content-muted">
                 <span>Procesado Local</span>
               </span>
             </div>
@@ -599,7 +595,8 @@ watch(() => props.modelValue, (isOpen) => {
                 <CustomMonthsField v-if="form.frequency === 'custom'" v-model:months="form.months"
                   v-model:day-of-month="form.dayOfMonth" :start-on="form.occurredOn" />
 
-                <BaseInput v-model="form.endOn" :label="t('transaction.endDate')" type="date" icon="solar:calendar-bold">
+                <BaseInput v-model="form.endOn" :label="t('transaction.endDate')" type="date"
+                  icon="solar:calendar-bold">
                   <template v-slot:label-slot>
                     <span class="text-xs text-content-subtle">({{ t('common.optional') }})</span>
                   </template>
@@ -614,10 +611,7 @@ watch(() => props.modelValue, (isOpen) => {
           </div>
 
           <!-- Footer Actions -->
-          <div class="flex justify-end gap-3 pt-2">
-            <BaseButton variant="ghost" @click="handleClose">
-              {{ t('voice.discard') }}
-            </BaseButton>
+          <div class="flex justify-end gap-3 pt-2" v-if="hasParsed">
             <BaseButton :loading="saving" :disabled="!hasParsed" @click="handleConfirm">
               {{ t('voice.confirm') }}
             </BaseButton>
@@ -626,32 +620,41 @@ watch(() => props.modelValue, (isOpen) => {
 
         <!-- AI Settings Section -->
         <div class="border-t border-line pt-4 mt-4 text-xs">
-          <button @click="showAISettings = !showAISettings" class="flex items-center gap-1.5 text-content-muted hover:text-primary transition-colors font-medium">
+          <button @click="showAISettings = !showAISettings"
+            class="flex items-center gap-1.5 text-content-muted hover:text-primary transition-colors font-medium">
             <AppIcon :name="showAISettings ? 'solar:alt-arrow-up-bold' : 'solar:settings-bold'" :size="14" />
-            <span>{{ showAISettings ? 'Ocultar ajustes de IA' : 'Ajustes de IA ✨' }}</span>
+            <span>{{ showAISettings ? 'Ocultar ajustes de IA' : 'Ajustes de IA' }}</span>
             <span v-if="geminiApiKey" class="text-emerald-500 font-bold ml-1 flex items-center gap-0.5">
               <span class="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
               Activa
             </span>
             <span v-else class="text-content-subtle ml-1">(Local)</span>
           </button>
-          <div v-if="showAISettings" class="mt-3 p-3 bg-surface-muted rounded-field border border-line space-y-2.5 animate-fade-in">
+          <div v-if="showAISettings"
+            class="mt-3 p-3 bg-surface-muted rounded-field border border-line space-y-2.5 animate-fade-in">
             <p class="text-content-muted leading-relaxed">
-              Monify puede usar <strong>Google Gemini 2.5 Flash</strong> (IA) para interpretar de forma inteligente tus comandos de voz, entendiendo expresiones más naturales y complejas.
+              Monify puede usar <strong>Google Gemini 2.5 Flash</strong> (IA) para interpretar de forma inteligente tus
+              comandos
+              de voz, entendiendo expresiones más naturales y complejas.
             </p>
             <div class="space-y-1">
               <label class="block text-[11px] font-semibold text-content-muted">API Key de Google Gemini</label>
               <div class="flex gap-2">
-                <input v-model="geminiApiKeyInput" type="password" placeholder="AIzaSy..." class="h-9 flex-1 rounded-field border border-line bg-surface px-3 text-xs text-content focus:border-primary-400 focus:outline-none" />
+                <input v-model="geminiApiKeyInput" type="password" placeholder="AIzaSy..."
+                  class="h-9 flex-1 rounded-field border border-line bg-surface px-3 text-xs text-content focus:border-primary-400 focus:outline-none" />
                 <BaseButton variant="primary" size="sm" class="h-9 px-3 text-xs" @click="saveApiKey">
                   Guardar
                 </BaseButton>
-                <BaseButton v-if="geminiApiKey" variant="secondary" size="sm" class="h-9 px-3 text-xs" @click="clearApiKey">
+                <BaseButton v-if="geminiApiKey" variant="secondary" size="sm" class="h-9 px-3 text-xs"
+                  @click="clearApiKey">
                   Limpiar
                 </BaseButton>
               </div>
               <p class="text-[10px] text-content-subtle mt-1">
-                Consigue una API Key gratuita en <a href="https://aistudio.google.com/" target="_blank" class="text-primary hover:underline font-medium">Google AI Studio</a>. La clave se guarda de forma segura en tu navegador.
+                Consigue una API Key gratuita en <a href="https://aistudio.google.com/" target="_blank"
+                  class="text-primary hover:underline font-medium">Google AI Studio</a>. La clave se guarda de forma
+                segura en
+                tu navegador.
               </p>
             </div>
           </div>
