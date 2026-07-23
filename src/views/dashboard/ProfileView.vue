@@ -242,7 +242,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="min-h-dvh bg-surface pb-24">
+  <div class="min-h-dvh bg-surface pb-12">
     <main class="mx-auto flex max-w-2xl flex-col gap-6 px-4 py-6">
       <div class="flex items-center gap-3">
         <RouterLink :to="{ name: ROUTE_NAMES.dashboard }"
@@ -268,8 +268,8 @@ onMounted(() => {
           <BaseInput :label="t('profile.email')" :model-value="auth.user?.email || ''" disabled icon="solar:letter-bold"
             class="opacity-75" />
 
-          <BaseInput v-model="name" :label="t('profile.fullName')" icon="solar:user-bold" :placeholder="t('profile.namePlaceholder')"
-            required />
+          <BaseInput v-model="name" :label="t('profile.fullName')" icon="solar:user-bold"
+            :placeholder="t('profile.namePlaceholder')" required />
 
           <div v-if="profileSuccess"
             class="rounded-field bg-primary-50 dark:bg-primary-500/15 p-3 text-sm text-primary-600 dark:text-primary-400">
@@ -295,8 +295,8 @@ onMounted(() => {
         </h2>
 
         <form @submit.prevent="changePassword" class="space-y-4">
-          <BaseInput v-model="newPassword" :label="t('profile.newPassword')" type="password" icon="solar:lock-password-bold"
-            :placeholder="t('profile.minCharsPlaceholder')" required />
+          <BaseInput v-model="newPassword" :label="t('profile.newPassword')" type="password"
+            icon="solar:lock-password-bold" :placeholder="t('profile.minCharsPlaceholder')" required />
 
           <BaseInput v-model="confirmPassword" :label="t('profile.confirmNewPassword')" type="password"
             icon="solar:lock-password-bold" :placeholder="t('profile.repeatPasswordPlaceholder')" required />
@@ -480,7 +480,8 @@ onMounted(() => {
     </main>
 
     <BaseDialog v-model="showClearDialog" variant="danger" :title="t('profile.clearDialog.title')"
-      :confirm-text="t('profile.clearDialog.confirmText')" :cancel-text="t('common.cancel')" show-cancel :loading="clearing" @confirm="confirmClearData">
+      :confirm-text="t('profile.clearDialog.confirmText')" :cancel-text="t('common.cancel')" show-cancel
+      :loading="clearing" @confirm="confirmClearData">
       <p class="text-content">
         {{ t('profile.clearDialog.bodyPart1') }}
         <strong>{{ t('profile.clearDialog.bodyStrong') }}</strong>?

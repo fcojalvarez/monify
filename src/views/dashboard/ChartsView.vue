@@ -353,9 +353,8 @@ const categoryBreakdown = computed(() => {
 </script>
 
 <template>
-  <div class="min-h-dvh bg-surface pb-24">
+  <div class="min-h-dvh bg-surface pb-12">
     <main class="mx-auto max-w-3xl space-y-6 px-4 py-6">
-      <!-- Cabecera de Página -->
       <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div class="flex items-center gap-3">
           <div>
@@ -368,7 +367,6 @@ const categoryBreakdown = computed(() => {
           </div>
         </div>
 
-        <!-- Segmented Control de Rango -->
         <div class="w-full sm:w-48 shrink-0">
           <SegmentedControl v-model="viewMode" :options="[
             { value: 'monthly', label: t('charts.monthly') },
@@ -377,7 +375,6 @@ const categoryBreakdown = computed(() => {
         </div>
       </div>
 
-      <!-- Spinner de carga -->
       <BaseSpinner v-if="loading" :message="t('charts.loadingStats')" :size="40" class="py-24" />
 
       <div v-else-if="!allTransactions.length" class="text-center py-16">
@@ -392,7 +389,6 @@ const categoryBreakdown = computed(() => {
       </div>
 
       <div v-else class="animate-fade-in space-y-6">
-        <!-- Selector de Año (Solo para vista Mensual) -->
         <div v-if="viewMode === 'monthly'"
           class="flex items-center justify-between rounded-card border border-line bg-surface-raised p-4">
           <div class="text-sm font-semibold text-content">
@@ -418,7 +414,6 @@ const categoryBreakdown = computed(() => {
           </div>
         </div>
 
-        <!-- Tarjetas de Métricas Generales -->
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <div class="rounded-card border border-line bg-surface-raised p-4">
             <p class="text-2xs font-semibold uppercase tracking-wider text-content-subtle">{{ t('summary.income') }}</p>
@@ -428,14 +423,16 @@ const categoryBreakdown = computed(() => {
           </div>
 
           <div class="rounded-card border border-line bg-surface-raised p-4">
-            <p class="text-2xs font-semibold uppercase tracking-wider text-content-subtle">{{ t('summary.expense') }}</p>
+            <p class="text-2xs font-semibold uppercase tracking-wider text-content-subtle">{{ t('summary.expense') }}
+            </p>
             <p class="mt-1 text-lg font-extrabold text-expense">
               {{ formatCurrency(periodMetrics.expense, { currency: ui.currency }) }}
             </p>
           </div>
 
           <div class="rounded-card border border-line bg-surface-raised p-4">
-            <p class="text-2xs font-semibold uppercase tracking-wider text-content-subtle">{{ t('charts.netSavings') }}</p>
+            <p class="text-2xs font-semibold uppercase tracking-wider text-content-subtle">{{ t('charts.netSavings') }}
+            </p>
             <p class="mt-1 text-lg font-extrabold"
               :class="periodMetrics.balance >= 0 ? 'text-content' : 'text-expense'">
               {{ periodMetrics.balance >= 0 ? '+' : '' }}{{ formatCurrency(periodMetrics.balance, {
@@ -446,24 +443,21 @@ const categoryBreakdown = computed(() => {
           </div>
 
           <div class="rounded-card border border-line bg-surface-raised p-4">
-            <p class="text-2xs font-semibold uppercase tracking-wider text-content-subtle">{{ t('charts.savingsRate') }}</p>
+            <p class="text-2xs font-semibold uppercase tracking-wider text-content-subtle">{{ t('charts.savingsRate') }}
+            </p>
             <p class="mt-1 text-lg font-extrabold text-primary-500">
               {{ periodMetrics.rate }}%
             </p>
           </div>
         </div>
 
-        <!-- Gráfica 1: Ingresos vs Gastos -->
         <IncomeExpenseChart :data="incomeExpensesData" />
 
-        <!-- Gráfica 2: Evolución de Ahorros -->
         <SavingsChart v-if="profile.savingsEnabled" :data="savingsEvolutionData" />
 
-        <!-- Gráfica 3: Efectivo y Carteras Familiares -->
         <CashWalletsChart v-if="profile.cashEnabled" :data="cashEvolutionData" :distribution="walletDistribution"
           :total-cash="cashStore.balance" :currency="ui.currency" />
 
-        <!-- Gastos por Categoría -->
         <BaseCard class="space-y-4">
           <div>
             <h2 class="text-base font-bold text-content">{{ t('charts.categoryBreakdownTitle') }}</h2>
@@ -472,10 +466,9 @@ const categoryBreakdown = computed(() => {
             </p>
           </div>
 
-          <!-- Total de gastos consultados -->
-          <div class="flex items-center justify-between p-3 rounded-field bg-expense-light/50 border border-expense/10">
+          <div class="flex items-center justify-between p-3 rounded-field border-2 border-expense/20">
             <span class="text-xs font-semibold text-content-muted">{{ t('charts.totalSpent') }}</span>
-            <span class="text-sm font-extrabold text-expense">
+            <span class="text-sm font-bold text-expense">
               {{ formatCurrency(categoryBreakdown.totalSpent, { currency: ui.currency }) }}
             </span>
           </div>
@@ -501,7 +494,6 @@ const categoryBreakdown = computed(() => {
                 </div>
               </div>
 
-              <!-- Barra de progreso estilizada -->
               <div class="h-2 w-full rounded-full bg-surface-muted overflow-hidden">
                 <div class="h-full rounded-full transition-all duration-500 ease-out" :style="{
                   width: `${item.percent}%`,

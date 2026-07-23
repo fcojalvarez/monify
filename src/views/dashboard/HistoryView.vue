@@ -185,7 +185,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="min-h-dvh bg-surface pb-24">
+  <div class="min-h-dvh bg-surface pb-12">
     <main class="mx-auto max-w-2xl space-y-6 px-4 py-6">
       <div class="flex items-center gap-3">
 
@@ -282,7 +282,8 @@ onBeforeUnmount(() => {
       </BaseCard>
     </main>
 
-    <BaseSheet v-model="showTransaction" :title="t('history.editMovement')" :has-changes="transactionFormRef?.hasChanges">
+    <BaseSheet v-model="showTransaction" :title="t('history.editMovement')"
+      :has-changes="transactionFormRef?.hasChanges">
       <TransactionForm ref="transactionFormRef" :transaction="editingTransaction" @saved="onTransactionSaved"
         @cancel="showTransaction = false" />
     </BaseSheet>
