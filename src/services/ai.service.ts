@@ -53,8 +53,8 @@ Instrucciones de análisis:
   const prompt = `Analiza la siguiente transcripción y genera el JSON correspondiente según el esquema solicitado:
 "${text}"`
 
-  // Usamos gemini-1.5-flash por máxima compatibilidad regional y estabilidad de cuotas
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`
+  // Usamos gemini-3.6-flash por máxima compatibilidad regional y estabilidad de cuotas
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`
 
   try {
     const response = await fetch(url, {
