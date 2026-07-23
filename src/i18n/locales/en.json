@@ -560,5 +560,27 @@
     "deleteConfirmBody": "Are you sure you want to delete this transaction? This action cannot be undone.",
     "insufficientWallet": "There isn't enough in {name}'s wallet",
     "thisPerson": "this person"
+  },
+  "voice": {
+    "title": "Voice Assistant",
+    "buttonLabel": "Voice Assistant",
+    "listening": "Listening...",
+    "speakPrompt": "Say something like: \"Create an expense of 43€ today of category Food\"",
+    "stop": "Stop",
+    "notSupported": "Your browser doesn't natively support speech recognition. Don't worry! You can write your command below:",
+    "fallbackPlaceholder": "Write your command here... (e.g. expense of 45€ food today)",
+    "process": "Process",
+    "summaryTitle": "Confirm Voice Transaction",
+    "success": "Transaction created successfully!",
+    "errorTitle": "Error saving",
+    "type": "Type",
+    "amount": "Amount",
+    "category": "Category",
+    "date": "Date",
+    "member": "Member",
+    "note": "Note",
+    "confirm": "Confirm and create",
+    "discard": "Cancel",
+    "parsingError": "Could not parse the text. Please make sure to specify at least the amount (e.g. 43€)."
   }
 }
