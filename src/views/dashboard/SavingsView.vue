@@ -55,9 +55,6 @@
       <!-- Lista de Metas -->
       <BaseSpinner v-if="savingsStore.loading" :message="t('savings.loading')" />
 
-      <EmptyState v-else-if="!displayGoals.length" icon="solar:safe-2-linear"
-        :title="t('savings.emptyGoals')" />
-
       <div v-else class="grid animate-fade-in gap-4">
         <BaseCard v-for="goal in displayGoals" :key="goal.id" class="space-y-4 p-5">
           <div>
@@ -337,8 +334,7 @@
     </BaseSheet>
 
     <!-- Botón flotante Gestionar -->
-    <div
-      class="fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] right-4 md:right-[calc(50vw-20rem)] z-40">
+    <div class="fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] right-4 md:right-[calc(50vw-20rem)] z-40">
       <div class="relative">
         <button
           class="flex h-14 items-center gap-2 rounded-pill bg-primary-500 px-6 font-semibold text-white shadow-primary-glow transition-transform active:scale-95"
