@@ -161,7 +161,11 @@ function processTranscript(text: string) {
 }
 
 function handleReprocess() {
-  processTranscript(transcript.value)
+  try {
+    processTranscript(transcript.value)
+  } catch (error) {
+    console.log(error);
+  }
 }
 
 function handleClose() {
