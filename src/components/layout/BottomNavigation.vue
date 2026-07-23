@@ -14,7 +14,6 @@ const { t } = useI18n()
 
 const currentRouteName = computed(() => route.name)
 
-// Elementos de navegación dinámicos
 const navigationItems = computed(() => {
   const items = [
     {
