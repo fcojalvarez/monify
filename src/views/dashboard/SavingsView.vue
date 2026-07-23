@@ -14,43 +14,6 @@
             </p>
           </div>
         </div>
-
-        <div class="relative">
-          <button
-            class="flex h-10 items-center gap-2 rounded-pill bg-primary-500 px-4 text-sm font-semibold text-white hover:bg-primary-600"
-            @click="showAddDropdown = !showAddDropdown">
-            <AppIcon name="solar:settings-bold" :size="18" />
-            {{ t('savings.manage') }}
-          </button>
-
-          <div v-if="showAddDropdown" class="fixed inset-0 z-10" @click="showAddDropdown = false" />
-
-          <div v-if="showAddDropdown"
-            class="absolute right-0 z-20 mt-2 w-56 space-y-1 rounded-card border border-line bg-surface-raised p-2 shadow-raised">
-            <button
-              class="flex w-full items-center gap-2 rounded-field px-3 py-2 text-left text-sm hover:bg-surface-muted"
-              @click="openGlobalTransfer(true); showAddDropdown = false">
-              <AppIcon name="solar:arrow-right-up-linear" class="text-income" :size="16" />
-              {{ t('savings.contribute') }}
-            </button>
-
-            <button
-              class="flex w-full items-center gap-2 rounded-field px-3 py-2 text-left text-sm hover:bg-surface-muted"
-              @click="openGlobalTransfer(false); showAddDropdown = false">
-              <AppIcon name="solar:arrow-right-up-linear" class="rotate-180 text-expense" :size="16" />
-              {{ t('savings.withdrawSaving') }}
-            </button>
-
-            <div class="my-1 h-px bg-line" />
-
-            <button
-              class="flex w-full items-center gap-2 rounded-field px-3 py-2 text-left text-sm hover:bg-surface-muted"
-              @click="openAddGoal(); showAddDropdown = false">
-              <AppIcon name="solar:target-bold" class="text-primary-500" :size="16" />
-              {{ t('savings.newGoal') }}
-            </button>
-          </div>
-        </div>
       </div>
 
       <!-- Resumen -->
@@ -91,6 +54,9 @@
 
       <!-- Lista de Metas -->
       <BaseSpinner v-if="savingsStore.loading" :message="t('savings.loading')" />
+
+      <EmptyState v-else-if="!displayGoals.length" icon="solar:safe-2-linear"
+        :title="t('savings.emptyGoals')" />
 
       <div v-else class="grid animate-fade-in gap-4">
         <BaseCard v-for="goal in displayGoals" :key="goal.id" class="space-y-4 p-5">
@@ -369,6 +335,47 @@
       <SavingsMovementForm v-if="editingMovement" ref="editFormRef" :transaction="editingMovement"
         @saved="onMovementEdited" @cancel="showEditSheet = false" />
     </BaseSheet>
+
+    <!-- Botón flotante Gestionar -->
+    <div
+      class="fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] right-4 md:right-[calc(50vw-20rem)] z-40">
+      <div class="relative">
+        <button
+          class="flex h-14 items-center gap-2 rounded-pill bg-primary-500 px-6 font-semibold text-white shadow-primary-glow transition-transform active:scale-95"
+          @click="showAddDropdown = !showAddDropdown">
+          <AppIcon name="solar:settings-bold" :size="22" />
+          {{ t('savings.manage') }}
+        </button>
+
+        <div v-if="showAddDropdown" class="fixed inset-0 z-10" @click="showAddDropdown = false" />
+
+        <div v-if="showAddDropdown"
+          class="absolute bottom-full right-0 z-20 mb-2 w-56 space-y-1 rounded-card border border-line bg-surface-raised p-2 shadow-raised">
+          <button
+            class="flex w-full items-center gap-2 rounded-field px-3 py-2 text-left text-sm hover:bg-surface-muted"
+            @click="openGlobalTransfer(true); showAddDropdown = false">
+            <AppIcon name="solar:arrow-right-up-linear" class="text-income" :size="16" />
+            {{ t('savings.contribute') }}
+          </button>
+
+          <button
+            class="flex w-full items-center gap-2 rounded-field px-3 py-2 text-left text-sm hover:bg-surface-muted"
+            @click="openGlobalTransfer(false); showAddDropdown = false">
+            <AppIcon name="solar:arrow-right-up-linear" class="rotate-180 text-expense" :size="16" />
+            {{ t('savings.withdrawSaving') }}
+          </button>
+
+          <div class="my-1 h-px bg-line" />
+
+          <button
+            class="flex w-full items-center gap-2 rounded-field px-3 py-2 text-left text-sm hover:bg-surface-muted"
+            @click="openAddGoal(); showAddDropdown = false">
+            <AppIcon name="solar:target-bold" class="text-primary-500" :size="16" />
+            {{ t('savings.newGoal') }}
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
