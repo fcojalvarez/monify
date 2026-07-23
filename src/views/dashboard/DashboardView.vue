@@ -338,46 +338,30 @@ onBeforeUnmount(() => {
         </button>
       </Transition>
 
-      <!-- Menú de Acción Expandible Verticalmente -->
-      <div
-        ref="actionMenuRef"
+      <div ref="actionMenuRef"
         class="pointer-events-auto relative flex flex-col justify-end items-center rounded-[28px] bg-primary-500 text-white shadow-primary-glow transition-all duration-300 ease-out select-none w-[130px] overflow-hidden"
         :class="isExpanded ? 'h-[114px]' : 'h-14 cursor-pointer hover:bg-primary-600 active:scale-95'"
-        @click="handleMainClick"
-      >
+        @click="handleMainClick">
         <div class="absolute inset-0 flex flex-col justify-end p-1">
-          <!-- Colapsado: Solo botón Añadir -->
-          <div
-            v-if="!isExpanded"
-            class="flex h-12 items-center justify-center gap-2 transition-all duration-300 ease-out w-full"
-          >
+          <div v-if="!isExpanded"
+            class="flex h-12 items-center justify-center gap-2 transition-all duration-300 ease-out w-full">
             <AppIcon name="solar:add-circle-bold" :size="22" />
             <span class="font-semibold text-sm tracking-wide">{{ t('common.add') }}</span>
           </div>
 
-          <!-- Expandido: Opciones Manual y Voz apiladas verticalmente -->
-          <div
-            v-else
-            class="flex flex-col gap-1 w-full h-full justify-center p-1 animate-fade-in"
-          >
-            <!-- Opción Manual -->
-            <button
-              type="button"
+          <div v-else class="flex flex-col gap-1 w-full h-full justify-center p-1 animate-fade-in">
+            <button type="button"
               class="flex h-11 w-full items-center justify-center gap-2 rounded-[22px] hover:bg-white/10 active:scale-95 transition-all font-semibold text-xs whitespace-nowrap text-white"
-              @click.stop="triggerManual"
-            >
+              @click.stop="triggerManual">
               <AppIcon name="solar:pen-new-round-bold" :size="16" />
-              <span>{{ t('common.manual') }}</span>
+              <span class="font-semibold text-sm">{{ t('common.manual') }}</span>
             </button>
 
-            <!-- Opción Voz -->
-            <button
-              type="button"
+            <button type="button"
               class="flex h-11 w-full items-center justify-center gap-2 rounded-[22px] hover:bg-white/10 active:scale-95 transition-all font-semibold text-xs whitespace-nowrap text-white"
-              @click.stop="triggerVoice"
-            >
+              @click.stop="triggerVoice">
               <AppIcon name="solar:microphone-bold" :size="16" />
-              <span>{{ t('voice.buttonLabelShort') }}</span>
+              <span class="font-semibold text-sm">{{ t('voice.buttonLabelShort') }}</span>
             </button>
           </div>
         </div>
