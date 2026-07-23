@@ -92,10 +92,6 @@
       <!-- Lista de Metas -->
       <BaseSpinner v-if="savingsStore.loading" :message="t('savings.loading')" />
 
-      <div v-else-if="!displayGoals.length" class="rounded-card border border-dashed border-line bg-surface-raised">
-        <EmptyState icon="solar:target-linear" :title="t('savings.emptyGoals')" :hint="t('savings.emptyGoalsHint')" />
-      </div>
-
       <div v-else class="grid animate-fade-in gap-4">
         <BaseCard v-for="goal in displayGoals" :key="goal.id" class="space-y-4 p-5">
           <div>
