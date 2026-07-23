@@ -68,7 +68,13 @@ export const recurringTransactionsService = {
   },
 
   async remove(id: string, options?: { deleteHistory?: boolean }) {
-    if (options && !options.deleteHistory) {
+    if (options && options.deleteHistory) {
+      const { error: deleteError } = await supabase
+        .from('transactions')
+        .delete()
+        .eq('recurring_transaction_id', id)
+      if (deleteError) throw deleteError
+    } else {
       const { error: updateError } = await supabase
         .from('transactions')
         .update({ recurring_transaction_id: null })
