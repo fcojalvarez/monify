@@ -219,7 +219,7 @@ describe('RecurringForm', () => {
     expect(store.create).not.toHaveBeenCalled()
   })
 
-  it('elimina la recurrencia al confirmar en el diálogo', async () => {
+  it('elimina la recurrencia al confirmar en el diálogo sin borrar historial (por defecto)', async () => {
     const { wrapper } = mountForm({ transaction: recurringTransaction })
     ;(recurringTransactionsService.remove as ReturnType<typeof vi.fn>).mockResolvedValue(undefined)
 
@@ -233,7 +233,30 @@ describe('RecurringForm', () => {
     dialog.vm.$emit('confirm')
     await nextTick()
 
-    await vi.waitFor(() => expect(recurringTransactionsService.remove).toHaveBeenCalledWith('recurring-1'))
+    await vi.waitFor(() => expect(recurringTransactionsService.remove).toHaveBeenCalledWith('recurring-1', { deleteHistory: false }))
+    expect(wrapper.emitted('saved')).toBeTruthy()
+  })
+
+  it('elimina la recurrencia al confirmar en el diálogo borrando el historial si se marca el interruptor', async () => {
+    const { wrapper } = mountForm({ transaction: recurringTransaction })
+    ;(recurringTransactionsService.remove as ReturnType<typeof vi.fn>).mockResolvedValue(undefined)
+
+    const deleteBtn = wrapper.find('button[class*="bg-expense"]')
+    expect(deleteBtn.exists()).toBe(true)
+
+    await deleteBtn.trigger('click')
+    await nextTick()
+
+    const dialog = wrapper.findComponent(BaseDialog)
+    const switchComp = dialog.findComponent({ name: 'BaseSwitch' })
+    expect(switchComp.exists()).toBe(true)
+    await switchComp.find('input[type="checkbox"]').setChecked(true)
+    await nextTick()
+
+    dialog.vm.$emit('confirm')
+    await nextTick()
+
+    await vi.waitFor(() => expect(recurringTransactionsService.remove).toHaveBeenCalledWith('recurring-1', { deleteHistory: true }))
     expect(wrapper.emitted('saved')).toBeTruthy()
   })
 })

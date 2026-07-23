@@ -192,13 +192,16 @@ async function onSubmit() {
 
 const deleting = ref(false)
 const showDeleteConfirm = ref(false)
+const deleteHistory = ref(false)
 
 async function onDeleteConfirm() {
   if (!props.transaction) return
   showDeleteConfirm.value = false
   deleting.value = true
   try {
-    await recurringTransactionsService.remove(props.transaction.id)
+    await recurringTransactionsService.remove(props.transaction.id, {
+      deleteHistory: deleteHistory.value,
+    })
     emit('saved')
   } catch (error) {
     serverError.value = error instanceof Error ? error.message : t('form.genericDeleteError')
@@ -325,9 +328,12 @@ defineExpose({
   <BaseDialog v-model="showDeleteConfirm" variant="danger" :title="t('recurringForm.deleteTitle')"
     :confirm-text="t('recurringForm.deleteButton')" :cancel-text="t('common.cancel')" show-cancel
     @confirm="onDeleteConfirm">
-    <p class="text-content">
-      {{ t('recurringForm.deleteConfirm') }}
-    </p>
+    <div class="space-y-4">
+      <p class="text-content">
+        {{ t('recurringForm.deleteConfirm') }}
+      </p>
+      <BaseSwitch v-model="deleteHistory" :label="t('recurringForm.deleteHistoryLabel')" />
+    </div>
   </BaseDialog>
 
   <BaseDialog v-model="showCategoryDialog" :title="t('common.createCategory')" :show-close="true">

@@ -215,7 +215,8 @@
   "recurringForm": {
     "title": "Edit recurring transaction",
     "createTitle": "New recurring transaction",
-    "deleteConfirm": "Are you sure you want to delete this recurring transaction? This action cannot be undone and will not affect already created transactions.",
+    "deleteConfirm": "Are you sure you want to delete this recurring transaction? This action cannot be undone.",
+    "deleteHistoryLabel": "Delete already created transactions from history",
     "startDate": "Start date",
     "nextExecution": "Next execution",
     "editButton": "Edit",
