@@ -73,7 +73,36 @@ const showTransaction = ref(false)
 const editingTransaction = ref<TransactionWithRelations | undefined>()
 const showVoiceAssistant = ref(false)
 
+const isExpanded = ref(false)
+const actionMenuRef = ref<HTMLElement | null>(null)
+
 const transactionFormRef = ref<InstanceType<typeof TransactionForm> | null>(null)
+
+function handleClickOutside(event: MouseEvent) {
+  const target = event.target as HTMLElement
+  if (!target || !target.isConnected) {
+    return
+  }
+  if (actionMenuRef.value && !actionMenuRef.value.contains(target)) {
+    isExpanded.value = false
+  }
+}
+
+function handleMainClick() {
+  if (!isExpanded.value) {
+    isExpanded.value = true
+  }
+}
+
+function triggerManual() {
+  openNewTransaction()
+  isExpanded.value = false
+}
+
+function triggerVoice() {
+  openVoiceAssistant()
+  isExpanded.value = false
+}
 
 const showAddMember = ref(false)
 const familyFormRef = ref<InstanceType<typeof FamilyForm> | null>(null)
@@ -160,6 +189,7 @@ function dismissSavingsPrompt() {
 
 onMounted(async () => {
   window.addEventListener('scroll', handleScroll)
+  document.addEventListener('click', handleClickOutside)
 
   const promises: Promise<unknown>[] = [
     categories.fetchAll(),
@@ -188,6 +218,7 @@ onMounted(async () => {
 
 onBeforeUnmount(() => {
   window.removeEventListener('scroll', handleScroll)
+  document.removeEventListener('click', handleClickOutside)
 })
 </script>
 
@@ -307,19 +338,63 @@ onBeforeUnmount(() => {
         </button>
       </Transition>
 
-      <button
-        class="pointer-events-auto flex h-14 items-center gap-2 rounded-pill bg-primary-500 px-6 font-semibold text-white shadow-primary-glow transition-transform active:scale-95"
-        :aria-label="t('dashboard.addAria')" @click="openNewTransaction">
-        <AppIcon name="solar:add-circle-bold" :size="22" />
-        {{ t('common.add') }}
-      </button>
+      <!-- Menú de Acción Expandible -->
+      <div
+        ref="actionMenuRef"
+        class="pointer-events-auto relative flex h-14 items-center justify-center rounded-pill bg-primary-500 text-white shadow-primary-glow transition-all duration-300 ease-out select-none"
+        :class="isExpanded ? 'w-[280px] px-2 bg-primary-600' : 'w-[130px] px-4 cursor-pointer hover:bg-primary-600 active:scale-95'"
+        @click="handleMainClick"
+      >
+        <div class="absolute inset-0 flex items-center justify-center px-2">
+          <!-- Colapsado: Solo botón Añadir -->
+          <div
+            v-if="!isExpanded"
+            class="flex items-center gap-2 transition-all duration-300 ease-out"
+          >
+            <AppIcon name="solar:add-circle-bold" :size="22" />
+            <span class="font-semibold text-sm tracking-wide">{{ t('common.add') }}</span>
+          </div>
 
-      <!-- Botón del Asistente de Voz -->
-      <button
-        class="pointer-events-auto flex h-14 w-14 items-center justify-center rounded-full bg-violet-600 text-white shadow-lg hover:bg-violet-700 transition-transform active:scale-95"
-        :aria-label="t('voice.buttonLabel')" :title="t('voice.buttonLabel')" @click="openVoiceAssistant">
-        <AppIcon name="solar:microphone-bold" :size="24" />
-      </button>
+          <!-- Expandido: Opciones Manual y Voz -->
+          <div
+            v-else
+            class="flex items-center gap-1.5 w-full h-full animate-fade-in"
+          >
+            <!-- Botón Manual -->
+            <button
+              type="button"
+              class="flex flex-1 items-center justify-center gap-1.5 py-1.5 px-3 rounded-pill hover:bg-white/10 active:scale-95 transition-transform font-semibold text-xs whitespace-nowrap"
+              @click.stop="triggerManual"
+            >
+              <AppIcon name="solar:pen-new-round-bold" :size="16" />
+              <span>{{ t('common.manual') }}</span>
+            </button>
+
+            <!-- Separador -->
+            <div class="h-6 w-[1px] bg-white/20 shrink-0"></div>
+
+            <!-- Botón Voz -->
+            <button
+              type="button"
+              class="flex flex-1 items-center justify-center gap-1.5 py-1.5 px-3 rounded-pill bg-violet-600 hover:bg-violet-700 active:scale-95 transition-transform font-semibold text-xs whitespace-nowrap text-white shadow-sm"
+              @click.stop="triggerVoice"
+            >
+              <AppIcon name="solar:microphone-bold" :size="16" />
+              <span>{{ t('voice.buttonLabelShort') }}</span>
+            </button>
+
+            <!-- Botón Cerrar -->
+            <button
+              type="button"
+              class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full hover:bg-white/10 active:scale-95 transition-transform text-white/80"
+              @click.stop="isExpanded = false"
+              :aria-label="t('common.close')"
+            >
+              <AppIcon name="solar:close-circle-bold" :size="16" />
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
 
     <BaseSheet v-model="showTransaction"
