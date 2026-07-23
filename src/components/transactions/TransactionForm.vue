@@ -324,9 +324,9 @@ defineExpose({
     <BaseSelect ref="categoryInputRef" v-model="form.categoryId"
       :no-item-message="t('common.noResults')" :label="t('form.category')"
       :placeholder="t('form.selectCategory')" :options="categoryOptions" :error="errors.categoryId">
-      <template #footer="{ close, search }">
+      <template #header="{ close, search }">
         <button type="button"
-          class="flex w-full items-center gap-2 rounded-lg px-3 py-3 text-left text-sm font-semibold text-primary-500 hover:bg-surface border-t border-line mt-1"
+          class="flex w-full items-center gap-2 rounded-lg px-3 py-3 text-left text-sm font-semibold text-primary-500 hover:bg-surface border-b border-line mb-1"
           @click="openCategoryCreator(close, search)">
           <AppIcon name="solar:add-circle-bold" :size="18" />
           <span>{{ t('common.createCategory') }}</span>

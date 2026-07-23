@@ -265,6 +265,8 @@ defineExpose({ focus, $el: buttonRef, close, open, search })
                   px-2
                   p-2
                 ">
+                <slot name="header" :close="close" :search="search" />
+
                 <p v-if="search.trim() && !filteredOptions.length"
                   class="px-3 py-6 text-center text-sm text-content-subtle">
                   {{ noItemMessage || t('common.noResults') }}
@@ -293,8 +295,6 @@ defineExpose({ focus, $el: buttonRef, close, open, search })
                       class="text-primary-500" />
                   </button>
                 </template>
-
-                <slot name="footer" :close="close" :search="search" />
               </div>
 
             </div>
