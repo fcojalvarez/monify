@@ -434,12 +434,6 @@ watch(() => props.modelValue, (isOpen) => {
               <AppIcon name="solar:info-circle-bold" :size="14" class="inline mr-1 text-amber-500" />
               No se reconoció una categoría exacta. Hemos seleccionado una por defecto; puedes cambiarla si lo deseas.
             </div>
-            <div v-if="unrecognized.includes('familyMember')"
-              class="rounded-field bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/30 p-2.5 text-xs text-amber-800 dark:text-amber-300 leading-snug">
-              <AppIcon name="solar:info-circle-bold" :size="14" class="inline mr-1 text-amber-500" />
-              No detectamos a qué miembro de la familia pertenece. Hemos seleccionado a ti por defecto; puedes
-              cambiarlo.
-            </div>
           </div>
 
           <!-- Parsed Transaction Fields -->
