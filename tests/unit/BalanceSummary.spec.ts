@@ -86,7 +86,13 @@ describe('BalanceSummary', () => {
   it('muestra datos de efectivo cuando está activado', () => {
     const wrapper = mount(BalanceSummary, {
       ...globalOptions,
-      props: { ...defaultProps(), cashEnabled: true, cash: 150, cashPeriodNet: 150 },
+      props: {
+        ...defaultProps(),
+        summary: { ...summary, income: 2650, expense: 1500, balance: 1150 },
+        cashEnabled: true,
+        cash: 150,
+        cashPeriodNet: 150,
+      },
     })
 
     expect(wrapper.text()).toContain('Banco')
@@ -98,7 +104,13 @@ describe('BalanceSummary', () => {
     const wrapper = mount(BalanceSummary, {
       ...globalOptions,
       // Hay 999 € de efectivo acumulado, pero en el periodo solo se han movido 40 €.
-      props: { ...defaultProps(), cashEnabled: true, cash: 999, cashPeriodNet: 40 },
+      props: {
+        ...defaultProps(),
+        summary: { ...summary, income: 2540, expense: 1500, balance: 1040 },
+        cashEnabled: true,
+        cash: 999,
+        cashPeriodNet: 40,
+      },
     })
 
     // Balance del periodo = balance bancario (1000) + neto de efectivo del periodo (40)

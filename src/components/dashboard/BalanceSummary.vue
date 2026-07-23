@@ -42,6 +42,15 @@ const cards = computed<CardId[]>(() => {
 })
 
 const totalCards = computed(() => cards.value.length)
+const totalBalance = computed(() => {
+  return props.summary.income - props.summary.expense
+})
+const bankBalance = computed(() => {
+  if (props.cashEnabled) {
+    return totalBalance.value - props.cashPeriodNet
+  }
+  return totalBalance.value
+})
 const walletPreviewRef = ref<HTMLElement | HTMLElement[]>()
 // Antes de poder medir el ancho real, mostramos solo una cartera para no desplazar el +N fuera de la tarjeta.
 const visibleCashMemberCount = ref(0)
@@ -215,12 +224,12 @@ onBeforeUnmount(() => walletPreviewObserver?.disconnect())
               <p class="text-sm text-white/70">{{ t('dashboard.balance', { period: props.periodLabel }) }}</p>
               <div class="mt-1 flex items-end justify-between">
                 <p class="text-3xl font-bold tracking-tight">
-                  {{ formatCurrency(props.summary.balance + (props.cashEnabled ? props.cashPeriodNet : 0), { currency: props.summary.currency }) }}
+                  {{ formatCurrency(totalBalance, { currency: props.summary.currency }) }}
                 </p>
                 <div v-if="props.cashEnabled" class="mr-2 flex gap-4 pb-1 text-right">
                   <div>
                     <p class="text-[9px] uppercase text-white/60">{{ t('summary.bank') }}</p>
-                    <p class="text-sm font-semibold">{{ formatCurrency(props.summary.balance, {
+                    <p class="text-sm font-semibold">{{ formatCurrency(bankBalance, {
                       currency:
                         props.summary.currency
                     }) }}</p>
