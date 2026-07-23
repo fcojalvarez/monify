@@ -28,6 +28,7 @@ const emit = defineEmits<{
 const { t } = useI18n()
 const open = ref(false)
 const containerRef = ref<HTMLElement | null>(null)
+const buttonRef = ref<HTMLButtonElement | null>(null)
 
 // El mes/año activo en el calendario
 const year = ref(new Date().getFullYear())
@@ -41,6 +42,7 @@ watch(open, (isOpen) => {
       year.value = baseDate.getFullYear()
       month.value = baseDate.getMonth()
     }
+    updateDropdownPosition()
   }
 })
 
@@ -48,9 +50,31 @@ const currentLocale = computed(() => getIntlLocale() || env.defaultLocale)
 
 const hasError = computed(() => !!props.error)
 
+// Visualización de fecha más corta y compacta para evitar desbordamientos en móviles
 const formattedDisplayDate = computed(() => {
   if (!props.modelValue) return props.placeholder || t('common.selectDate') || 'Seleccionar fecha'
-  return formatDate(props.modelValue, { day: 'numeric', month: 'long', year: 'numeric' })
+  return formatDate(props.modelValue, { day: 'numeric', month: 'short', year: 'numeric' })
+})
+
+// Nombres de los meses localizados para acceso directo
+const monthNames = computed(() => {
+  const locale = currentLocale.value
+  const formatter = new Intl.DateTimeFormat(locale, { month: 'long' })
+  return Array.from({ length: 12 }, (_, i) => {
+    const d = new Date(2026, i, 1)
+    const label = formatter.format(d)
+    return label.charAt(0).toUpperCase() + label.slice(1)
+  })
+})
+
+// Rango de años para acceso rápido (los últimos 20 años y los próximos 10)
+const availableYears = computed(() => {
+  const currentY = new Date().getFullYear()
+  const years: number[] = []
+  for (let y = currentY - 20; y <= currentY + 10; y++) {
+    years.push(y)
+  }
+  return years
 })
 
 // Días de la semana abreviados según idioma local
@@ -62,15 +86,6 @@ const weekdays = computed(() => {
     const label = formatter.format(d)
     return label.replace(/\.$/, '') // Quitar el punto final si lo hay (como "lun.")
   })
-})
-
-// Título del mes y año (p. ej., "Enero 2026")
-const monthYearLabel = computed(() => {
-  const locale = currentLocale.value
-  const d = new Date(year.value, month.value, 1)
-  const formatter = new Intl.DateTimeFormat(locale, { month: 'long', year: 'numeric' })
-  const formatted = formatter.format(d)
-  return formatted.charAt(0).toUpperCase() + formatted.slice(1)
 })
 
 // Días en un mes
@@ -163,22 +178,83 @@ function selectDay(dateString: string) {
   open.value = false
 }
 
+const dropdownStyle = ref<Record<string, string>>({})
+const isPlacedUpward = ref(false)
+
+function updateDropdownPosition() {
+  if (open.value && buttonRef.value) {
+    const rect = buttonRef.value.getBoundingClientRect()
+    const viewportHeight = window.innerHeight
+    const dropdownHeight = 310 // Altura estimada del calendario
+    const minWidth = 280
+
+    // Auto-posicionamiento vertical: si no cabe abajo, colocar hacia arriba
+    const spaceBelow = viewportHeight - rect.bottom
+    const spaceAbove = rect.top
+
+    let leftPos = rect.left
+    // Mantener dentro de los márgenes de la pantalla
+    if (leftPos + minWidth > window.innerWidth) {
+      leftPos = Math.max(16, window.innerWidth - minWidth - 16)
+    }
+
+    if (spaceBelow < dropdownHeight && spaceAbove > spaceBelow) {
+      isPlacedUpward.value = true
+      dropdownStyle.value = {
+        position: 'fixed',
+        bottom: `${viewportHeight - rect.top + 6}px`,
+        left: `${leftPos}px`,
+        width: `${Math.max(rect.width, minWidth)}px`,
+        maxWidth: '320px',
+        zIndex: '999999',
+      }
+    } else {
+      isPlacedUpward.value = false
+      dropdownStyle.value = {
+        position: 'fixed',
+        top: `${rect.bottom + 6}px`,
+        left: `${leftPos}px`,
+        width: `${Math.max(rect.width, minWidth)}px`,
+        maxWidth: '320px',
+        zIndex: '999999',
+      }
+    }
+  }
+}
+
+const teleportTarget = ref<string | HTMLElement>('body')
+
+function resolveTeleportTarget(): string | HTMLElement {
+  return containerRef.value?.closest('dialog') ?? 'body'
+}
+
 function handleClickOutside(event: MouseEvent) {
   if (open.value && containerRef.value && !containerRef.value.contains(event.target as Node)) {
+    // Si estamos usando Teleport, los clics en el propio calendario flotante (que está en body)
+    // deben ser ignorados y no cerrar el calendario. Por eso comprobamos si el clic ocurrió
+    // dentro de algún elemento con la clase '.calendar-dropdown-container'
+    const target = event.target as HTMLElement
+    if (target.closest('.calendar-dropdown-container')) return
+
     open.value = false
   }
 }
 
 onMounted(() => {
-  document.addEventListener('click', handleClickOutside)
+  document.addEventListener('mousedown', handleClickOutside)
+  window.addEventListener('scroll', updateDropdownPosition, true)
+  window.addEventListener('resize', updateDropdownPosition, true)
 })
 
 onUnmounted(() => {
-  document.removeEventListener('click', handleClickOutside)
+  document.removeEventListener('mousedown', handleClickOutside)
+  window.removeEventListener('scroll', updateDropdownPosition, true)
+  window.removeEventListener('resize', updateDropdownPosition, true)
 })
 
 function toggleOpen() {
   if (!props.disabled) {
+    teleportTarget.value = resolveTeleportTarget()
     open.value = !open.value
   }
 }
@@ -192,6 +268,7 @@ function toggleOpen() {
 
     <div class="relative">
       <button
+        ref="buttonRef"
         type="button"
         :disabled="disabled"
         class="h-12 w-full rounded-field border bg-surface-muted px-4 text-left text-content transition-all duration-200 focus:bg-surface-raised focus:outline-none focus:shadow-focus"
@@ -224,66 +301,87 @@ function toggleOpen() {
       {{ error }}
     </p>
 
-    <!-- Desplegable del calendario animado -->
-    <Transition name="dropdown">
-      <div
-        v-if="open"
-        class="absolute left-0 right-0 z-[100] mt-1.5 rounded-2xl border border-line bg-surface-raised p-4 shadow-raised transition-all duration-300"
-      >
-        <!-- Cabecera del calendario -->
-        <div class="flex items-center justify-between pb-3">
-          <button
-            type="button"
-            class="flex h-8 w-8 items-center justify-center rounded-full text-content hover:bg-surface-muted transition-colors"
-            @click="prevMonth"
-          >
-            <AppIcon name="solar:alt-arrow-left-linear" :size="16" />
-          </button>
+    <!-- Desplegable del calendario animado y teletransportado -->
+    <Teleport :to="teleportTarget">
+      <Transition name="dropdown">
+        <div
+          v-if="open"
+          :style="dropdownStyle"
+          class="calendar-dropdown-container rounded-2xl border border-line bg-surface-raised p-4 shadow-raised transition-all duration-300"
+          :class="[isPlacedUpward ? 'origin-bottom' : 'origin-top']"
+        >
+          <!-- Cabecera del calendario con selectores rápidos -->
+          <div class="flex items-center justify-between pb-3">
+            <button
+              type="button"
+              class="flex h-8 w-8 items-center justify-center rounded-full text-content hover:bg-surface-muted transition-colors"
+              @click="prevMonth"
+            >
+              <AppIcon name="solar:alt-arrow-left-linear" :size="16" />
+            </button>
 
-          <span class="text-sm font-bold text-content">
-            {{ monthYearLabel }}
-          </span>
+            <!-- Acceso directo a meses y años mediante selects integrados -->
+            <div class="flex items-center gap-1.5 px-2 py-0.5 rounded-lg hover:bg-surface-muted transition-colors">
+              <select
+                v-model="month"
+                class="bg-transparent font-bold text-sm text-content focus:outline-none cursor-pointer hover:text-primary-500 py-0.5"
+              >
+                <option v-for="(mName, idx) in monthNames" :key="idx" :value="idx">
+                  {{ mName }}
+                </option>
+              </select>
 
-          <button
-            type="button"
-            class="flex h-8 w-8 items-center justify-center rounded-full text-content hover:bg-surface-muted transition-colors"
-            @click="nextMonth"
-          >
-            <AppIcon name="solar:alt-arrow-right-linear" :size="16" />
-          </button>
-        </div>
+              <select
+                v-model="year"
+                class="bg-transparent font-bold text-sm text-content focus:outline-none cursor-pointer hover:text-primary-500 py-0.5"
+              >
+                <option v-for="yNum in availableYears" :key="yNum" :value="yNum">
+                  {{ yNum }}
+                </option>
+              </select>
+            </div>
 
-        <!-- Días de la semana -->
-        <div class="grid grid-cols-7 gap-1 text-center text-[10px] font-bold text-content-subtle uppercase pb-1 border-b border-line/60">
-          <div v-for="day in weekdays" :key="day" class="py-1">
-            {{ day }}
+            <button
+              type="button"
+              class="flex h-8 w-8 items-center justify-center rounded-full text-content hover:bg-surface-muted transition-colors"
+              @click="nextMonth"
+            >
+              <AppIcon name="solar:alt-arrow-right-linear" :size="16" />
+            </button>
+          </div>
+
+          <!-- Días de la semana -->
+          <div class="grid grid-cols-7 gap-1 text-center text-[10px] font-bold text-content-subtle uppercase pb-1 border-b border-line/60">
+            <div v-for="day in weekdays" :key="day" class="py-1">
+              {{ day }}
+            </div>
+          </div>
+
+          <!-- Cuadrícula de días -->
+          <div class="grid grid-cols-7 gap-1 pt-2">
+            <button
+              v-for="cell in calendarDays"
+              :key="cell.dateString"
+              type="button"
+              class="relative flex aspect-square items-center justify-center rounded-full text-xs font-medium transition-all duration-200"
+              :class="[
+                cell.currentMonth ? 'text-content' : 'text-content-subtle/40',
+                cell.dateString === modelValue
+                  ? 'bg-primary-500 text-white font-bold scale-105 shadow-sm shadow-primary-500/30'
+                  : 'hover:bg-surface-muted',
+              ]"
+              @click="selectDay(cell.dateString)"
+            >
+              <span>{{ cell.day }}</span>
+              <span
+                v-if="cell.isToday && cell.dateString !== modelValue"
+                class="absolute bottom-1 h-1 w-1 rounded-full bg-primary-500"
+              />
+            </button>
           </div>
         </div>
-
-        <!-- Cuadrícula de días -->
-        <div class="grid grid-cols-7 gap-1 pt-2">
-          <button
-            v-for="cell in calendarDays"
-            :key="cell.dateString"
-            type="button"
-            class="relative flex aspect-square items-center justify-center rounded-full text-xs font-medium transition-all duration-200"
-            :class="[
-              cell.currentMonth ? 'text-content' : 'text-content-subtle/40',
-              cell.dateString === modelValue
-                ? 'bg-primary-500 text-white font-bold scale-105 shadow-sm shadow-primary-500/30'
-                : 'hover:bg-surface-muted',
-            ]"
-            @click="selectDay(cell.dateString)"
-          >
-            <span>{{ cell.day }}</span>
-            <span
-              v-if="cell.isToday && cell.dateString !== modelValue"
-              class="absolute bottom-1 h-1 w-1 rounded-full bg-primary-500"
-            />
-          </button>
-        </div>
-      </div>
-    </Transition>
+      </Transition>
+    </Teleport>
   </div>
 </template>
 
@@ -291,11 +389,17 @@ function toggleOpen() {
 .dropdown-enter-active,
 .dropdown-leave-active {
   transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s ease;
-  transform-origin: top;
 }
 .dropdown-enter-from,
 .dropdown-leave-to {
-  transform: scaleY(0.95) translateY(-8px);
+  transform: scaleY(0.95) translateY(4px);
   opacity: 0;
+}
+
+/* Ocultar flechas por defecto en los select de la cabecera */
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
 }
 </style>

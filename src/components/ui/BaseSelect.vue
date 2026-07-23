@@ -77,28 +77,14 @@ const dropdownStyle = ref<Record<string, string>>({})
 function updateDropdownPosition() {
   if (open.value && props.teleport && buttonRef.value) {
     const rect = buttonRef.value.getBoundingClientRect()
-    // Si estamos dentro de un dialog que actúa como teleportTarget,
-    // debemos calcular la posición relativa a ese dialog para que se dibuje bien.
-    const target = resolveTeleportTarget()
-    if (target instanceof HTMLDialogElement) {
-      const dialogRect = target.getBoundingClientRect()
-      dropdownStyle.value = {
-        position: 'absolute',
-        top: `${rect.bottom - dialogRect.top}px`,
-        left: `${rect.left - dialogRect.left}px`,
-        width: `${rect.width}px`,
-        zIndex: '999999',
-      }
-    } else {
-      const scrollTop = window.scrollY || document.documentElement.scrollTop
-      const scrollLeft = window.scrollX || document.documentElement.scrollLeft
-      dropdownStyle.value = {
-        position: 'absolute',
-        top: `${rect.bottom + scrollTop}px`,
-        left: `${rect.left + scrollLeft}px`,
-        width: `${rect.width}px`,
-        zIndex: '999999',
-      }
+    // Usamos posicionamiento fixed relativo al viewport para que siempre
+    // aparezca pegado por debajo, sin importar contextos de apilado.
+    dropdownStyle.value = {
+      position: 'fixed',
+      top: `${rect.bottom}px`,
+      left: `${rect.left}px`,
+      width: `${rect.width}px`,
+      zIndex: '999999',
     }
   }
 }
