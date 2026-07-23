@@ -1,8 +1,17 @@
+import { Capacitor } from '@capacitor/core'
+
 export type Platform = 'web' | 'ios' | 'android'
 
 function detectPlatform(): Platform {
   if (typeof window === 'undefined' || typeof navigator === 'undefined') {
     return 'web'
+  }
+
+  if (Capacitor.isNativePlatform()) {
+    const platform = Capacitor.getPlatform()
+    if (platform === 'ios' || platform === 'android') {
+      return platform
+    }
   }
 
   const ua = navigator.userAgent.toLowerCase()
