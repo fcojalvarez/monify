@@ -514,10 +514,7 @@ watch(() => props.modelValue, (isOpen) => {
           </div>
 
           <!-- Footer Actions -->
-          <div class="flex justify-end gap-3 pt-2">
-            <BaseButton variant="ghost" @click="handleClose">
-              {{ t('voice.discard') }}
-            </BaseButton>
+          <div class="flex justify-end gap-3 pt-2" v-if="hasParsed">
             <BaseButton :loading="saving" :disabled="!hasParsed" @click="handleConfirm">
               {{ t('voice.confirm') }}
             </BaseButton>
