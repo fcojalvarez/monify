@@ -3,15 +3,19 @@ import { ref, reactive, watch, nextTick, onMounted } from 'vue'
 import { useCategoriesStore } from '@/stores/categories'
 import { useFamilyStore } from '@/stores/family'
 import { useTransactionsStore } from '@/stores/transactions'
+import { useRecurringTransactionsStore } from '@/stores/recurring-transactions'
 import { useI18n, getIntlLocale } from '@/i18n'
-import { todayISO } from '@/utils/format'
+import { todayISO, formatDateWithMonthName } from '@/utils/format'
 import { parseVoiceCommand } from '@/utils/voiceParser'
+import { customOccurrenceOnOrAfter, normalizeMonths } from '@/utils/recurring'
 import { useCategoryOptions, useMemberOptions } from '@/composables/useEntityOptions'
 import BaseDialog from '@/components/ui/BaseDialog.vue'
 import BaseInput from '@/components/ui/BaseInput.vue'
 import BaseSelect from '@/components/ui/BaseSelect.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
+import BaseSwitch from '@/components/ui/BaseSwitch.vue'
 import SegmentedControl from '@/components/ui/SegmentedControl.vue'
+import CustomMonthsField from '@/components/transactions/CustomMonthsField.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
 
 const props = defineProps<{
@@ -26,6 +30,7 @@ const emit = defineEmits<{
 const categoriesStore = useCategoriesStore()
 const familyStore = useFamilyStore()
 const transactionsStore = useTransactionsStore()
+const recurringTransactionsStore = useRecurringTransactionsStore()
 const { t } = useI18n()
 
 const isSupported = ref(
@@ -41,6 +46,7 @@ const transcript = ref('')
 const hasParsed = ref(false)
 const saving = ref(false)
 const errorMsg = ref('')
+const unrecognized = ref<('amount' | 'category' | 'familyMember')[]>([])
 
 const form = reactive({
   kind: 'expense' as 'expense' | 'income',
@@ -48,7 +54,13 @@ const form = reactive({
   categoryId: '',
   familyMemberId: '',
   occurredOn: todayISO(),
-  note: ''
+  note: '',
+  isCash: false,
+  isRecurring: false,
+  frequency: 'monthly' as 'daily' | 'weekly' | 'monthly' | 'yearly' | 'custom',
+  endOn: '',
+  months: [] as number[],
+  dayOfMonth: '1',
 })
 
 const categoryOptions = useCategoryOptions(() => form.kind)
@@ -138,7 +150,13 @@ function processTranscript(text: string) {
   form.familyMemberId = parsed.familyMemberId
   form.occurredOn = parsed.occurredOn
   form.note = parsed.note
+  form.isCash = parsed.isCash
+  form.isRecurring = parsed.isRecurring
+  form.frequency = parsed.frequency
+  form.months = parsed.months
+  form.dayOfMonth = String(parsed.dayOfMonth)
 
+  unrecognized.value = parsed.unrecognizedFields
   hasParsed.value = true
 }
 
@@ -165,21 +183,62 @@ async function handleConfirm() {
     return
   }
 
+  if (form.isCash) {
+    const selectedMember = familyStore.items.find((m) => m.id === form.familyMemberId)
+    const currentBalance = selectedMember?.cash_balance ?? 0
+    if (form.kind === 'expense' && currentBalance - amountNum < 0) {
+      errorMsg.value = t('transactionForm.insufficientWallet', { name: selectedMember?.name ?? t('transactionForm.thisPerson') })
+      return
+    }
+  }
+
   saving.value = true
 
   try {
-    await transactionsStore.create({
-      transaction: {
-        kind: form.kind,
-        amount: amountNum,
-        category_id: form.categoryId,
-        family_member_id: form.familyMemberId || familyStore.self?.id || '',
-        occurred_on: form.occurredOn,
-        note: form.note.trim() || null,
-        payment_method: 'bank'
-      },
-      gross: form.kind === 'income' ? amountNum : 0
-    })
+    const baseData = {
+      kind: form.kind,
+      amount: amountNum,
+      category_id: form.categoryId,
+      family_member_id: form.familyMemberId || familyStore.self?.id || '',
+      note: form.note.trim() || null,
+      payment_method: (form.isCash ? 'cash' : 'bank') as 'cash' | 'bank',
+    }
+
+    const gross = form.kind === 'income' ? amountNum : null
+
+    if (form.isRecurring) {
+      const day = Number(form.dayOfMonth)
+      const scheduleData = form.frequency === 'custom'
+        ? {
+            frequency: 'custom' as const,
+            start_on: form.occurredOn,
+            next_execution: customOccurrenceOnOrAfter(form.occurredOn, form.months, day),
+            months: normalizeMonths(form.months),
+            day_of_month: day,
+          }
+        : {
+            frequency: form.frequency,
+            start_on: form.occurredOn,
+            next_execution: form.occurredOn,
+          }
+
+      await recurringTransactionsStore.create({
+        ...baseData,
+        gross,
+        end_on: form.endOn || null,
+        ...scheduleData,
+      })
+
+      await recurringTransactionsStore.sync()
+    } else {
+      await transactionsStore.create({
+        transaction: {
+          ...baseData,
+          occurred_on: form.occurredOn,
+        },
+        gross: gross ?? 0,
+      })
+    }
 
     emit('saved')
     handleClose()
@@ -196,6 +255,7 @@ watch(() => props.modelValue, (isOpen) => {
     transcript.value = ''
     hasParsed.value = false
     errorMsg.value = ''
+    unrecognized.value = []
 
     // Default form pre-population
     form.kind = 'expense'
@@ -204,6 +264,12 @@ watch(() => props.modelValue, (isOpen) => {
     form.familyMemberId = familyStore.self?.id || familyStore.items[0]?.id || ''
     form.occurredOn = todayISO()
     form.note = ''
+    form.isCash = false
+    form.isRecurring = false
+    form.frequency = 'monthly'
+    form.endOn = ''
+    form.months = []
+    form.dayOfMonth = String(Number(todayISO().split('-')[2]) || 1)
 
     if (isSupported.value) {
       nextTick(() => {
@@ -296,6 +362,22 @@ watch(() => props.modelValue, (isOpen) => {
           </button>
         </div>
 
+        <!-- Unrecognized Fields Warn Banners -->
+        <div v-if="hasParsed && unrecognized.length > 0" class="space-y-1.5 animate-fade-in">
+          <div v-if="unrecognized.includes('amount')" class="rounded-field bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/30 p-2.5 text-xs text-amber-800 dark:text-amber-300 leading-snug">
+            <AppIcon name="solar:info-circle-bold" :size="14" class="inline mr-1 text-amber-500" />
+            No hemos podido detectar el importe en tu mensaje de voz. Por favor, introdúcelo manualmente.
+          </div>
+          <div v-if="unrecognized.includes('category')" class="rounded-field bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/30 p-2.5 text-xs text-amber-800 dark:text-amber-300 leading-snug">
+            <AppIcon name="solar:info-circle-bold" :size="14" class="inline mr-1 text-amber-500" />
+            No se reconoció una categoría exacta. Hemos seleccionado una por defecto; puedes cambiarla si lo deseas.
+          </div>
+          <div v-if="unrecognized.includes('familyMember')" class="rounded-field bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/30 p-2.5 text-xs text-amber-800 dark:text-amber-300 leading-snug">
+            <AppIcon name="solar:info-circle-bold" :size="14" class="inline mr-1 text-amber-500" />
+            No detectamos a qué miembro de la familia pertenece. Hemos seleccionado a ti por defecto; puedes cambiarlo.
+          </div>
+        </div>
+
         <!-- Parsed Transaction Fields -->
         <div v-if="hasParsed" class="rounded-card border border-line p-4 bg-surface/50 space-y-4">
           <h4 class="font-bold text-sm text-content-muted border-b border-line pb-2">
@@ -310,6 +392,8 @@ watch(() => props.modelValue, (isOpen) => {
                 { value: 'income', label: t('form.income') },
               ]"
             />
+
+            <BaseSwitch v-model="form.isCash" :label="t('form.isCash')" />
 
             <div class="grid grid-cols-2 gap-3">
               <BaseInput
@@ -342,15 +426,39 @@ watch(() => props.modelValue, (isOpen) => {
             <BaseInput
               v-model="form.note"
               :label="t('form.note')"
-              placeholder="..."
-            />
-          </div>
-        </div>
+              icon="solar:pen-bold"
+              :placeholder="t('form.notePlaceholder')"
+            >
+              <template v-slot:label-slot>
+                <span class="text-xs text-content-subtle">({{ t('common.optional') }})</span>
+              </template>
+            </BaseInput>
 
-        <!-- Hint if parsing failed to extract amount -->
-        <div v-if="hasParsed && !form.amount" class="rounded-field bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/30 p-3 text-xs text-amber-800 dark:text-amber-300 leading-normal">
-          <AppIcon name="solar:info-circle-bold" :size="14" class="inline mr-1" />
-          {{ t('voice.parsingError') }}
+            <!-- Recurrence Config -->
+            <BaseSwitch v-model="form.isRecurring" :label="t('transaction.repeatMovement')" />
+
+            <div v-if="form.isRecurring" class="space-y-3 rounded-field border border-line p-3">
+              <BaseSelect v-model="form.frequency" :label="t('transaction.frequency')" :options="[
+                { value: 'daily', label: t('recurringList.frequencies.daily') }, { value: 'weekly', label: t('recurringList.frequencies.weekly') },
+                { value: 'monthly', label: t('recurringList.frequencies.monthly') }, { value: 'yearly', label: t('recurringList.frequencies.yearly') },
+                { value: 'custom', label: t('recurringList.frequencies.custom') },
+              ]" />
+
+              <CustomMonthsField v-if="form.frequency === 'custom'" v-model:months="form.months"
+                v-model:day-of-month="form.dayOfMonth" :start-on="form.occurredOn" />
+
+              <BaseInput v-model="form.endOn" :label="t('transaction.endDate')" type="date" icon="solar:calendar-bold">
+                <template v-slot:label-slot>
+                  <span class="text-xs text-content-subtle">({{ t('common.optional') }})</span>
+                </template>
+              </BaseInput>
+
+              <p v-if="form.endOn" class="text-xs text-content-muted">
+                {{ t('transaction.endsOn', { date: formatDateWithMonthName(form.endOn) }) }}
+              </p>
+            </div>
+
+          </div>
         </div>
 
         <!-- Footer Actions -->

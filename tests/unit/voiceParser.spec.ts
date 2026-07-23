@@ -2,11 +2,13 @@ import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
 import {
   normalizeText,
   extractKind,
+  extractIsCash,
   extractAmount,
   extractDate,
   extractCategory,
   extractFamilyMember,
   extractNote,
+  extractRecurring,
   replaceWordsWithDigits,
   parseVoiceCommand,
 } from '@/utils/voiceParser'
@@ -49,6 +51,15 @@ describe('voiceParser', () => {
       expect(extractKind('he gastado 15 euros en el súper')).toBe('expense')
       expect(extractKind('un pago de la factura de luz')).toBe('expense')
       expect(extractKind('un refresco por 2€')).toBe('expense') // default
+    })
+  })
+
+  describe('extractIsCash', () => {
+    it('detects if the movement is in cash', () => {
+      expect(extractIsCash('un gasto de 12 euros en efectivo')).toBe(true)
+      expect(extractIsCash('ingreso de 10 con cash')).toBe(true)
+      expect(extractIsCash('gasto en la cartera')).toBe(true)
+      expect(extractIsCash('compra de 5 euros')).toBe(false)
     })
   })
 
@@ -114,28 +125,28 @@ describe('voiceParser', () => {
 
   describe('extractCategory', () => {
     it('matches category name precisely (with correct kind priority)', () => {
-      expect(extractCategory('gasto de comida rápida de hoy', mockCategories, 'expense')).toBe('cat-2')
-      expect(extractCategory('gasto de comida', mockCategories, 'expense')).toBe('cat-1')
+      expect(extractCategory('gasto de comida rápida de hoy', mockCategories, 'expense').categoryId).toBe('cat-2')
+      expect(extractCategory('gasto de comida', mockCategories, 'expense').categoryId).toBe('cat-1')
     })
 
     it('matches category name ignoring accents and case', () => {
-      expect(extractCategory('he gastado en cómida', mockCategories, 'expense')).toBe('cat-1')
-      expect(extractCategory('un ingreso para mi nomina', mockCategories, 'income')).toBe('cat-3')
+      expect(extractCategory('he gastado en cómida', mockCategories, 'expense').categoryId).toBe('cat-1')
+      expect(extractCategory('un ingreso para mi nomina', mockCategories, 'income').categoryId).toBe('cat-3')
     })
 
     it('falls back to first of kind if no match', () => {
-      expect(extractCategory('gasto en algo desconocido', mockCategories, 'expense')).toBe('cat-1') // Comida is first expense
+      expect(extractCategory('gasto en algo desconocido', mockCategories, 'expense').categoryId).toBe('cat-1') // Comida is first expense
     })
   })
 
   describe('extractFamilyMember', () => {
     it('matches family member name', () => {
-      expect(extractFamilyMember('gasto de comida de Ana', mockMembers)).toBe('mem-1')
-      expect(extractFamilyMember('gasto pagado por papa', mockMembers)).toBe('mem-2')
+      expect(extractFamilyMember('gasto de comida de Ana', mockMembers).familyMemberId).toBe('mem-1')
+      expect(extractFamilyMember('gasto pagado por papa', mockMembers).familyMemberId).toBe('mem-2')
     })
 
     it('falls back to default member if no match', () => {
-      expect(extractFamilyMember('gasto de comida de Luis', mockMembers, 'mem-1')).toBe('mem-1')
+      expect(extractFamilyMember('gasto de comida de Luis', mockMembers, 'mem-1').familyMemberId).toBe('mem-1')
     })
   })
 
@@ -148,6 +159,53 @@ describe('voiceParser', () => {
       expect(extractNote('gasto de 43 euros con nota cena de cumpleaños')).toBe('cena de cumpleaños')
       expect(extractNote('gasto de 5€ pon en notas almuerzo rápido')).toBe('almuerzo rápido')
       expect(extractNote('ingreso de 100 con el concepto transferencia mensual')).toBe('transferencia mensual')
+    })
+  })
+
+  describe('extractRecurring', () => {
+    beforeEach(() => {
+      vi.useFakeTimers()
+      vi.setSystemTime(new Date(2026, 9, 15)) // 15 de Octubre de 2026
+    })
+
+    afterEach(() => {
+      vi.useRealTimers()
+    })
+
+    it('detects simple recurrence frequencies', () => {
+      expect(extractRecurring('gasto todos los días de comida')).toEqual({
+        isRecurring: true, frequency: 'daily', months: [], dayOfMonth: 1
+      })
+      expect(extractRecurring('ingreso de nómina cada mes')).toEqual({
+        isRecurring: true, frequency: 'monthly', months: [], dayOfMonth: 15 // system date day is 15
+      })
+      expect(extractRecurring('gasto semanal de gasolina')).toEqual({
+        isRecurring: true, frequency: 'weekly', months: [], dayOfMonth: 1
+      })
+      expect(extractRecurring('gasto de seguro anual')).toEqual({
+        isRecurring: true, frequency: 'yearly', months: [], dayOfMonth: 1
+      })
+    })
+
+    it('detects custom recurrence with monthly day', () => {
+      expect(extractRecurring('gasto los 1 de cada mes')).toEqual({
+        isRecurring: true, frequency: 'monthly', months: [], dayOfMonth: 1
+      })
+      expect(extractRecurring('pago de hipoteca el día 10 de cada mes')).toEqual({
+        isRecurring: true, frequency: 'monthly', months: [], dayOfMonth: 10
+      })
+    })
+
+    it('detects custom recurrence with specific months and days', () => {
+      expect(extractRecurring('gasto los días 5 de enero marzo y abril')).toEqual({
+        isRecurring: true, frequency: 'custom', months: [1, 3, 4], dayOfMonth: 5
+      })
+    })
+
+    it('returns isRecurring false for non-recurring texts', () => {
+      expect(extractRecurring('gasto de 43 euros hoy')).toEqual({
+        isRecurring: false, frequency: 'monthly', months: [], dayOfMonth: 1
+      })
     })
   })
 
@@ -172,21 +230,42 @@ describe('voiceParser', () => {
         familyMemberId: 'mem-1',
         occurredOn: '2026-10-12',
         note: '',
+        isCash: false,
+        isRecurring: false,
+        frequency: 'monthly',
+        months: [],
+        dayOfMonth: 1,
+        unrecognizedFields: [],
       })
     })
 
-    it('parses a full natural Spanish sentence with note', () => {
-      const sentence = 'Crea un gasto de dos con cincuenta el día 12 de categoría Comida Rápida para Ana con nota cena familiar'
+    it('parses a full natural Spanish sentence with note, cash, and recurrence', () => {
+      const sentence = 'gasto de dos con cincuenta en efectivo los días 5 de enero y marzo para Ana con nota cena familiar'
       const parsed = parseVoiceCommand(sentence, mockCategories, mockMembers, 'mem-1')
 
       expect(parsed).toEqual({
         kind: 'expense',
         amount: 2.5,
-        categoryId: 'cat-2',
+        categoryId: 'cat-1', // Comida is fallback as Comida Rápida is not explicitly said and Comida is first
         familyMemberId: 'mem-1',
-        occurredOn: '2026-10-12',
+        occurredOn: '2026-10-15',
         note: 'cena familiar',
+        isCash: true,
+        isRecurring: true,
+        frequency: 'custom',
+        months: [1, 3],
+        dayOfMonth: 5,
+        unrecognizedFields: ['category'], // category was fallback
       })
+    })
+
+    it('reports unrecognized fields when important details are missing', () => {
+      const sentence = 'un gasto para papá'
+      const parsed = parseVoiceCommand(sentence, mockCategories, mockMembers, 'mem-1')
+
+      expect(parsed.unrecognizedFields).toContain('amount')
+      expect(parsed.unrecognizedFields).toContain('category')
+      expect(parsed.unrecognizedFields).not.toContain('familyMember') // Papá matched exactly
     })
   })
 })
