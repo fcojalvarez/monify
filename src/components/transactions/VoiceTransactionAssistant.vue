@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, reactive, watch, nextTick, onMounted } from 'vue'
+import type { CategoryKind, Category } from '@/types'
 import { useCategoriesStore } from '@/stores/categories'
 import { useFamilyStore } from '@/stores/family'
 import { useTransactionsStore } from '@/stores/transactions'
@@ -18,6 +19,7 @@ import BaseSwitch from '@/components/ui/BaseSwitch.vue'
 import SegmentedControl from '@/components/ui/SegmentedControl.vue'
 import CustomMonthsField from '@/components/transactions/CustomMonthsField.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
+import CategoryForm from '@/components/categories/CategoryForm.vue'
 
 const props = defineProps<{
   modelValue: boolean
@@ -33,6 +35,22 @@ const familyStore = useFamilyStore()
 const transactionsStore = useTransactionsStore()
 const recurringTransactionsStore = useRecurringTransactionsStore()
 const { t } = useI18n()
+
+const showCategoryDialog = ref(false)
+const categoryFormKind = ref<CategoryKind>('expense')
+const initialCategoryName = ref('')
+
+function openCategoryCreator(closeSelect: () => void, search: string) {
+  closeSelect()
+  categoryFormKind.value = form.kind
+  initialCategoryName.value = search.trim()
+  showCategoryDialog.value = true
+}
+
+function onCategoryCreated(newCategory: Category) {
+  showCategoryDialog.value = false
+  form.categoryId = newCategory.id
+}
 
 const isSupported = ref(
   typeof window !== 'undefined' &&
@@ -465,7 +483,16 @@ watch(() => props.modelValue, (isOpen) => {
             </div>
 
             <BaseSelect v-model="form.categoryId" :label="t('form.category')" :options="categoryOptions"
-              :placeholder="t('form.selectCategory')" />
+              :placeholder="t('form.selectCategory')" :no-item-message="t('common.noResults')">
+              <template #header="{ close, search }">
+                <button type="button"
+                  class="flex w-full items-center gap-2 rounded-lg px-3 py-3 text-left text-sm font-semibold text-primary-500 hover:bg-surface border-b border-line mb-1"
+                  @click="openCategoryCreator(close, search)">
+                  <AppIcon name="solar:add-circle-bold" :size="18" />
+                  <span>{{ t('common.createCategory') }}</span>
+                </button>
+              </template>
+            </BaseSelect>
 
             <BaseSelect v-model="form.familyMemberId" :label="t('form.belongsTo')" :options="memberOptions"
               :placeholder="t('form.selectMember')" />
@@ -515,5 +542,10 @@ watch(() => props.modelValue, (isOpen) => {
         </div>
       </div>
     </div>
+  </BaseDialog>
+
+  <BaseDialog v-model="showCategoryDialog" :title="t('common.createCategory')" :show-close="true">
+    <CategoryForm v-if="showCategoryDialog" :default-kind="categoryFormKind" :initial-name="initialCategoryName"
+      @saved="onCategoryCreated" @cancel="showCategoryDialog = false" />
   </BaseDialog>
 </template>
