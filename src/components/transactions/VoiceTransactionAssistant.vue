@@ -380,8 +380,7 @@ watch(() => props.modelValue, (isOpen) => {
       <!-- Result / Editing State -->
       <div v-else class="space-y-4 animate-fade-in">
         <!-- Error Banner -->
-        <div v-if="errorMsg"
-          class="rounded-field bg-expense-light/50 border border-expense/30 p-3 text-sm text-expense font-medium">
+        <div v-if="errorMsg" class="rounded-field border border-expense/30 p-3 text-sm text-expense font-medium">
           {{ errorMsg }}
         </div>
 
@@ -425,12 +424,12 @@ watch(() => props.modelValue, (isOpen) => {
           <!-- Unrecognized Fields Warn Banners -->
           <div v-if="hasParsed && unrecognized.length > 0" class="space-y-1.5 animate-fade-in">
             <div v-if="unrecognized.includes('amount')"
-              class="rounded-field bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/30 p-2.5 text-xs text-amber-800 dark:text-amber-300 leading-snug">
+              class="rounded-field  dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/30 p-2.5 text-xs text-amber-800 dark:text-amber-300 leading-snug">
               <AppIcon name="solar:info-circle-bold" :size="14" class="inline mr-1 text-amber-500" />
               No hemos podido detectar el importe en tu mensaje de voz. Por favor, introdúcelo manualmente.
             </div>
             <div v-if="unrecognized.includes('category')"
-              class="rounded-field bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/30 p-2.5 text-xs text-amber-800 dark:text-amber-300 leading-snug">
+              class="rounded-field  dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/30 p-2.5 text-xs text-amber-800 dark:text-amber-300 leading-snug">
               <AppIcon name="solar:info-circle-bold" :size="14" class="inline mr-1 text-amber-500" />
               No se reconoció una categoría exacta. Hemos seleccionado una por defecto; puedes cambiarla si lo deseas.
             </div>
