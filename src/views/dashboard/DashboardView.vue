@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, defineAsyncComponent } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, defineAsyncComponent } from 'vue'
 import { storeToRefs } from 'pinia'
 import type { TransactionWithRelations } from '@/types'
 import { useProfileStore } from '@/stores/profile'
@@ -121,6 +121,22 @@ async function selectPeriod() {
   await fetchTransactions()
 }
 
+/**
+ * Scroll top
+ */
+const showScrollTop = ref(false)
+
+function handleScroll() {
+  showScrollTop.value = window.scrollY > 500
+}
+
+function scrollToTop() {
+  window.scrollTo({
+    top: 0,
+    behavior: 'smooth',
+  })
+}
+
 const showSavingsPrompt = ref(false)
 
 async function activateSavings() {
@@ -136,6 +152,8 @@ function dismissSavingsPrompt() {
 }
 
 onMounted(async () => {
+  window.addEventListener('scroll', handleScroll)
+
   const promises: Promise<unknown>[] = [
     categories.fetchAll(),
     family.fetchAll(),
@@ -159,6 +177,10 @@ onMounted(async () => {
       showSavingsPrompt.value = true
     }, 1000)
   }
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('scroll', handleScroll)
 })
 </script>
 
@@ -266,12 +288,25 @@ onMounted(async () => {
       </BaseCard>
     </main>
 
-    <button
-      class="fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] right-4 md:right-[calc(50vw-20rem)] flex h-14 items-center gap-2 rounded-pill bg-primary-500 px-6 font-semibold text-white shadow-primary-glow transition-transform active:scale-95"
-      :aria-label="t('dashboard.addAria')" @click="openNewTransaction">
-      <AppIcon name="solar:add-circle-bold" :size="22" />
-      {{ t('common.add') }}
-    </button>
+    <div class="fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] right-4 md:right-[calc(50vw-20rem)] z-40 flex items-center gap-3 pointer-events-none">
+      <!-- Botón volver arriba -->
+      <Transition enter-active-class="transition duration-200 ease-out"
+        leave-active-class="transition duration-150 ease-in" enter-from-class="translate-y-4 opacity-0 scale-95"
+        leave-to-class="translate-y-4 opacity-0 scale-95">
+        <button v-if="showScrollTop" type="button"
+          class="pointer-events-auto flex h-14 w-14 items-center justify-center rounded-full bg-surface-raised border border-line text-content shadow-lg transition-transform hover:bg-surface-muted active:scale-95"
+          :aria-label="t('history.scrollTop')" :title="t('history.scrollTop')" @click="scrollToTop">
+          <AppIcon name="solar:alt-arrow-up-bold" :size="22" />
+        </button>
+      </Transition>
+
+      <button
+        class="pointer-events-auto flex h-14 items-center gap-2 rounded-pill bg-primary-500 px-6 font-semibold text-white shadow-primary-glow transition-transform active:scale-95"
+        :aria-label="t('dashboard.addAria')" @click="openNewTransaction">
+        <AppIcon name="solar:add-circle-bold" :size="22" />
+        {{ t('common.add') }}
+      </button>
+    </div>
 
     <BaseSheet v-model="showTransaction"
       :title="editingTransaction ? t('dashboard.editMovement') : t('dashboard.newMovement')"
