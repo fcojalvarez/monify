@@ -362,7 +362,6 @@ onBeforeUnmount(() => {
             <div class="h-px bg-white/15 mx-3"></div>
 
             <!-- Opción Voz -->
-            type="button"
             <button type="button"
               class="flex h-11 w-full items-center justify-center gap-2 rounded-[22px] hover:bg-white/10 active:scale-95 transition-all font-semibold text-xs whitespace-nowrap text-white"
               @click.stop="triggerVoice">
