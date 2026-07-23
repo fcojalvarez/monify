@@ -199,13 +199,19 @@ function closeSearch() {
       <FilterPanel @clear="clearFilters">
         <div class="grid grid-cols-2 gap-3 border-t border-line pt-4">
           <div>
-            <BaseDateInput v-model="filterNextFrom"
-              :label="t('recurringList.nextFrom') + ' (' + t('history.to').toLowerCase() + ')'" />
+            <BaseDateInput v-model="filterNextFrom" :label="t('recurringList.nextFrom')">
+              <template v-slot:label-slot>
+                <span class="text-xs text-content-subtle">({{ t('history.to') }})</span>
+              </template>
+            </BaseDateInput>
           </div>
 
           <div>
-            <BaseDateInput v-model="filterNextTo"
-              :label="t('recurringList.nextTo') + ' (' + t('history.from').toLowerCase() + ')'" />
+            <BaseDateInput v-model="filterNextTo" :label="t('recurringList.nextTo')">
+              <template v-slot:label-slot>
+                <span class="text-xs text-content-subtle">({{ t('history.from') }})</span>
+              </template>
+            </BaseDateInput>
           </div>
         </div>
 
