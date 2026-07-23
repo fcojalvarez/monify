@@ -50,8 +50,16 @@ const balancePeriodLabel = computed(() => t(`dashboard.period.${activeFilter.val
 
 /** Neto de efectivo (entradas − salidas) del periodo activo para la tarjeta de balance. */
 const cashPeriodNet = computed(() => {
-  const { from, to } = currentPeriodRange(activeFilter.value)
-  return cashStore.netForRange(from, to)
+  return items.value
+    .filter((t) => t.payment_method === 'cash')
+    .reduce((sum, t) => sum + (t.kind === 'income' ? t.amount : -t.amount), 0)
+})
+
+/** Neto del banco (entradas − salidas) del periodo activo para la tarjeta de balance. */
+const bankPeriodNet = computed(() => {
+  return items.value
+    .filter((t) => t.payment_method !== 'cash')
+    .reduce((sum, t) => sum + (t.kind === 'income' ? t.amount : -t.amount), 0)
 })
 
 const filteredItems = computed(() => items.value)
@@ -192,7 +200,7 @@ onMounted(async () => {
       </div>
 
       <BalanceSummary :summary="summary" :period-label="balancePeriodLabel" :savings="savings" :cash="cash"
-        :cash-period-net="cashPeriodNet" :savings-loaded="savingsLoaded" :cash-enabled="cashEnabled"
+        :cash-period-net="cashPeriodNet" :bank-period-net="bankPeriodNet" :savings-loaded="savingsLoaded" :cash-enabled="cashEnabled"
         :members="family.items" />
 
       <div v-if="family.items.length > 0" class="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">

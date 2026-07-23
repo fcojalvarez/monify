@@ -91,18 +91,23 @@ describe('BalanceSummary', () => {
 
     expect(wrapper.text()).toContain('Banco')
     expect(wrapper.text()).toContain('Efectivo')
-    expect(wrapper.text()).toContain('1150,00')
+    // El balance principal es exactamente summary.balance (1000)
+    expect(wrapper.text()).toContain('1000,00')
+    // El neto del banco es summary.balance (1000) - cashPeriodNet (150) = 850
+    expect(wrapper.text()).toContain('850,00')
+    // El neto de efectivo es cashPeriodNet (150)
+    expect(wrapper.text()).toContain('150,00')
   })
 
-  it('la tarjeta de balance suma el efectivo del periodo, no el efectivo total', () => {
+  it('la tarjeta de balance muestra el balance del periodo, no la suma con el acumulado total', () => {
     const wrapper = mount(BalanceSummary, {
       ...globalOptions,
       // Hay 999 € de efectivo acumulado, pero en el periodo solo se han movido 40 €.
       props: { ...defaultProps(), cashEnabled: true, cash: 999, cashPeriodNet: 40 },
     })
 
-    // Balance del periodo = balance bancario (1000) + neto de efectivo del periodo (40)
-    expect(wrapper.text()).toContain('1040,00')
+    // Balance principal del periodo es summary.balance (1000)
+    expect(wrapper.text()).toContain('1000,00')
     expect(wrapper.text()).not.toContain('1999,00')
   })
 

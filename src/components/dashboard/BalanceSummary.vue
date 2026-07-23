@@ -21,9 +21,15 @@ const props = defineProps<{
   cash: number
   /** Neto de efectivo (entradas − salidas) del periodo activo (para la tarjeta de balance). */
   cashPeriodNet: number
+  bankPeriodNet?: number
   cashEnabled: boolean
   members: FamilyMember[]
 }>()
+
+const displayBankPeriodNet = computed(() => {
+  if (props.bankPeriodNet !== undefined) return props.bankPeriodNet
+  return props.summary.balance - (props.cashPeriodNet ?? 0)
+})
 
 const { isDesktop } = usePlatform()
 const carouselRef = ref<HTMLElement>()
@@ -215,12 +221,12 @@ onBeforeUnmount(() => walletPreviewObserver?.disconnect())
               <p class="text-sm text-white/70">{{ t('dashboard.balance', { period: props.periodLabel }) }}</p>
               <div class="mt-1 flex items-end justify-between">
                 <p class="text-3xl font-bold tracking-tight">
-                  {{ formatCurrency(props.summary.balance + (props.cashEnabled ? props.cashPeriodNet : 0), { currency: props.summary.currency }) }}
+                  {{ formatCurrency(props.summary.balance, { currency: props.summary.currency }) }}
                 </p>
                 <div v-if="props.cashEnabled" class="mr-2 flex gap-4 pb-1 text-right">
                   <div>
                     <p class="text-[9px] uppercase text-white/60">{{ t('summary.bank') }}</p>
-                    <p class="text-sm font-semibold">{{ formatCurrency(props.summary.balance, {
+                    <p class="text-sm font-semibold">{{ formatCurrency(displayBankPeriodNet, {
                       currency:
                         props.summary.currency
                     }) }}</p>
