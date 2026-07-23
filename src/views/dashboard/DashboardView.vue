@@ -309,12 +309,7 @@ onBeforeUnmount(() => {
           </h2>
 
           <div class="relative flex items-center w-28">
-            <BaseSelect
-              v-model="activeFilter"
-              size="sm"
-              :options="filterOptions"
-              @update:model-value="selectPeriod"
-            />
+            <BaseSelect v-model="activeFilter" size="sm" :options="filterOptions" @update:model-value="selectPeriod" />
           </div>
         </div>
 
@@ -353,7 +348,9 @@ onBeforeUnmount(() => {
             <span class="font-semibold text-sm tracking-wide">{{ t('common.add') }}</span>
           </div>
 
-          <div v-else class="flex flex-col gap-1 w-full h-full justify-center p-1 animate-fade-in">
+          <!-- Expandido: Opciones Manual y Voz apiladas verticalmente con separador elegante -->
+          <div v-else class="flex flex-col gap-0.5 w-full h-full justify-center p-1 animate-fade-in">
+            <!-- Opción Manual -->
             <button type="button"
               class="flex h-11 w-full items-center justify-center gap-2 rounded-[22px] hover:bg-white/10 active:scale-95 transition-all font-semibold text-xs whitespace-nowrap text-white"
               @click.stop="triggerManual">
@@ -361,11 +358,16 @@ onBeforeUnmount(() => {
               <span class="font-semibold text-sm">{{ t('common.manual') }}</span>
             </button>
 
+            <!-- Separador minimalista y elegante -->
+            <div class="h-px bg-white/15 mx-3"></div>
+
+            <!-- Opción Voz -->
+            type="button"
             <button type="button"
               class="flex h-11 w-full items-center justify-center gap-2 rounded-[22px] hover:bg-white/10 active:scale-95 transition-all font-semibold text-xs whitespace-nowrap text-white"
               @click.stop="triggerVoice">
               <AppIcon name="solar:microphone-bold" :size="16" />
-              <span class="font-semibold text-sm">{{ t('voice.buttonLabelShort') }}</span>
+              <span>{{ t('voice.buttonLabelShort') }}</span>
             </button>
           </div>
         </div>
