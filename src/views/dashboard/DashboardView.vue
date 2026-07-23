@@ -222,8 +222,8 @@ onBeforeUnmount(() => {
       </div>
 
       <BalanceSummary :summary="summary" :period-label="balancePeriodLabel" :savings="savings" :cash="cash"
-        :cash-period-net="cashPeriodNet" :bank-period-net="bankPeriodNet" :savings-loaded="savingsLoaded" :cash-enabled="cashEnabled"
-        :members="family.items" />
+        :cash-period-net="cashPeriodNet" :bank-period-net="bankPeriodNet" :savings-loaded="savingsLoaded"
+        :cash-enabled="cashEnabled" :members="family.items" />
 
       <div v-if="family.items.length > 0" class="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
         <button class="shrink-0 rounded-pill px-4 py-2 text-sm font-medium transition-colors"
@@ -239,9 +239,9 @@ onBeforeUnmount(() => {
           {{ member.name }}
         </button>
 
-        <button class="shrink-0 rounded-full h-9 w-9 flex items-center justify-center bg-surface-muted text-primary-500 hover:bg-line transition-colors"
-          :aria-label="t('profile.addPerson')"
-          @click="openAddMember">
+        <button
+          class="shrink-0 rounded-full h-9 w-9 flex items-center justify-center bg-surface-muted text-primary-500 hover:bg-line transition-colors"
+          :aria-label="t('profile.addPerson')" @click="openAddMember">
           <AppIcon name="solar:add-circle-bold" :size="20" />
         </button>
       </div>
@@ -288,13 +288,13 @@ onBeforeUnmount(() => {
       </BaseCard>
     </main>
 
-    <div class="fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] right-4 md:right-[calc(50vw-20rem)] z-40 flex items-center gap-3 pointer-events-none">
-      <!-- Botón volver arriba -->
+    <div
+      class="fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] right-4 md:right-[calc(50vw-20rem)] z-40 flex items-center gap-3 pointer-events-none">
       <Transition enter-active-class="transition duration-200 ease-out"
         leave-active-class="transition duration-150 ease-in" enter-from-class="translate-y-4 opacity-0 scale-95"
         leave-to-class="translate-y-4 opacity-0 scale-95">
         <button v-if="showScrollTop" type="button"
-          class="pointer-events-auto flex h-14 w-14 items-center justify-center rounded-full bg-surface-raised border border-line text-content shadow-lg transition-transform hover:bg-surface-muted active:scale-95"
+          class="pointer-events-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary-500 text-white shadow-lg hover:bg-primary-600 active:scale-95 text-content transition-transform hover:bg-surface-muted"
           :aria-label="t('history.scrollTop')" :title="t('history.scrollTop')" @click="scrollToTop">
           <AppIcon name="solar:alt-arrow-up-bold" :size="22" />
         </button>
@@ -315,9 +315,7 @@ onBeforeUnmount(() => {
         @cancel="showTransaction = false" />
     </BaseSheet>
 
-    <BaseSheet v-model="showAddMember"
-      :title="t('profile.addPerson')"
-      :has-changes="familyFormRef?.hasChanges">
+    <BaseSheet v-model="showAddMember" :title="t('profile.addPerson')" :has-changes="familyFormRef?.hasChanges">
       <FamilyForm ref="familyFormRef" @saved="onFamilyMemberSaved" @cancel="showAddMember = false" />
     </BaseSheet>
 
