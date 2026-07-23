@@ -263,6 +263,7 @@
     "keepEditing": "Keep editing",
     "unsavedChangesMessage": "You have unsaved changes. Are you sure you want to leave? The entered data will be lost.",
     "select": "Select…",
+    "selectDate": "Select date",
     "search": "Search",
     "noResults": "No results for this search.",
     "goToSettingsToCategories": "Go to settings to add categories.",
@@ -278,6 +279,7 @@
     "cancel": "Cancel",
     "save": "Save",
     "add": "Add",
+    "manual": "Manual",
     "loading": "Loading…",
     "addMember": "Add member",
     "createCategory": "Create category",
@@ -564,6 +566,7 @@
   "voice": {
     "title": "Voice Assistant",
     "buttonLabel": "Voice Assistant",
+    "buttonLabelShort": "Voice",
     "listening": "Listening...",
     "speakPrompt": "Say something like: \"Create an expense of 43€ today of category Food\"",
     "stop": "Stop",

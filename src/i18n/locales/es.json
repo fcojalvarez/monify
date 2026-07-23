@@ -263,6 +263,7 @@
     "keepEditing": "Seguir editando",
     "unsavedChangesMessage": "Tienes cambios sin guardar. ¿Seguro que quieres salir? Se perderán los datos introducidos.",
     "select": "Selecciona…",
+    "selectDate": "Seleccionar fecha",
     "search": "Buscar",
     "noResults": "No hay resultados para esta búsqueda.",
     "goToSettingsToCategories": "Ir a configuración para añadir categorías.",
@@ -278,6 +279,7 @@
     "cancel": "Cancelar",
     "save": "Guardar",
     "add": "Añadir",
+    "manual": "Manual",
     "loading": "Cargando…",
     "addMember": "Añadir miembro",
     "createCategory": "Crear categoría",
@@ -564,6 +566,7 @@
   "voice": {
     "title": "Asistente de voz",
     "buttonLabel": "Asistente de voz",
+    "buttonLabelShort": "Voz",
     "listening": "Escuchando...",
     "speakPrompt": "Di algo como: \"Crea un gasto de 43€ hoy de categoría Comida\"",
     "stop": "Detener",
