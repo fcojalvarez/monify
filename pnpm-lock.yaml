@@ -110,6 +110,13 @@ packages:
       }
     engines: { node: '>=10' }
 
+  '@alloc/quick-lru@5.2.0':
+    resolution:
+      {
+        integrity: sha512-UrcABB+4bUrFABwbluTIBErXwvbsU/V7TZWfmbgJfbkwiBuziS9gxdODUyuiecfdGQ85jglMW6juS3+z5TsKLw==,
+      }
+    engines: { node: '>=10' }
+
   '@ampproject/remapping@2.3.0':
     resolution:
       {

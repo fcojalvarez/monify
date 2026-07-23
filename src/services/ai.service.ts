@@ -53,7 +53,8 @@ Instrucciones de análisis:
   const prompt = `Analiza la siguiente transcripción y genera el JSON correspondiente según el esquema solicitado:
 "${text}"`
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`
+  // Usamos gemini-1.5-flash por máxima compatibilidad regional y estabilidad de cuotas
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`
 
   try {
     const response = await fetch(url, {
@@ -114,15 +115,20 @@ Instrucciones de análisis:
 
     if (!response.ok) {
       const errorText = await response.text()
-      console.error(`[AI Parser] Gemini API error: ${response.status} - ${errorText}`)
-      throw new Error(`Gemini API error ${response.status}: ${errorText}`)
+      let errorDetail = errorText
+      try {
+        const errorJson = JSON.parse(errorText)
+        if (errorJson.error?.message) {
+          errorDetail = errorJson.error.message
+        }
+      } catch (e) {}
+      throw new Error(`Error de la API de Gemini: ${response.status} - ${errorDetail}`)
     }
 
     const data = await response.json()
     const contentText = data.candidates?.[0]?.content?.parts?.[0]?.text
     if (!contentText) {
-      console.error('[AI Parser] Empty content from Gemini:', data)
-      throw new Error('Gemini returned empty content.')
+      throw new Error('La API de Gemini devolvió una respuesta vacía.')
     }
 
     const parsed = JSON.parse(contentText)
@@ -147,114 +153,7 @@ Instrucciones de análisis:
       usedAI: true,
     }
   } catch (err) {
-    // If it's a network error or fetch failed, we can still fall back
-    if (err instanceof TypeError || (err instanceof Error && err.message.includes('fetch'))) {
-      console.warn('[AI Parser] Network error. Falling back to local parser.', err)
-      const parsed = parseVoiceCommand(text, categories, familyMembers, defaultFamilyMemberId)
-      return { parsed, usedAI: false }
-    }
-    // Otherwise re-throw so the UI can show the real API error
-    throw err
-  }
-
-  try {
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        contents: [
-          {
-            parts: [{ text: prompt }],
-          },
-        ],
-        systemInstruction: {
-          parts: [{ text: systemInstruction }],
-        },
-        generationConfig: {
-          responseMimeType: 'application/json',
-          responseSchema: {
-            type: 'OBJECT',
-            properties: {
-              kind: { type: 'STRING', enum: ['expense', 'income'] },
-              amount: { type: 'NUMBER' },
-              categoryId: { type: 'STRING' },
-              familyMemberId: { type: 'STRING' },
-              occurredOn: { type: 'STRING' },
-              note: { type: 'STRING' },
-              isCash: { type: 'BOOLEAN' },
-              isRecurring: { type: 'BOOLEAN' },
-              frequency: {
-                type: 'STRING',
-                enum: ['daily', 'weekly', 'monthly', 'yearly', 'custom'],
-              },
-              months: { type: 'ARRAY', items: { type: 'INTEGER' } },
-              dayOfMonth: { type: 'INTEGER' },
-              unrecognizedFields: {
-                type: 'ARRAY',
-                items: { type: 'STRING', enum: ['amount', 'category', 'familyMember'] },
-              },
-            },
-            required: [
-              'kind',
-              'categoryId',
-              'familyMemberId',
-              'occurredOn',
-              'note',
-              'isCash',
-              'isRecurring',
-              'frequency',
-              'months',
-              'dayOfMonth',
-              'unrecognizedFields',
-            ],
-          },
-        },
-      }),
-    })
-
-    if (!response.ok) {
-      const errorText = await response.text()
-      console.warn(
-        `[AI Parser] Gemini API returned error: ${response.status} - ${errorText}. Falling back to local parser.`,
-      )
-      const parsed = parseVoiceCommand(text, categories, familyMembers, defaultFamilyMemberId)
-      return { parsed, usedAI: false }
-    }
-
-    const data = await response.json()
-    const contentText = data.candidates?.[0]?.content?.parts?.[0]?.text
-    if (!contentText) {
-      console.warn('[AI Parser] Empty content from Gemini. Falling back to local parser.')
-      const parsed = parseVoiceCommand(text, categories, familyMembers, defaultFamilyMemberId)
-      return { parsed, usedAI: false }
-    }
-
-    const parsed = JSON.parse(contentText)
-
-    return {
-      parsed: {
-        kind: parsed.kind || 'expense',
-        amount: typeof parsed.amount === 'number' ? parsed.amount : null,
-        categoryId: parsed.categoryId || '',
-        familyMemberId: parsed.familyMemberId || defaultFamilyMemberId,
-        occurredOn: parsed.occurredOn || currentDate,
-        note: parsed.note || '',
-        isCash: !!parsed.isCash,
-        isRecurring: !!parsed.isRecurring,
-        frequency: parsed.frequency || 'monthly',
-        months: Array.isArray(parsed.months) ? parsed.months : [],
-        dayOfMonth: typeof parsed.dayOfMonth === 'number' ? parsed.dayOfMonth : 1,
-        unrecognizedFields: Array.isArray(parsed.unrecognizedFields)
-          ? parsed.unrecognizedFields
-          : [],
-      },
-      usedAI: true,
-    }
-  } catch (err) {
-    console.warn('[AI Parser] Error during Gemini API call. Falling back to local parser.', err)
-    const parsed = parseVoiceCommand(text, categories, familyMembers, defaultFamilyMemberId)
-    return { parsed, usedAI: false }
+    console.warn('[AI Parser] Error during Gemini API call.', err)
+    throw err // Lanzamos el error para que sea capturado en la UI
   }
 }

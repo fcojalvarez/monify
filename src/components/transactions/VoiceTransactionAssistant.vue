@@ -218,6 +218,18 @@ async function processTranscript(text: string) {
       form.dayOfMonth = String(parsed.dayOfMonth)
     }
 
+    // Forzar sincronización de la fecha (occurredOn) con el día de recurrencia si es mensual o personalizado.
+    // Solo si el usuario no especificó otra fecha (es decir, es la fecha de hoy por defecto)
+    if (form.isRecurring && (form.frequency === 'monthly' || form.frequency === 'custom')) {
+      const dayNum = Number(form.dayOfMonth)
+      if (dayNum >= 1 && dayNum <= 31 && form.occurredOn === todayISO()) {
+        const parts = form.occurredOn.split('-')
+        if (parts.length === 3) {
+          form.occurredOn = `${parts[0]}-${parts[1]}-${String(dayNum).padStart(2, '0')}`
+        }
+      }
+    }
+
     // Filtrar unrecognized según lo que ya está seleccionado o completado en el formulario
     const newUnrecognized = [...parsed.unrecognizedFields]
     if (form.amount) {
@@ -528,14 +540,20 @@ watch(() => props.modelValue, (isOpen) => {
           <!-- Unrecognized Fields Warn Banners -->
           <div v-if="hasParsed && unrecognized.length > 0" class="space-y-1.5 animate-fade-in">
             <div v-if="unrecognized.includes('amount')"
-              class="rounded-field  dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/30 p-2.5 text-xs text-amber-800 dark:text-amber-300 leading-snug">
+              class="rounded-field bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/30 p-2.5 text-xs text-amber-800 dark:text-amber-300 leading-snug">
               <AppIcon name="solar:info-circle-bold" :size="14" class="inline mr-1 text-amber-500" />
               No hemos podido detectar el importe en tu mensaje de voz. Por favor, introdúcelo manualmente.
             </div>
             <div v-if="unrecognized.includes('category')"
-              class="rounded-field  dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/30 p-2.5 text-xs text-amber-800 dark:text-amber-300 leading-snug">
+              class="rounded-field bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/30 p-2.5 text-xs text-amber-800 dark:text-amber-300 leading-snug">
               <AppIcon name="solar:info-circle-bold" :size="14" class="inline mr-1 text-amber-500" />
               No se reconoció una categoría exacta. Hemos seleccionado una por defecto; puedes cambiarla si lo deseas.
+            </div>
+            <div v-if="unrecognized.includes('familyMember')"
+              class="rounded-field bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/30 p-2.5 text-xs text-amber-800 dark:text-amber-300 leading-snug">
+              <AppIcon name="solar:info-circle-bold" :size="14" class="inline mr-1 text-amber-500" />
+              No detectamos a qué miembro de la familia pertenece. Hemos seleccionado a ti por defecto; puedes
+              cambiarlo.
             </div>
           </div>
 
@@ -611,7 +629,10 @@ watch(() => props.modelValue, (isOpen) => {
           </div>
 
           <!-- Footer Actions -->
-          <div class="flex justify-end gap-3 pt-2" v-if="hasParsed">
+          <div class="flex justify-end gap-3 pt-2">
+            <BaseButton variant="ghost" @click="handleClose">
+              {{ t('voice.discard') }}
+            </BaseButton>
             <BaseButton :loading="saving" :disabled="!hasParsed" @click="handleConfirm">
               {{ t('voice.confirm') }}
             </BaseButton>
@@ -623,7 +644,7 @@ watch(() => props.modelValue, (isOpen) => {
           <button @click="showAISettings = !showAISettings"
             class="flex items-center gap-1.5 text-content-muted hover:text-primary transition-colors font-medium">
             <AppIcon :name="showAISettings ? 'solar:alt-arrow-up-bold' : 'solar:settings-bold'" :size="14" />
-            <span>{{ showAISettings ? 'Ocultar ajustes de IA' : 'Ajustes de IA' }}</span>
+            <span>{{ showAISettings ? 'Ocultar ajustes de IA' : 'Ajustes de IA ✨' }}</span>
             <span v-if="geminiApiKey" class="text-emerald-500 font-bold ml-1 flex items-center gap-0.5">
               <span class="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
               Activa

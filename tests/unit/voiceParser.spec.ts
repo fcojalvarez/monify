@@ -283,7 +283,7 @@ describe('voiceParser', () => {
         amount: 2.5,
         categoryId: 'cat-1', // Comida is first fallback
         familyMemberId: 'mem-1',
-        occurredOn: '2026-10-15',
+        occurredOn: '2026-10-05',
         note: 'family dinner',
         isCash: true,
         isRecurring: true,
