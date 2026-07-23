@@ -108,8 +108,12 @@ function triggerManual() {
 }
 
 function triggerVoice() {
-  openVoiceAssistant()
-  isExpanded.value = false
+  try {
+    openVoiceAssistant()
+    isExpanded.value = false
+  } catch (error) {
+
+  }
 }
 
 const showAddMember = ref(false)
