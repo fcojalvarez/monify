@@ -560,5 +560,27 @@
     "deleteConfirmBody": "¿Estás seguro de que deseas eliminar este movimiento? Esta acción no se puede deshacer.",
     "insufficientWallet": "No hay esa cantidad en la cartera de {name}",
     "thisPerson": "esta persona"
+  },
+  "voice": {
+    "title": "Asistente de voz",
+    "buttonLabel": "Asistente de voz",
+    "listening": "Escuchando...",
+    "speakPrompt": "Di algo como: \"Crea un gasto de 43€ hoy de categoría Comida\"",
+    "stop": "Detener",
+    "notSupported": "Tu navegador no soporta el reconocimiento de voz de forma nativa. ¡No te preocupes! Puedes escribir tu orden a continuación:",
+    "fallbackPlaceholder": "Escribe aquí tu orden... (ej: gasto de 45€ comida hoy)",
+    "process": "Procesar",
+    "summaryTitle": "Confirmar movimiento por voz",
+    "success": "¡Movimiento creado con éxito!",
+    "errorTitle": "Error al guardar",
+    "type": "Tipo",
+    "amount": "Importe",
+    "category": "Categoría",
+    "date": "Fecha",
+    "member": "Miembro",
+    "note": "Nota",
+    "confirm": "Confirmar y crear",
+    "discard": "Cancelar",
+    "parsingError": "No se pudo interpretar el texto. Por favor, asegúrate de indicar al menos el importe (ej: 43€)."
   }
 }

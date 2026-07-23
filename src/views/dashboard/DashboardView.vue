@@ -26,6 +26,7 @@ import { useI18n } from '@/i18n'
 
 const TransactionForm = defineAsyncComponent(() => import('@/components/transactions/TransactionForm.vue'))
 const FamilyForm = defineAsyncComponent(() => import('@/components/family/FamilyForm.vue'))
+const VoiceTransactionAssistant = defineAsyncComponent(() => import('@/components/transactions/VoiceTransactionAssistant.vue'))
 
 const profile = useProfileStore()
 const categories = useCategoriesStore()
@@ -70,6 +71,7 @@ const limitedUsage = computed(() =>
 
 const showTransaction = ref(false)
 const editingTransaction = ref<TransactionWithRelations | undefined>()
+const showVoiceAssistant = ref(false)
 
 const transactionFormRef = ref<InstanceType<typeof TransactionForm> | null>(null)
 
@@ -95,8 +97,13 @@ function openEditTransaction(transaction: TransactionWithRelations) {
   showTransaction.value = true
 }
 
+function openVoiceAssistant() {
+  showVoiceAssistant.value = true
+}
+
 async function onTransactionSaved() {
   showTransaction.value = false
+  showVoiceAssistant.value = false
   await fetchTransactions()
   if (profile.cashEnabled) {
     await cashStore.refresh()
@@ -306,6 +313,13 @@ onBeforeUnmount(() => {
         <AppIcon name="solar:add-circle-bold" :size="22" />
         {{ t('common.add') }}
       </button>
+
+      <!-- Botón del Asistente de Voz -->
+      <button
+        class="pointer-events-auto flex h-14 w-14 items-center justify-center rounded-full bg-violet-600 text-white shadow-lg hover:bg-violet-700 transition-transform active:scale-95"
+        :aria-label="t('voice.buttonLabel')" :title="t('voice.buttonLabel')" @click="openVoiceAssistant">
+        <AppIcon name="solar:microphone-bold" :size="24" />
+      </button>
     </div>
 
     <BaseSheet v-model="showTransaction"
@@ -318,6 +332,8 @@ onBeforeUnmount(() => {
     <BaseSheet v-model="showAddMember" :title="t('profile.addPerson')" :has-changes="familyFormRef?.hasChanges">
       <FamilyForm ref="familyFormRef" @saved="onFamilyMemberSaved" @cancel="showAddMember = false" />
     </BaseSheet>
+
+    <VoiceTransactionAssistant v-model="showVoiceAssistant" @saved="onTransactionSaved" />
 
   </div>
 </template>
