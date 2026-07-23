@@ -280,7 +280,7 @@ onBeforeUnmount(() => {
         <button
           class="shrink-0 rounded-full h-9 w-9 flex items-center justify-center bg-surface-muted text-primary-500 hover:bg-line transition-colors"
           :aria-label="t('profile.addPerson')" @click="openAddMember">
-          <AppIcon name="solar:add-circle-bold" :size="20" />
+          <AppIcon name="solar:add-circle-bold" :size="24" />
         </button>
       </div>
 
