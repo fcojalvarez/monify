@@ -11,6 +11,7 @@ import { customOccurrenceOnOrAfter, normalizeMonths } from '@/utils/recurring'
 import { useCategoryOptions, useMemberOptions } from '@/composables/useEntityOptions'
 import BaseDialog from '@/components/ui/BaseDialog.vue'
 import BaseInput from '@/components/ui/BaseInput.vue'
+import BaseDateInput from '@/components/ui/BaseDateInput.vue'
 import BaseSelect from '@/components/ui/BaseSelect.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import BaseSwitch from '@/components/ui/BaseSwitch.vue'
@@ -236,7 +237,11 @@ function processTranscript(text: string, isIncremental = false) {
 }
 
 function handleReprocess() {
-  processTranscript(transcript.value)
+  try {
+    processTranscript(transcript.value)
+  } catch (error) {
+    console.log(error);
+  }
 }
 
 function handleClose() {
@@ -285,17 +290,17 @@ async function handleConfirm() {
       const day = Number(form.dayOfMonth)
       const scheduleData = form.frequency === 'custom'
         ? {
-            frequency: 'custom' as const,
-            start_on: form.occurredOn,
-            next_execution: customOccurrenceOnOrAfter(form.occurredOn, form.months, day),
-            months: normalizeMonths(form.months),
-            day_of_month: day,
-          }
+          frequency: 'custom' as const,
+          start_on: form.occurredOn,
+          next_execution: customOccurrenceOnOrAfter(form.occurredOn, form.months, day),
+          months: normalizeMonths(form.months),
+          day_of_month: day,
+        }
         : {
-            frequency: form.frequency,
-            start_on: form.occurredOn,
-            next_execution: form.occurredOn,
-          }
+          frequency: form.frequency,
+          start_on: form.occurredOn,
+          next_execution: form.occurredOn,
+        }
 
       await recurringTransactionsStore.create({
         ...baseData,
@@ -358,26 +363,20 @@ watch(() => props.modelValue, (isOpen) => {
 </script>
 
 <template>
-  <BaseDialog
-    :model-value="modelValue"
-    :title="t('voice.title')"
-    :show-close="true"
-    @close="handleClose"
-  >
+  <BaseDialog :model-value="modelValue" :title="t('voice.title')" :show-close="true" @close="handleClose">
     <div class="space-y-6">
       <!-- Listening State -->
-      <div v-if="isListening" class="flex flex-col items-center justify-center py-6 text-center space-y-4 animate-fade-in">
+      <div v-if="isListening"
+        class="flex flex-col items-center justify-center py-6 text-center space-y-4 animate-fade-in">
         <div class="relative flex items-center justify-center">
           <!-- Outer pulsing ring -->
           <span class="absolute inline-flex h-20 w-20 animate-ping rounded-full bg-violet-400/30 opacity-75"></span>
           <!-- Inner pulsing ring -->
           <span class="absolute inline-flex h-16 w-16 animate-pulse rounded-full bg-violet-400/50"></span>
           <!-- Microphone Button -->
-          <button
-            type="button"
+          <button type="button"
             class="relative flex h-14 w-14 items-center justify-center rounded-full bg-violet-600 text-white shadow-lg focus:outline-none"
-            @click="stopListening"
-          >
+            @click="stopListening">
             <AppIcon name="solar:microphone-bold" :size="28" />
           </button>
         </div>
@@ -399,7 +398,8 @@ watch(() => props.modelValue, (isOpen) => {
       <!-- Result / Editing State -->
       <div v-else class="space-y-4 animate-fade-in">
         <!-- Error Banner -->
-        <div v-if="errorMsg" class="rounded-field bg-expense-light/50 border border-expense/30 p-3 text-sm text-expense font-medium">
+        <div v-if="errorMsg"
+          class="rounded-field bg-expense-light/50 border border-expense/30 p-3 text-sm text-expense font-medium">
           {{ errorMsg }}
         </div>
 
@@ -411,14 +411,10 @@ watch(() => props.modelValue, (isOpen) => {
           </p>
 
           <div class="flex gap-2">
-            <input
-              v-model="transcript"
-              type="text"
-              :placeholder="t('voice.fallbackPlaceholder')"
+            <input v-model="transcript" type="text" :placeholder="t('voice.fallbackPlaceholder')"
               class="h-11 flex-1 rounded-field border border-line bg-surface-muted px-4 text-sm text-content focus:border-primary-400 focus:outline-none focus:shadow-focus"
-              @keyup.enter="handleReprocess"
-            />
-            <BaseButton variant="secondary" size="sm" class="h-11" @click="handleReprocess">
+              @keyup.enter="handleReprocess" />
+            <BaseButton variant="secondary" size="md" class="h-12" @click="handleReprocess">
               <AppIcon name="solar:play-bold" :size="16" />
               {{ t('voice.process') }}
             </BaseButton>
@@ -427,11 +423,9 @@ watch(() => props.modelValue, (isOpen) => {
 
         <!-- Pulse Mic when we can try again -->
         <div v-if="isSupported && !isListening" class="flex justify-center py-1">
-          <button
-            type="button"
+          <button type="button"
             class="flex items-center gap-2 rounded-pill bg-violet-50 hover:bg-violet-100 dark:bg-violet-950/40 dark:hover:bg-violet-900/50 px-4 py-2 text-xs font-semibold text-violet-600 dark:text-violet-400 transition-colors"
-            @click="startListening"
-          >
+            @click="startListening">
             <AppIcon name="solar:microphone-bold" :size="16" />
             <span>Volver a grabar voz</span>
           </button>
@@ -439,11 +433,13 @@ watch(() => props.modelValue, (isOpen) => {
 
         <!-- Unrecognized Fields Warn Banners -->
         <div v-if="hasParsed && unrecognized.length > 0" class="space-y-1.5 animate-fade-in">
-          <div v-if="unrecognized.includes('amount')" class="rounded-field bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/30 p-2.5 text-xs text-amber-800 dark:text-amber-300 leading-snug">
+          <div v-if="unrecognized.includes('amount')"
+            class="rounded-field bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/30 p-2.5 text-xs text-amber-800 dark:text-amber-300 leading-snug">
             <AppIcon name="solar:info-circle-bold" :size="14" class="inline mr-1 text-amber-500" />
             No hemos podido detectar el importe en tu mensaje de voz. Por favor, introdúcelo manualmente.
           </div>
-          <div v-if="unrecognized.includes('category')" class="rounded-field bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/30 p-2.5 text-xs text-amber-800 dark:text-amber-300 leading-snug">
+          <div v-if="unrecognized.includes('category')"
+            class="rounded-field bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/30 p-2.5 text-xs text-amber-800 dark:text-amber-300 leading-snug">
             <AppIcon name="solar:info-circle-bold" :size="14" class="inline mr-1 text-amber-500" />
             No se reconoció una categoría exacta. Hemos seleccionado una por defecto; puedes cambiarla si lo deseas.
           </div>
@@ -456,50 +452,26 @@ watch(() => props.modelValue, (isOpen) => {
           </h4>
 
           <div class="space-y-3">
-            <SegmentedControl
-              v-model="form.kind"
-              :options="[
-                { value: 'expense', label: t('form.expense') },
-                { value: 'income', label: t('form.income') },
-              ]"
-            />
+            <SegmentedControl v-model="form.kind" :options="[
+              { value: 'expense', label: t('form.expense') },
+              { value: 'income', label: t('form.income') },
+            ]" />
 
             <BaseSwitch v-model="form.isCash" :label="t('form.isCash')" />
 
             <div class="grid grid-cols-2 gap-3">
-              <BaseInput
-                v-model="form.amount"
-                :label="t('form.amount')"
-                type="number"
-                placeholder="0.00"
-              />
-              <BaseInput
-                v-model="form.occurredOn"
-                :label="t('form.date')"
-                type="date"
-              />
+              <BaseInput v-model="form.amount" :label="t('form.amount')" type="number" placeholder="0.00" />
+              <BaseDateInput v-model="form.occurredOn" :label="t('form.date')" />
             </div>
 
-            <BaseSelect
-              v-model="form.categoryId"
-              :label="t('form.category')"
-              :options="categoryOptions"
-              :placeholder="t('form.selectCategory')"
-            />
+            <BaseSelect v-model="form.categoryId" :label="t('form.category')" :options="categoryOptions"
+              :placeholder="t('form.selectCategory')" />
 
-            <BaseSelect
-              v-model="form.familyMemberId"
-              :label="t('form.belongsTo')"
-              :options="memberOptions"
-              :placeholder="t('form.selectMember')"
-            />
+            <BaseSelect v-model="form.familyMemberId" :label="t('form.belongsTo')" :options="memberOptions"
+              :placeholder="t('form.selectMember')" />
 
-            <BaseInput
-              v-model="form.note"
-              :label="t('form.note')"
-              icon="solar:pen-bold"
-              :placeholder="t('form.notePlaceholder')"
-            >
+            <BaseInput v-model="form.note" :label="t('form.note')" icon="solar:pen-bold"
+              :placeholder="t('form.notePlaceholder')">
               <template v-slot:label-slot>
                 <span class="text-xs text-content-subtle">({{ t('common.optional') }})</span>
               </template>
@@ -518,11 +490,11 @@ watch(() => props.modelValue, (isOpen) => {
               <CustomMonthsField v-if="form.frequency === 'custom'" v-model:months="form.months"
                 v-model:day-of-month="form.dayOfMonth" :start-on="form.occurredOn" />
 
-              <BaseInput v-model="form.endOn" :label="t('transaction.endDate')" type="date" icon="solar:calendar-bold">
+              <BaseDateInput v-model="form.endOn" :label="t('transaction.endDate')" icon="solar:calendar-bold">
                 <template v-slot:label-slot>
                   <span class="text-xs text-content-subtle">({{ t('common.optional') }})</span>
                 </template>
-              </BaseInput>
+              </BaseDateInput>
 
               <p v-if="form.endOn" class="text-xs text-content-muted">
                 {{ t('transaction.endsOn', { date: formatDateWithMonthName(form.endOn) }) }}

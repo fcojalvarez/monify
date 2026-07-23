@@ -92,6 +92,9 @@ async function changePassword() {
     await auth.updatePassword(newPassword.value)
 
     passwordSuccess.value = true
+    setTimeout(() => {
+      passwordSuccess.value = false
+    }, 5000);
     newPassword.value = ''
     confirmPassword.value = ''
   } catch (error) {

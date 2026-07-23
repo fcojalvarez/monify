@@ -11,6 +11,7 @@ import TransactionItem from '@/components/transactions/TransactionItem.vue'
 import BaseCard from '@/components/ui/BaseCard.vue'
 import BaseSheet from '@/components/ui/BaseSheet.vue'
 import BaseSelect from '@/components/ui/BaseSelect.vue'
+import BaseDateInput from '@/components/ui/BaseDateInput.vue'
 import FilterPanel from '@/components/ui/FilterPanel.vue'
 import BaseSpinner from '@/components/ui/BaseSpinner.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
@@ -203,21 +204,11 @@ onBeforeUnmount(() => {
       <FilterPanel :title="t('history.filters')" :clear-label="t('history.clearFilters')" @clear="clearFilters">
         <div class="grid grid-cols-2 gap-3 border-t border-line pt-4">
           <div>
-            <label class="field-label">
-              {{ t('history.from') }}
-            </label>
-
-            <input v-model="filterFrom" type="date"
-              class="h-10 w-full rounded-field border border-line bg-surface px-3 text-sm text-content focus-visible:ring-primary-500">
+            <BaseDateInput v-model="filterFrom" :label="t('history.from')" />
           </div>
 
           <div>
-            <label class="field-label">
-              {{ t('history.to') }}
-            </label>
-
-            <input v-model="filterTo" type="date"
-              class="h-10 w-full rounded-field border border-line bg-surface px-3 text-sm text-content focus-visible:ring-primary-500">
+            <BaseDateInput v-model="filterTo" :label="t('history.to')" />
           </div>
         </div>
 

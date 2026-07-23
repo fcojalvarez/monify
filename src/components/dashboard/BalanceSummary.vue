@@ -17,9 +17,9 @@ const props = defineProps<{
   periodLabel: string
   savings: Savings[]
   savingsLoaded: boolean
-  /** Efectivo total acumulado (para la tarjeta de efectivo). */
+  // Efectivo total acumulado (para la tarjeta de efectivo).
   cash: number
-  /** Neto de efectivo (entradas − salidas) del periodo activo (para la tarjeta de balance). */
+  // Neto de efectivo (entradas − salidas) del periodo activo (para la tarjeta de balance).
   cashPeriodNet: number
   bankPeriodNet?: number
   cashEnabled: boolean
@@ -49,13 +49,14 @@ const cards = computed<CardId[]>(() => {
 
 const totalCards = computed(() => cards.value.length)
 const walletPreviewRef = ref<HTMLElement | HTMLElement[]>()
-// Antes de poder medir el ancho real, mostramos solo una cartera para no desplazar el +N fuera de la tarjeta.
+
+// Ajuste del número de carteras visibles en el indicador para evitar desbordamientos
 const visibleCashMemberCount = ref(0)
 const visibleCashMembers = computed(() => props.members.slice(0, visibleCashMemberCount.value))
 const hiddenCashMembers = computed(() => Math.max(props.members.length - visibleCashMembers.value.length, 0))
 const activeIndex = ref(0)
 let walletPreviewObserver: ResizeObserver | undefined
-// w-28 (112px) + px-3 (24px padding) = 136px
+
 const walletChipWidth = 136
 const moreIndicatorWidth = 56
 

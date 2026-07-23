@@ -11,6 +11,7 @@ import { useMemberOptions, useKindOptions, useCategoryOptions } from '@/composab
 import BaseCard from '@/components/ui/BaseCard.vue'
 import BaseSheet from '@/components/ui/BaseSheet.vue'
 import BaseSelect from '@/components/ui/BaseSelect.vue'
+import BaseDateInput from '@/components/ui/BaseDateInput.vue'
 import FilterPanel from '@/components/ui/FilterPanel.vue'
 import BaseSpinner from '@/components/ui/BaseSpinner.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
@@ -179,21 +180,17 @@ function closeSearch() {
       <FilterPanel @clear="clearFilters">
         <div class="grid grid-cols-2 gap-3 border-t border-line pt-4">
           <div>
-            <label class="field-label">
-              {{ t('recurringList.nextFrom') }}
-              <span class="text-xs text-content-subtle">({{ t('history.to').toLowerCase() }})</span>
-            </label>
-            <input v-model="filterNextFrom" type="date"
-              class="h-10 w-full rounded-field border border-line bg-surface px-3 text-sm text-content focus-visible:ring-primary-500">
+            <BaseDateInput
+              v-model="filterNextFrom"
+              :label="t('recurringList.nextFrom') + ' (' + t('history.to').toLowerCase() + ')'"
+            />
           </div>
 
           <div>
-            <label class="field-label">
-              {{ t('recurringList.nextTo') }}
-              <span class="text-xs text-content-subtle">({{ t('history.from').toLowerCase() }})</span>
-            </label>
-            <input v-model="filterNextTo" type="date"
-              class="h-10 w-full rounded-field border border-line bg-surface px-3 text-sm text-content focus-visible:ring-primary-500">
+            <BaseDateInput
+              v-model="filterNextTo"
+              :label="t('recurringList.nextTo') + ' (' + t('history.from').toLowerCase() + ')'"
+            />
           </div>
         </div>
 

@@ -18,6 +18,7 @@ import BaseSheet from '@/components/ui/BaseSheet.vue'
 import BaseSpinner from '@/components/ui/BaseSpinner.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
+import BaseSelect from '@/components/ui/BaseSelect.vue'
 import {
   currentPeriodRange,
   type DashboardPeriod,
@@ -45,6 +46,13 @@ const { balance: cash } = storeToRefs(cashStore)
 const savingsLoaded = ref(false)
 const activeMember = ref<string | null>(null)
 const activeFilter = ref<DashboardPeriod>('day')
+
+const filterOptions = computed(() => [
+  { value: 'day', label: t('dashboard.filter.day') },
+  { value: 'week', label: t('dashboard.filter.week') },
+  { value: 'month', label: t('dashboard.filter.month') },
+  { value: 'year', label: t('dashboard.filter.year') },
+])
 
 const filterLabel = computed(() => t(`dashboard.movements.${activeFilter.value}`))
 const balancePeriodLabel = computed(() => t(`dashboard.period.${activeFilter.value}`))
@@ -280,7 +288,7 @@ onBeforeUnmount(() => {
         <button
           class="shrink-0 rounded-full h-9 w-9 flex items-center justify-center bg-surface-muted text-primary-500 hover:bg-line transition-colors"
           :aria-label="t('profile.addPerson')" @click="openAddMember">
-          <AppIcon name="solar:add-circle-bold" :size="20" />
+          <AppIcon name="solar:add-circle-bold" :size="24" />
         </button>
       </div>
 
@@ -300,17 +308,8 @@ onBeforeUnmount(() => {
             {{ filterLabel }}
           </h2>
 
-          <div class="relative flex items-center">
-            <select v-model="activeFilter" @change="selectPeriod"
-              class="appearance-none rounded-field bg-surface-muted pl-2.5 pr-7 py-1 text-xs font-medium text-content-muted border border-transparent hover:border-line focus:outline-none focus:border-primary-500 cursor-pointer transition-colors">
-              <option value="day">{{ t('dashboard.filter.day') }}</option>
-              <option value="week">{{ t('dashboard.filter.week') }}</option>
-              <option value="month">{{ t('dashboard.filter.month') }}</option>
-              <option value="year">{{ t('dashboard.filter.year') }}</option>
-            </select>
-
-            <AppIcon name="solar:alt-arrow-down-linear" :size="14"
-              class="absolute right-2.5 pointer-events-none text-content-muted" />
+          <div class="relative flex items-center w-28">
+            <BaseSelect v-model="activeFilter" size="sm" :options="filterOptions" @update:model-value="selectPeriod" />
           </div>
         </div>
 
@@ -338,47 +337,35 @@ onBeforeUnmount(() => {
         </button>
       </Transition>
 
-      <!-- Menú de Acción Expandible Verticalmente -->
-      <div
-        ref="actionMenuRef"
+      <div ref="actionMenuRef"
         class="pointer-events-auto relative flex flex-col justify-end items-center rounded-[28px] bg-primary-500 text-white shadow-primary-glow transition-all duration-300 ease-out select-none w-[130px] overflow-hidden"
         :class="isExpanded ? 'h-[114px]' : 'h-14 cursor-pointer hover:bg-primary-600 active:scale-95'"
-        @click="handleMainClick"
-      >
+        @click="handleMainClick">
         <div class="absolute inset-0 flex flex-col justify-end p-1">
-          <!-- Colapsado: Solo botón Añadir -->
-          <div
-            v-if="!isExpanded"
-            class="flex h-12 items-center justify-center gap-2 transition-all duration-300 ease-out w-full"
-          >
+          <div v-if="!isExpanded"
+            class="flex h-12 items-center justify-center gap-2 transition-all duration-300 ease-out w-full">
             <AppIcon name="solar:add-circle-bold" :size="22" />
             <span class="font-semibold text-sm tracking-wide">{{ t('common.add') }}</span>
           </div>
 
           <!-- Expandido: Opciones Manual y Voz apiladas verticalmente con separador elegante -->
-          <div
-            v-else
-            class="flex flex-col gap-0.5 w-full h-full justify-center p-1 animate-fade-in"
-          >
+          <div v-else class="flex flex-col gap-0.5 w-full h-full justify-center p-1 animate-fade-in">
             <!-- Opción Manual -->
-            <button
-              type="button"
+            <button type="button"
               class="flex h-11 w-full items-center justify-center gap-2 rounded-[22px] hover:bg-white/10 active:scale-95 transition-all font-semibold text-xs whitespace-nowrap text-white"
-              @click.stop="triggerManual"
-            >
+              @click.stop="triggerManual">
               <AppIcon name="solar:pen-new-round-bold" :size="16" />
-              <span>{{ t('common.manual') }}</span>
+              <span class="font-semibold text-sm">{{ t('common.manual') }}</span>
             </button>
 
             <!-- Separador minimalista y elegante -->
             <div class="h-px bg-white/15 mx-3"></div>
 
             <!-- Opción Voz -->
-            <button
-              type="button"
+            type="button"
+            <button type="button"
               class="flex h-11 w-full items-center justify-center gap-2 rounded-[22px] hover:bg-white/10 active:scale-95 transition-all font-semibold text-xs whitespace-nowrap text-white"
-              @click.stop="triggerVoice"
-            >
+              @click.stop="triggerVoice">
               <AppIcon name="solar:microphone-bold" :size="16" />
               <span>{{ t('voice.buttonLabelShort') }}</span>
             </button>

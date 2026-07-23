@@ -5,6 +5,7 @@ import { useCashStore } from '@/stores/cash'
 import { useFamilyStore } from '@/stores/family'
 import { parseAmount, isPositiveAmount } from '@/utils/validation'
 import BaseInput from '@/components/ui/BaseInput.vue'
+import BaseDateInput from '@/components/ui/BaseDateInput.vue'
 import BaseSelect from '@/components/ui/BaseSelect.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import BaseDialog from '@/components/ui/BaseDialog.vue'
@@ -97,7 +98,7 @@ defineExpose({ hasChanges })
       { value: 'withdrawal', label: t('cash.edit.withdrawal') },
     ]" />
 
-    <BaseInput v-model="form.occurredOn" :label="t('cash.date')" type="date" icon="solar:calendar-bold" />
+    <BaseDateInput v-model="form.occurredOn" :label="t('cash.date')" icon="solar:calendar-bold" />
 
     <BaseInput v-model="form.amount" :label="t('cash.amount')" type="number" icon="solar:tag-price-bold"
       :placeholder="t('cash.amountPlaceholder')" :error="errors.amount" />

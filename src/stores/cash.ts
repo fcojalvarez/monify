@@ -16,7 +16,6 @@ export interface CashMovementPayload {
 }
 
 export interface CashTransactionEditPayload {
-  /** Importe absoluto (siempre positivo); el signo lo determina `isDeposit`. */
   amount: number
   isDeposit: boolean
   note?: string | null
@@ -29,14 +28,8 @@ export const useCashStore = defineStore('cash', () => {
   const transactions = ref<CashTransaction[]>([])
   const loading = ref(false)
 
-  /**
-   * Balance total de efectivo
-   */
   const balance = computed(() => account.value?.balance ?? 0)
 
-  /**
-   * Balance de cada miembro
-   */
   const balancesByMember = computed(() => {
     const balances = new Map<string, number>()
 
@@ -71,17 +64,11 @@ export const useCashStore = defineStore('cash', () => {
   const totalIncome = computed(() => totals.value.income)
   const totalExpense = computed(() => totals.value.expense)
 
-  /**
-   * Balance de un miembro
-   */
   function memberBalance(memberId: string) {
     return balancesByMember.value.get(memberId) ?? 0
   }
 
-  /**
-   * Neto de efectivo (entradas − salidas) dentro de un rango de fechas inclusivo
-   * (formato YYYY-MM-DD). Se usa para reflejar el efectivo del periodo activo.
-   */
+  // Neto de efectivo en un rango YYYY-MM-DD
   function netForRange(from: string, to: string) {
     let net = 0
     for (const tx of transactions.value) {
@@ -93,9 +80,6 @@ export const useCashStore = defineStore('cash', () => {
     return net
   }
 
-  /**
-   * Cuenta
-   */
   async function fetch() {
     loading.value = true
 
@@ -112,9 +96,6 @@ export const useCashStore = defineStore('cash', () => {
     }
   }
 
-  /**
-   * Historial
-   */
   async function fetchTransactions() {
     if (!account.value) {
       await fetch()
@@ -127,18 +108,12 @@ export const useCashStore = defineStore('cash', () => {
     transactions.value = await cashService.getTransactions(account.value.id)
   }
 
-  /**
-   * Refrescar todo
-   */
   async function refresh() {
     await fetch()
     await fetchTransactions()
   }
 
-  /**
-   * Devuelve el id de la categoría "Efectivo" para un tipo dado, creándola si no existe.
-   * Delega en el store de categorías (que encapsula el acceso al servicio).
-   */
+  // Obtiene o crea la categoría de Efectivo en el store general
   async function getOrCreateCashCategoryId(kind: 'income' | 'expense'): Promise<string> {
     const categoriesStore = useCategoriesStore()
     const category = await categoriesStore.getOrCreate({
@@ -150,15 +125,11 @@ export const useCashStore = defineStore('cash', () => {
     return category.id
   }
 
-  /**
-   * Añadir efectivo
-   */
   async function deposit(payload: CashMovementPayload) {
     if (!account.value) {
       throw new Error('No existe la cuenta de efectivo.')
     }
 
-    // 1. Registrar movimiento en la caja de efectivo
     await cashService.deposit(account.value.id, {
       amount: payload.amount,
       note: payload.note,
@@ -166,7 +137,6 @@ export const useCashStore = defineStore('cash', () => {
       occurredOn: payload.occurredAt,
     })
 
-    // 2. Si se marca el check, crear el ingreso principal en las transacciones generales
     if (payload.shouldCreateMainTransaction) {
       const categoryId = await getOrCreateCashCategoryId('income')
 
@@ -175,13 +145,12 @@ export const useCashStore = defineStore('cash', () => {
           amount: payload.amount,
           kind: 'income',
           note: payload.note || 'Entrada de efectivo',
-          family_member_id: payload.familyMemberId ?? '', // 👈 Corregido null
+          family_member_id: payload.familyMemberId ?? '',
           occurred_on: payload.occurredAt || new Date().toISOString().split('T')[0],
           category_id: categoryId,
         },
       })
 
-      // Refrescamos el store general de movimientos
       const transactionsStore = useTransactionsStore()
       await transactionsStore.fetch()
     }
@@ -189,15 +158,11 @@ export const useCashStore = defineStore('cash', () => {
     await refresh()
   }
 
-  /**
-   * Retirar efectivo
-   */
   async function withdraw(payload: CashMovementPayload) {
     if (!account.value) {
       throw new Error('No existe la cuenta de efectivo.')
     }
 
-    // 1. Registrar la retirada en la caja de efectivo
     await cashService.withdraw(account.value.id, {
       amount: payload.amount,
       note: payload.note,
@@ -205,7 +170,6 @@ export const useCashStore = defineStore('cash', () => {
       occurredOn: payload.occurredAt,
     })
 
-    // 2. Si se marca el check, crear el gasto principal en las transacciones generales
     if (payload.shouldCreateMainTransaction) {
       const categoryId = await getOrCreateCashCategoryId('expense')
 
@@ -214,13 +178,12 @@ export const useCashStore = defineStore('cash', () => {
           amount: payload.amount,
           kind: 'expense',
           note: payload.note || 'Salida de efectivo',
-          family_member_id: payload.familyMemberId ?? '', // 👈 Corregido null
+          family_member_id: payload.familyMemberId ?? '',
           occurred_on: payload.occurredAt || new Date().toISOString().split('T')[0],
           category_id: categoryId,
         },
       })
 
-      // Refrescamos el store general de movimientos
       const transactionsStore = useTransactionsStore()
       await transactionsStore.fetch()
     }
@@ -228,9 +191,6 @@ export const useCashStore = defineStore('cash', () => {
     await refresh()
   }
 
-  /**
-   * Editar un movimiento de efectivo existente.
-   */
   async function updateTransaction(id: string, payload: CashTransactionEditPayload) {
     await cashService.updateTransaction(id, {
       amount: signedAmount(payload.amount, payload.isDeposit),
@@ -242,17 +202,11 @@ export const useCashStore = defineStore('cash', () => {
     await refresh()
   }
 
-  /**
-   * Eliminar un movimiento de efectivo existente.
-   */
   async function deleteTransaction(id: string) {
     await cashService.deleteTransaction(id)
     await refresh()
   }
 
-  /**
-   * Balance manual
-   */
   async function setBalance(balance: number) {
     if (!account.value) {
       throw new Error('No existe la cuenta de efectivo.')

@@ -5,6 +5,7 @@ import { useSavingsStore } from '@/stores/savings'
 import { parseAmount, isPositiveAmount } from '@/utils/validation'
 import { savingsAccountLabel } from '@/utils/savings'
 import BaseInput from '@/components/ui/BaseInput.vue'
+import BaseDateInput from '@/components/ui/BaseDateInput.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import BaseDialog from '@/components/ui/BaseDialog.vue'
 import SegmentedControl from '@/components/ui/SegmentedControl.vue'
@@ -95,7 +96,7 @@ defineExpose({ hasChanges })
       { value: 'withdrawal', label: t('savings.edit.withdrawal') },
     ]" />
 
-    <BaseInput v-model="form.occurredOn" :label="t('savings.date')" type="date" icon="solar:calendar-bold" />
+    <BaseDateInput v-model="form.occurredOn" :label="t('savings.date')" icon="solar:calendar-bold" />
 
     <BaseInput v-model="form.amount" :label="t('savings.amount')" type="number" step="any" icon="solar:tag-price-bold"
       :placeholder="t('cash.amountPlaceholder')" :error="errors.amount" />

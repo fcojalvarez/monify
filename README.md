@@ -96,11 +96,16 @@ Definido en [`tailwind.config.ts`](./tailwind.config.ts) y [`src/assets/styles/m
 
 Todo protegido con **RLS**: cada usuario solo accede a sus propios datos.
 
-## Camino a Capacitor (futuro)
+## 📱 Camino a Capacitor (Listo para Producción)
 
-La app ya está preparada, sin dependencias nativas todavía:
+La app está completamente equipada y lista para ser empaquetada como aplicación nativa en Android e iOS sin necesidad de reescribir lógica:
 
-- `usePlatform()` centraliza la detección de plataforma (basta cambiar su cuerpo por `Capacitor.getPlatform()`).
-- El cliente Supabase documenta cómo cambiar el almacenamiento de sesión a `@capacitor/preferences`.
-- `viewport-fit=cover` + utilidades `safe-top` / `safe-bottom` para el notch.
-- Cuando toque: `pnpm add @capacitor/core @capacitor/cli && npx cap init`.
+- **Detección robusta de plataformas:** `usePlatform()` centraliza la detección de entorno usando APIs de `@capacitor/core` con adaptadores web alternativos.
+- **Persistencia persistente de sesión en móviles:** En `src/lib/supabase.ts`, un adaptador de almacenamiento híbrido implementa `@capacitor/preferences` para entornos nativos y `localStorage` para la web.
+- **Diseño fluido de pantalla completa:** Utiliza `viewport-fit=cover` junto con utilidades CSS para soportar áreas seguras de pantallas modernas (Safe Areas y Notch) en `src/assets/styles/main.css`.
+
+### 📖 Documentación de Despliegue y Publicación
+
+Hemos creado una guía completa paso a paso que cubre desde la instalación de prerrequisitos, configuración del entorno (Android Studio & Xcode), permisos de privacidad (micrófono y reconocimiento de voz para el asistente de transacciones), compilación y firma, hasta la publicación en Google Play Store y Apple App Store:
+
+👉 **[Guía Completa de Despliegue y Publicación con Capacitor (CAPACITOR_DEPLOYMENT.md)](./CAPACITOR_DEPLOYMENT.md)**

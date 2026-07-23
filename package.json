@@ -21,6 +21,8 @@
     "db:types": "supabase gen types typescript --linked > src/types/database.types.ts"
   },
   "dependencies": {
+    "@capacitor/core": "^6.1.2",
+    "@capacitor/preferences": "^6.0.2",
     "@iconify/vue": "^4.3.0",
     "@supabase/supabase-js": "^2.110.2",
     "pinia": "^2.3.0",
@@ -28,6 +30,9 @@
     "vue-router": "^4.5.0"
   },
   "devDependencies": {
+    "@capacitor/android": "^6.1.2",
+    "@capacitor/cli": "^6.1.2",
+    "@capacitor/ios": "^6.1.2",
     "@pinia/testing": "^0.1.7",
     "@types/node": "^22.10.5",
     "@vitejs/plugin-vue": "^5.2.1",
