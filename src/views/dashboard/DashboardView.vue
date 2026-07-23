@@ -18,6 +18,7 @@ import BaseSheet from '@/components/ui/BaseSheet.vue'
 import BaseSpinner from '@/components/ui/BaseSpinner.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
+import BaseSelect from '@/components/ui/BaseSelect.vue'
 import {
   currentPeriodRange,
   type DashboardPeriod,
@@ -45,6 +46,13 @@ const { balance: cash } = storeToRefs(cashStore)
 const savingsLoaded = ref(false)
 const activeMember = ref<string | null>(null)
 const activeFilter = ref<DashboardPeriod>('day')
+
+const filterOptions = computed(() => [
+  { value: 'day', label: t('dashboard.filter.day') },
+  { value: 'week', label: t('dashboard.filter.week') },
+  { value: 'month', label: t('dashboard.filter.month') },
+  { value: 'year', label: t('dashboard.filter.year') },
+])
 
 const filterLabel = computed(() => t(`dashboard.movements.${activeFilter.value}`))
 const balancePeriodLabel = computed(() => t(`dashboard.period.${activeFilter.value}`))
@@ -300,17 +308,13 @@ onBeforeUnmount(() => {
             {{ filterLabel }}
           </h2>
 
-          <div class="relative flex items-center">
-            <select v-model="activeFilter" @change="selectPeriod"
-              class="appearance-none rounded-field bg-surface-muted pl-2.5 pr-7 py-1 text-xs font-medium text-content-muted border border-transparent hover:border-line focus:outline-none focus:border-primary-500 cursor-pointer transition-colors">
-              <option value="day">{{ t('dashboard.filter.day') }}</option>
-              <option value="week">{{ t('dashboard.filter.week') }}</option>
-              <option value="month">{{ t('dashboard.filter.month') }}</option>
-              <option value="year">{{ t('dashboard.filter.year') }}</option>
-            </select>
-
-            <AppIcon name="solar:alt-arrow-down-linear" :size="14"
-              class="absolute right-2.5 pointer-events-none text-content-muted" />
+          <div class="relative flex items-center w-28">
+            <BaseSelect
+              v-model="activeFilter"
+              size="sm"
+              :options="filterOptions"
+              @update:model-value="selectPeriod"
+            />
           </div>
         </div>
 

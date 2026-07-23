@@ -301,15 +301,14 @@
         <BaseSelect v-model="transferForm.familyMemberId" :label="t('savings.member')" :options="memberOptions"
           required />
 
-        <div class="flex items-start gap-2 py-1">
-          <input id="createMainTx" type="checkbox" v-model="transferForm.createMainTx"
-            class="mt-1 rounded border-line text-primary-500 focus:ring-primary-500" />
-          <label for="createMainTx" class="text-xs text-content-muted select-none">
-            {{ t('savings.reflectMain', {
+        <div class="py-1">
+          <BaseCheckbox
+            v-model="transferForm.createMainTx"
+            :label="t('savings.reflectMain', {
               kind: transferForm.isDeposit ? t('savings.kindExpense') :
                 t('savings.kindIncome')
-            }) }}
-          </label>
+            })"
+          />
         </div>
 
         <p v-if="transferError" class="text-xs text-expense font-medium">
@@ -395,6 +394,7 @@ import BaseSheet from '@/components/ui/BaseSheet.vue'
 import BaseSpinner from '@/components/ui/BaseSpinner.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
+import BaseCheckbox from '@/components/ui/BaseCheckbox.vue'
 
 const ColorPicker = defineAsyncComponent(() => import('@/components/ui/ColorPicker.vue'))
 const SavingsMovementForm = defineAsyncComponent(() => import('@/components/savings/SavingsMovementForm.vue'))
