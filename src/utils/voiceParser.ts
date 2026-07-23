@@ -12,6 +12,7 @@ export interface ParsedVoiceTransaction {
   frequency: 'daily' | 'weekly' | 'monthly' | 'yearly' | 'custom'
   months: number[]
   dayOfMonth: number
+  endOn: string | null
   unrecognizedFields: ('amount' | 'category' | 'familyMember')[]
 }
 
@@ -398,6 +399,67 @@ export function extractNote(text: string): string {
   return ''
 }
 
+export function extractEndOn(text: string): string {
+  const normalized = normalizeText(text)
+
+  const MONTH_MAP: Record<string, number> = {
+    // Spanish
+    enero: 1, febrero: 2, marzo: 3, abril: 4, mayo: 5, junio: 6,
+    julio: 7, agosto: 8, septiembre: 9, setiembre: 9, octubre: 10,
+    noviembre: 11, diciembre: 12,
+    // English
+    january: 1, february: 2, march: 3, april: 4, may: 5, june: 6,
+    july: 7, august: 8, september: 9, october: 10, november: 11, december: 12
+  }
+
+  // 1. Spanish pattern: "hasta el 15 de diciembre", "finaliza el 31 de diciembre"
+  const spanishEndRegex = /(?:hasta|finaliza|finalizando|fin|termina|terminando)\s+(?:el\s+)?(?:dia\s+)?(\d{1,2})\s+de\s+(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|setiembre|octubre|noviembre|diciembre)/i
+  const spanishMatch = spanishEndRegex.exec(normalized)
+  if (spanishMatch) {
+    const dayNum = parseInt(spanishMatch[1], 10)
+    const monthName = spanishMatch[2]
+    const monthNum = MONTH_MAP[monthName]
+    if (dayNum >= 1 && dayNum <= 31 && monthNum) {
+      const year = new Date().getFullYear()
+      const mStr = String(monthNum).padStart(2, '0')
+      const dStr = String(dayNum).padStart(2, '0')
+      return `${year}-${mStr}-${dStr}`
+    }
+  }
+
+  // 2. English pattern: "until the 15th of october", "ending on the 15 of october"
+  const englishOfEndRegex = /(?:until|ending|ends|ends on|finishing|finish)\s+(?:the\s+)?(\d{1,2})(?:st|nd|rd|th)?\s+of\s+(january|february|march|april|may|june|july|august|september|october|november|december)/i
+  const englishOfMatch = englishOfEndRegex.exec(normalized)
+  if (englishOfMatch) {
+    const dayNum = parseInt(englishOfMatch[1], 10)
+    const monthName = englishOfMatch[2]
+    const monthNum = MONTH_MAP[monthName]
+    if (dayNum >= 1 && dayNum <= 31 && monthNum) {
+      const year = new Date().getFullYear()
+      const mStr = String(monthNum).padStart(2, '0')
+      const dStr = String(dayNum).padStart(2, '0')
+      return `${year}-${mStr}-${dStr}`
+    }
+  }
+
+  // 3. English Month Day: "until october 15th", "ends december 31"
+  const englishMonthDayEndRegex = /(?:until|ending|ends|ends on|finishing|finish)\s+(january|february|march|april|may|june|july|august|september|october|november|december)\s+(?:the\s+)?(\d{1,2})(?:st|nd|rd|th)?/i
+  const englishMonthDayMatch = englishMonthDayEndRegex.exec(normalized)
+  if (englishMonthDayMatch) {
+    const monthName = englishMonthDayMatch[1]
+    const dayNum = parseInt(englishMonthDayMatch[2], 10)
+    const monthNum = MONTH_MAP[monthName]
+    if (dayNum >= 1 && dayNum <= 31 && monthNum) {
+      const year = new Date().getFullYear()
+      const mStr = String(monthNum).padStart(2, '0')
+      const dStr = String(dayNum).padStart(2, '0')
+      return `${year}-${mStr}-${dStr}`
+    }
+  }
+
+  return ''
+}
+
 export function extractRecurring(text: string): ParsedRecurringInfo {
   const normalized = normalizeText(text)
 
@@ -526,6 +588,7 @@ export function parseVoiceCommand(
   const note = extractNote(text)
   const isCash = extractIsCash(text)
   const recInfo = extractRecurring(text)
+  const endOn = extractEndOn(text) || null
 
   // Ajustar la fecha (occurredOn) si es una recurrencia mensual/personalizada con un día del mes específico.
   // Solo lo hacemos si la fecha extraída es la de hoy por defecto (el usuario no especificó otra fecha de inicio).
@@ -556,6 +619,7 @@ export function parseVoiceCommand(
     frequency: recInfo.frequency,
     months: recInfo.months,
     dayOfMonth: recInfo.dayOfMonth,
+    endOn,
     unrecognizedFields,
   }
 }

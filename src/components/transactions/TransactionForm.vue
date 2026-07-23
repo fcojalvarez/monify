@@ -8,7 +8,6 @@ import { parseAmount, isPositiveAmount } from '@/utils/validation'
 import { todayISO, formatDateWithMonthName } from '@/utils/format'
 import { customOccurrenceOnOrAfter, normalizeMonths } from '@/utils/recurring'
 import BaseInput from '@/components/ui/BaseInput.vue'
-import BaseDateInput from '@/components/ui/BaseDateInput.vue'
 import BaseSelect from '@/components/ui/BaseSelect.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import BaseDialog from '@/components/ui/BaseDialog.vue'
@@ -335,7 +334,7 @@ defineExpose({
       </template>
     </BaseSelect>
 
-    <BaseDateInput v-model="form.occurredOn" :label="t('form.date')" icon="solar:calendar-bold" />
+    <BaseInput v-model="form.occurredOn" :label="t('form.date')" type="date" icon="solar:calendar-bold" />
 
     <BaseInput v-model="form.note" :label="t('form.note')" icon="solar:pen-bold"
       :placeholder="t('form.notePlaceholder')">
@@ -357,11 +356,11 @@ defineExpose({
           v-model:day-of-month="form.dayOfMonth" :start-on="form.occurredOn" :months-error="errors.months"
           :day-error="errors.dayOfMonth" />
 
-        <BaseDateInput v-model="form.endOn" :label="t('transaction.endDate')" icon="solar:calendar-bold">
+        <BaseInput v-model="form.endOn" :label="t('transaction.endDate')" type="date" icon="solar:calendar-bold">
           <template v-slot:label-slot>
             <span class="text-xs text-content-subtle">({{ t('common.optional') }})</span>
           </template>
-        </BaseDateInput>
+        </BaseInput>
         <p v-if="form.endOn" class="text-xs text-content-muted">
           {{ t('transaction.endsOn', { date: formatDateWithMonthName(form.endOn) }) }}
         </p>

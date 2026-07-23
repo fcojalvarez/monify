@@ -270,6 +270,7 @@ describe('voiceParser', () => {
         frequency: 'monthly',
         months: [],
         dayOfMonth: 1,
+        endOn: null,
         unrecognizedFields: [],
       })
     })
@@ -290,8 +291,15 @@ describe('voiceParser', () => {
         frequency: 'custom',
         months: [1, 3],
         dayOfMonth: 5,
+        endOn: null,
         unrecognizedFields: ['category'], // category was fallback
       })
+    })
+
+    it('parses recurrence with an end date', () => {
+      const sentence = 'gasto de 10€ todos los meses el dia 5 hasta el 20 de diciembre'
+      const parsed = parseVoiceCommand(sentence, mockCategories, mockMembers, 'mem-1')
+      expect(parsed.endOn).toBe('2026-12-20')
     })
 
     it('reports unrecognized fields when important details are missing', () => {

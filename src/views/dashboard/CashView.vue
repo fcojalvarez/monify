@@ -12,8 +12,6 @@ import BaseButton from '@/components/ui/BaseButton.vue'
 import BaseDialog from '@/components/ui/BaseDialog.vue'
 import BaseInput from '@/components/ui/BaseInput.vue'
 import BaseSheet from '@/components/ui/BaseSheet.vue'
-import BaseCheckbox from '@/components/ui/BaseCheckbox.vue'
-import BaseDateInput from '@/components/ui/BaseDateInput.vue'
 import BaseSpinner from '@/components/ui/BaseSpinner.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
@@ -373,7 +371,7 @@ onMounted(async () => {
                 </div>
 
                 <!-- Input de Fecha de Operación -->
-                <BaseDateInput v-model="movementForm.occurredAt" :label="t('cash.date')"
+                <BaseInput v-model="movementForm.occurredAt" type="date" :label="t('cash.date')"
                     icon="solar:calendar-bold" required />
 
                 <BaseInput v-model="movementForm.amount" type="number" :label="t('cash.amount')"
@@ -397,7 +395,7 @@ onMounted(async () => {
                         </p>
                     </div>
 
-                    <BaseCheckbox v-model="movementForm.createMainTx" />
+                    <input v-model="movementForm.createMainTx" type="checkbox" class="h-5 w-5 rounded">
                 </label>
 
                 <div v-if="transferError" class="rounded-card bg-expense-light p-3 text-sm text-expense">

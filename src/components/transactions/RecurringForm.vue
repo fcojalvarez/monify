@@ -5,7 +5,6 @@ import { useFamilyStore } from '@/stores/family'
 import { useMemberOptions, useCategoryOptions } from '@/composables/useEntityOptions'
 import { parseAmount, isPositiveAmount } from '@/utils/validation'
 import BaseInput from '@/components/ui/BaseInput.vue'
-import BaseDateInput from '@/components/ui/BaseDateInput.vue'
 import BaseSelect from '@/components/ui/BaseSelect.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import BaseDialog from '@/components/ui/BaseDialog.vue'
@@ -290,17 +289,17 @@ defineExpose({
     <CustomMonthsField v-if="isCustom" v-model:months="form.months" v-model:day-of-month="form.dayOfMonth"
       :start-on="form.startOn" :months-error="errors.months" :day-error="errors.dayOfMonth" />
 
-    <BaseDateInput v-model="form.startOn" :label="t('recurringForm.startDate')" icon="solar:calendar-bold"
+    <BaseInput v-model="form.startOn" :label="t('recurringForm.startDate')" type="date" icon="solar:calendar-bold"
       :error="errors.startOn" />
 
-    <BaseDateInput v-if="!isCustom" v-model="form.nextExecution" :label="t('recurringForm.nextExecution')"
+    <BaseInput v-if="!isCustom" v-model="form.nextExecution" :label="t('recurringForm.nextExecution')" type="date"
       icon="solar:calendar-bold" :error="errors.nextExecution" />
 
-    <BaseDateInput v-model="form.endOn" :label="t('transaction.endDate')" icon="solar:calendar-bold">
+    <BaseInput v-model="form.endOn" :label="t('transaction.endDate')" type="date" icon="solar:calendar-bold">
       <template v-slot:label-slot>
         <span class="text-xs text-content-subtle">({{ t('common.optional') }})</span>
       </template>
-    </BaseDateInput>
+    </BaseInput>
     <p v-if="form.endOn" class="text-xs text-content-muted">
       {{ t('transaction.endsOn', { date: formatDate(form.endOn) }) }}
     </p>

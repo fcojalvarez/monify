@@ -17,16 +17,12 @@ const props = withDefaults(
     teleport?: boolean
     closeOnClickOutside?: boolean
     noItemMessage?: string
-    size?: 'sm' | 'md'
-    disabled?: boolean
   }>(),
   {
     showAllOption: false,
     allLabel: 'Todos',
     teleport: true,
-    closeOnClickOutside: true,
-    size: 'md',
-    disabled: false
+    closeOnClickOutside: true
   }
 )
 
@@ -43,6 +39,12 @@ const buttonRef = ref<HTMLButtonElement | null>(null)
 
 /**
  * Destino del Teleport del desplegable.
+ *
+ * Por defecto es `<body>`, pero si el select vive dentro de un `<dialog>` abierto con
+ * `showModal()` (que el navegador promociona al "top layer"), un teleport a `<body>`
+ * quedaría PINTADO POR DEBAJO de ese diálogo — no se podrían elegir opciones. En ese
+ * caso teletransportamos el desplegable DENTRO del propio `<dialog>`, de modo que
+ * comparta su top layer y quede siempre por encima del contenido del formulario.
  */
 const teleportTarget = ref<string | HTMLElement>('body')
 
@@ -72,53 +74,85 @@ const selectedLabel = computed(() =>
   allOptions.value.find(o => o.value === props.modelValue)?.label
 )
 
-const dropdownStyle = ref<Record<string, string>>({})
+/**
+ * Keyboard handling
+ */
+const keyboardOffset = ref(0)
 
-function updateDropdownPosition() {
-  if (open.value && props.teleport && buttonRef.value) {
-    const rect = buttonRef.value.getBoundingClientRect()
-    // Usamos posicionamiento fixed relativo al viewport para que siempre
-    // aparezca pegado por debajo, sin importar contextos de apilado.
-    dropdownStyle.value = {
-      position: 'fixed',
-      top: `${rect.bottom}px`,
-      left: `${rect.left}px`,
-      width: `${rect.width}px`,
-      zIndex: '999999',
-    }
-  }
+function updateKeyboardOffset() {
+  if (!window.visualViewport) return
+
+  const viewport = window.visualViewport
+
+  keyboardOffset.value = Math.max(
+    window.innerHeight - viewport.height,
+    0
+  )
 }
 
-// Escuchar cambios de scroll/resize para re-posicionar el dropdown si está abierto
 onMounted(() => {
-  window.addEventListener('scroll', updateDropdownPosition, true)
-  window.addEventListener('resize', updateDropdownPosition, true)
+  window.visualViewport?.addEventListener('resize', updateKeyboardOffset)
+  window.visualViewport?.addEventListener('scroll', updateKeyboardOffset)
 })
 
 onUnmounted(() => {
-  window.removeEventListener('scroll', updateDropdownPosition, true)
-  window.removeEventListener('resize', updateDropdownPosition, true)
+  window.visualViewport?.removeEventListener('resize', updateKeyboardOffset)
+  window.visualViewport?.removeEventListener('scroll', updateKeyboardOffset)
 })
 
-function onOpenHandle() {
-  if (props.disabled) return
-  teleportTarget.value = resolveTeleportTarget()
-  open.value = !open.value
 
-  if (open.value) {
-    search.value = ''
-    if (showSearch.value) {
-      nextTick(() => {
-        searchInput.value?.focus()
-      })
-    }
-    updateDropdownPosition()
+/**
+ * Swipe
+ */
+const startY = ref(0)
+const translateY = ref(0)
+const dragging = ref(false)
+
+function onTouchStart(e: TouchEvent) {
+  if (!props.teleport) return
+
+  dragging.value = true
+  startY.value = e.touches[0].clientY
+}
+
+function onTouchMove(e: TouchEvent) {
+  if (!dragging.value || !props.teleport) return
+
+  const delta = e.touches[0].clientY - startY.value
+  translateY.value = Math.max(delta, 0)
+}
+
+function onTouchEnd() {
+  if (!props.teleport) return
+
+  dragging.value = false
+
+  if (translateY.value > 120) {
+    close()
   }
+
+  startY.value = 0
+  translateY.value = 0
+}
+
+function onOpenHandle() {
+  teleportTarget.value = resolveTeleportTarget()
+  open.value = true
+  search.value = ''
+  if (showSearch.value) {
+    nextTick(() => {
+      searchInput.value?.focus()
+    })
+  }
+  translateY.value = 0
+  keyboardOffset.value = 0
 }
 
 function close() {
   open.value = false
   search.value = ''
+  translateY.value = 0
+  keyboardOffset.value = 0
 }
 
 function handleOverlayClick() {
@@ -140,26 +174,21 @@ defineExpose({ focus, $el: buttonRef, close, open, search })
 </script>
 
 <template>
-  <div class="relative w-full">
-    <label v-if="label" class="field-label" :class="[size === 'sm' ? 'text-[11px] mb-1' : '']">
+  <div class="relative">
+    <label v-if="label" class="field-label">
       {{ label }}
     </label>
 
     <div class="relative">
-      <button ref="buttonRef" type="button" :disabled="disabled"
-        class="w-full rounded-field border bg-surface-muted px-4 text-left text-content transition-all duration-200 focus:bg-surface-raised focus:outline-none focus:shadow-focus"
-        :class="[
-          size === 'sm' ? 'h-8 text-xs pr-8' : 'h-12 text-sm pr-10',
-          hasError ? 'border-expense focus:border-expense' : 'border-transparent focus:border-primary-400',
-          disabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'
-        ]"
+      <button ref="buttonRef" type="button"
+        class="h-12 w-full rounded-field border bg-surface-muted px-4 pr-10 text-left text-content transition-colors focus:bg-surface-raised focus:outline-none focus:shadow-focus"
+        :class="hasError ? 'border-expense focus:border-expense' : 'border-transparent focus:border-primary-400'"
         @click="onOpenHandle">
         {{ selectedLabel ?? placeholder ?? t('common.select') }}
       </button>
 
-      <AppIcon name="solar:alt-arrow-down-linear" :size="size === 'sm' ? 14 : 16"
-        class="pointer-events-none absolute top-1/2 -translate-y-1/2 text-content-muted"
-        :class="[size === 'sm' ? 'right-2' : 'right-2.5']" />
+      <AppIcon name="solar:alt-arrow-down-linear" :size="16"
+        class="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-content-muted" />
     </div>
 
     <p v-if="hasError" class="mt-1.5 text-xs font-medium text-expense">
@@ -171,35 +200,55 @@ defineExpose({ focus, $el: buttonRef, close, open, search })
         leave-active-class="transition-opacity duration-150" enter-from-class="opacity-0" leave-to-class="opacity-0">
         <div v-if="open" data-testid="select-overlay" @click.self.stop="handleOverlayClick" :class="[
           teleport
-            ? 'fixed inset-0 z-[999999] bg-transparent'
-            : 'absolute left-0 top-full z-[100] mt-1.5 w-full'
+            ? 'fixed inset-0 z-[999999] flex items-end justify-center bg-secondary-950/50 backdrop-blur-sm md:items-center'
+            : 'absolute left-0 top-full z-[100] mt-2 w-full'
         ]">
 
-          <Transition name="dropdown" appear>
-            <div v-if="open" :style="teleport ? dropdownStyle : {}" class="
+          <Transition enter-active-class="transition duration-300 ease-out"
+            leave-active-class="transition duration-200 ease-in"
+            enter-from-class="translate-y-full md:translate-y-0 md:scale-95 md:opacity-0"
+            leave-to-class="translate-y-full md:translate-y-0 md:scale-95 md:opacity-0">
+
+            <div v-if="open" class="
                 flex
                 flex-col
                 bg-surface-raised
                 shadow-raised
-                border
+                w-full
+                max-h-[85dvh]
                 border-line
-                rounded-2xl
-                max-h-60
-                overflow-hidden
+                border-t
+                md:border
+                rounded-t-2xl
               " :class="[
-                teleport ? '' : 'absolute left-0 right-0 top-full mt-1.5 w-full'
-              ]">
+                teleport ? 'md:max-w-md' : '',
+                keyboardOffset > 0 ? 'fixed bottom-0' : ''
+              ]" :style="teleport
+                ? {
+                  maxHeight: keyboardOffset > 0 ? `calc(${keyboardOffset}px - 16px)` : '85dvh',
+                  marginBottom: keyboardOffset > 0 ? '16px' : '0',
+                  transform: `translateY(${translateY}px)`
+                }
+                : {}
+                ">
 
-              <div v-if="showSearch" class="border-b border-line px-3 py-2">
+              <!-- Solo el handle controla el swipe -->
+              <div class="flex justify-center py-3 md:hidden" @touchstart="onTouchStart" @touchmove="onTouchMove"
+                @touchend="onTouchEnd">
+                <div class="h-1.5 w-12 rounded-full bg-line" />
+              </div>
+
+
+              <div v-if="showSearch" class="border-b border-line px-4 py-3">
                 <input v-model="search" ref="searchInput" type="text" :placeholder="t('common.search')" class="
-                    h-8
+                    h-10
                     w-full
                     rounded-field
                     border
                     border-line
                     bg-surface
                     px-3
-                    text-xs
+                    text-sm
                     text-content
                     placeholder:text-content-subtle
                     focus:border-primary-400
@@ -208,16 +257,18 @@ defineExpose({ focus, $el: buttonRef, close, open, search })
                   ">
               </div>
 
+
               <div class="
                   min-h-0
                   overflow-y-auto
                   overscroll-contain
-                  p-1.5
+                  px-2
+                  p-2
                 ">
                 <slot name="header" :close="close" :search="search" />
 
                 <p v-if="search.trim() && !filteredOptions.length"
-                  class="px-3 py-4 text-center text-xs text-content-subtle">
+                  class="px-3 py-6 text-center text-sm text-content-subtle">
                   {{ noItemMessage || t('common.noResults') }}
                 </p>
 
@@ -229,24 +280,25 @@ defineExpose({ focus, $el: buttonRef, close, open, search })
                       justify-between
                       rounded-lg
                       px-3
-                      py-2
+                      py-3.5
                       text-left
-                      text-xs
+                      text-sm
                       transition-all
                       duration-200
                     " :class="option.value === modelValue
-                      ? 'bg-primary-500/10 text-content font-semibold'
-                      : 'text-content hover:bg-surface-muted'
+                      ? 'bg-primary-500/10 text-content'
+                      : 'text-content hover:bg-surface'
                       " @click="select(option.value)">
                     <span>{{ option.label }}</span>
 
-                    <AppIcon v-if="option.value === modelValue" name="solar:check-circle-bold" :size="14"
+                    <AppIcon v-if="option.value === modelValue" name="solar:check-circle-bold" :size="16"
                       class="text-primary-500" />
                   </button>
                 </template>
               </div>
 
             </div>
+
           </Transition>
 
         </div>
@@ -254,16 +306,3 @@ defineExpose({ focus, $el: buttonRef, close, open, search })
     </Teleport>
   </div>
 </template>
-
-<style scoped>
-.dropdown-enter-active,
-.dropdown-leave-active {
-  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s ease;
-  transform-origin: top;
-}
-.dropdown-enter-from,
-.dropdown-leave-to {
-  transform: scaleY(0.95) translateY(-8px);
-  opacity: 0;
-}
-</style>
