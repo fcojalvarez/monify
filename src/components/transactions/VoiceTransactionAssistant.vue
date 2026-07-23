@@ -170,24 +170,79 @@ async function processTranscript(text: string) {
       geminiApiKey.value
     )
 
-    form.kind = parsed.kind
-    form.amount = parsed.amount !== null ? String(parsed.amount) : ''
-    form.categoryId = parsed.categoryId
-    form.familyMemberId = parsed.familyMemberId
-    form.occurredOn = parsed.occurredOn
-    form.note = parsed.note
-    form.isCash = parsed.isCash
-    form.isRecurring = parsed.isRecurring
-    form.frequency = parsed.frequency
-    form.months = parsed.months
-    form.dayOfMonth = String(parsed.dayOfMonth)
+    // Fusionar de forma inteligente si ya se había analizado previamente
+    if (hasParsed.value) {
+      form.kind = parsed.kind
 
-    unrecognized.value = parsed.unrecognizedFields
+      if (parsed.amount !== null && !parsed.unrecognizedFields.includes('amount')) {
+        form.amount = String(parsed.amount)
+      }
+
+      if (parsed.categoryId && !parsed.unrecognizedFields.includes('category')) {
+        form.categoryId = parsed.categoryId
+      }
+
+      if (parsed.familyMemberId && !parsed.unrecognizedFields.includes('familyMember')) {
+        form.familyMemberId = parsed.familyMemberId
+      }
+
+      if (parsed.occurredOn !== todayISO()) {
+        form.occurredOn = parsed.occurredOn
+      }
+
+      if (parsed.note) {
+        form.note = parsed.note
+      }
+
+      if (parsed.isCash) {
+        form.isCash = true
+      }
+
+      if (parsed.isRecurring) {
+        form.isRecurring = true
+        form.frequency = parsed.frequency
+        form.months = parsed.months
+        form.dayOfMonth = String(parsed.dayOfMonth)
+      }
+    } else {
+      form.kind = parsed.kind
+      form.amount = parsed.amount !== null ? String(parsed.amount) : ''
+      form.categoryId = parsed.categoryId
+      form.familyMemberId = parsed.familyMemberId
+      form.occurredOn = parsed.occurredOn
+      form.note = parsed.note
+      form.isCash = parsed.isCash
+      form.isRecurring = parsed.isRecurring
+      form.frequency = parsed.frequency
+      form.months = parsed.months
+      form.dayOfMonth = String(parsed.dayOfMonth)
+    }
+
+    // Filtrar unrecognized según lo que ya está seleccionado o completado en el formulario
+    const newUnrecognized = [...parsed.unrecognizedFields]
+    if (form.amount) {
+      const idx = newUnrecognized.indexOf('amount')
+      if (idx !== -1) newUnrecognized.splice(idx, 1)
+    }
+    if (form.categoryId) {
+      const idx = newUnrecognized.indexOf('category')
+      if (idx !== -1) newUnrecognized.splice(idx, 1)
+    }
+    if (form.familyMemberId) {
+      const idx = newUnrecognized.indexOf('familyMember')
+      if (idx !== -1) newUnrecognized.splice(idx, 1)
+    }
+
+    unrecognized.value = newUnrecognized
     hasParsed.value = true
     usedAI.value = aiSuccess
   } catch (error) {
     console.error('[AI Processing error]', error)
-    errorMsg.value = 'Error al procesar con IA. Usando procesador local alternativo.'
+
+    // Mostramos el mensaje detallado de error para que el usuario sepa qué pasa
+    const apiError = error instanceof Error ? error.message : String(error)
+    errorMsg.value = `Error en el análisis de IA: ${apiError}. Usando procesador local alternativo.`
+
     // Fallback logic
     const parsed = parseVoiceCommand(
       text,
@@ -196,19 +251,68 @@ async function processTranscript(text: string) {
       familyStore.self?.id
     )
 
-    form.kind = parsed.kind
-    form.amount = parsed.amount !== null ? String(parsed.amount) : ''
-    form.categoryId = parsed.categoryId
-    form.familyMemberId = parsed.familyMemberId
-    form.occurredOn = parsed.occurredOn
-    form.note = parsed.note
-    form.isCash = parsed.isCash
-    form.isRecurring = parsed.isRecurring
-    form.frequency = parsed.frequency
-    form.months = parsed.months
-    form.dayOfMonth = String(parsed.dayOfMonth)
+    if (hasParsed.value) {
+      form.kind = parsed.kind
 
-    unrecognized.value = parsed.unrecognizedFields
+      if (parsed.amount !== null && !parsed.unrecognizedFields.includes('amount')) {
+        form.amount = String(parsed.amount)
+      }
+
+      if (parsed.categoryId && !parsed.unrecognizedFields.includes('category')) {
+        form.categoryId = parsed.categoryId
+      }
+
+      if (parsed.familyMemberId && !parsed.unrecognizedFields.includes('familyMember')) {
+        form.familyMemberId = parsed.familyMemberId
+      }
+
+      if (parsed.occurredOn !== todayISO()) {
+        form.occurredOn = parsed.occurredOn
+      }
+
+      if (parsed.note) {
+        form.note = parsed.note
+      }
+
+      if (parsed.isCash) {
+        form.isCash = true
+      }
+
+      if (parsed.isRecurring) {
+        form.isRecurring = true
+        form.frequency = parsed.frequency
+        form.months = parsed.months
+        form.dayOfMonth = String(parsed.dayOfMonth)
+      }
+    } else {
+      form.kind = parsed.kind
+      form.amount = parsed.amount !== null ? String(parsed.amount) : ''
+      form.categoryId = parsed.categoryId
+      form.familyMemberId = parsed.familyMemberId
+      form.occurredOn = parsed.occurredOn
+      form.note = parsed.note
+      form.isCash = parsed.isCash
+      form.isRecurring = parsed.isRecurring
+      form.frequency = parsed.frequency
+      form.months = parsed.months
+      form.dayOfMonth = String(parsed.dayOfMonth)
+    }
+
+    const newUnrecognized = [...parsed.unrecognizedFields]
+    if (form.amount) {
+      const idx = newUnrecognized.indexOf('amount')
+      if (idx !== -1) newUnrecognized.splice(idx, 1)
+    }
+    if (form.categoryId) {
+      const idx = newUnrecognized.indexOf('category')
+      if (idx !== -1) newUnrecognized.splice(idx, 1)
+    }
+    if (form.familyMemberId) {
+      const idx = newUnrecognized.indexOf('familyMember')
+      if (idx !== -1) newUnrecognized.splice(idx, 1)
+    }
+
+    unrecognized.value = newUnrecognized
     hasParsed.value = true
     usedAI.value = false
   } finally {
