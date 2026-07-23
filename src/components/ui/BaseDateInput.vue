@@ -52,7 +52,7 @@ const hasError = computed(() => !!props.error)
 
 // Visualización de fecha más corta y compacta para evitar desbordamientos en móviles
 const formattedDisplayDate = computed(() => {
-  if (!props.modelValue) return props.placeholder || t('common.selectDate') || 'Seleccionar fecha'
+  if (!props.modelValue) return props.placeholder || t('common.selectDate')
   return formatDate(props.modelValue, { day: 'numeric', month: 'short', year: 'numeric' })
 })
 
@@ -267,34 +267,22 @@ function toggleOpen() {
     </label>
 
     <div class="relative">
-      <button
-        ref="buttonRef"
-        type="button"
-        :disabled="disabled"
+      <button ref="buttonRef" type="button" :disabled="disabled"
         class="h-12 w-full rounded-field border bg-surface-muted px-4 text-left text-content transition-all duration-200 focus:bg-surface-raised focus:outline-none focus:shadow-focus"
         :class="[
           icon ? 'pl-11' : 'pl-4',
           hasError ? 'border-expense focus:border-expense' : 'border-transparent focus:border-primary-400',
           disabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer',
           modelValue ? 'text-content' : 'text-content-subtle'
-        ]"
-        @click="toggleOpen"
-      >
+        ]" @click="toggleOpen">
         {{ formattedDisplayDate }}
       </button>
 
-      <AppIcon
-        v-if="icon"
-        :name="icon"
-        :size="18"
-        class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-content-subtle"
-      />
+      <AppIcon v-if="icon" :name="icon" :size="18"
+        class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-content-subtle" />
 
-      <AppIcon
-        name="solar:alt-arrow-down-linear"
-        :size="16"
-        class="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-content-subtle"
-      />
+      <AppIcon name="solar:alt-arrow-down-linear" :size="16"
+        class="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-content-subtle" />
     </div>
 
     <p v-if="hasError" class="mt-1.5 text-xs font-medium text-expense">
@@ -304,54 +292,44 @@ function toggleOpen() {
     <!-- Desplegable del calendario animado y teletransportado -->
     <Teleport :to="teleportTarget">
       <Transition name="dropdown">
-        <div
-          v-if="open"
-          :style="dropdownStyle"
+        <div v-if="open" :style="dropdownStyle"
           class="calendar-dropdown-container rounded-2xl border border-line bg-surface-raised p-4 shadow-raised transition-all duration-300"
-          :class="[isPlacedUpward ? 'origin-bottom' : 'origin-top']"
-        >
+          :class="[isPlacedUpward ? 'origin-bottom' : 'origin-top']">
           <!-- Cabecera del calendario con selectores rápidos -->
           <div class="flex items-center justify-between pb-3">
-            <button
-              type="button"
+            <button type="button"
               class="flex h-8 w-8 items-center justify-center rounded-full text-content hover:bg-surface-muted transition-colors"
-              @click="prevMonth"
-            >
+              @click="prevMonth">
               <AppIcon name="solar:alt-arrow-left-linear" :size="16" />
             </button>
 
             <!-- Acceso directo a meses y años mediante selects integrados -->
             <div class="flex items-center gap-1.5 px-2 py-0.5 rounded-lg hover:bg-surface-muted transition-colors">
-              <select
-                v-model="month"
-                class="bg-transparent font-bold text-sm text-content focus:outline-none cursor-pointer hover:text-primary-500 py-0.5"
-              >
+              <select v-model="month"
+                class="bg-transparent font-bold text-sm text-content focus:outline-none cursor-pointer hover:text-primary-500 py-0.5">
                 <option v-for="(mName, idx) in monthNames" :key="idx" :value="idx">
                   {{ mName }}
                 </option>
               </select>
 
-              <select
-                v-model="year"
-                class="bg-transparent font-bold text-sm text-content focus:outline-none cursor-pointer hover:text-primary-500 py-0.5"
-              >
+              <select v-model="year"
+                class="bg-transparent font-bold text-sm text-content focus:outline-none cursor-pointer hover:text-primary-500 py-0.5">
                 <option v-for="yNum in availableYears" :key="yNum" :value="yNum">
                   {{ yNum }}
                 </option>
               </select>
             </div>
 
-            <button
-              type="button"
+            <button type="button"
               class="flex h-8 w-8 items-center justify-center rounded-full text-content hover:bg-surface-muted transition-colors"
-              @click="nextMonth"
-            >
+              @click="nextMonth">
               <AppIcon name="solar:alt-arrow-right-linear" :size="16" />
             </button>
           </div>
 
           <!-- Días de la semana -->
-          <div class="grid grid-cols-7 gap-1 text-center text-[10px] font-bold text-content-subtle uppercase pb-1 border-b border-line/60">
+          <div
+            class="grid grid-cols-7 gap-1 text-center text-[10px] font-bold text-content-subtle uppercase pb-1 border-b border-line/60">
             <div v-for="day in weekdays" :key="day" class="py-1">
               {{ day }}
             </div>
@@ -359,24 +337,17 @@ function toggleOpen() {
 
           <!-- Cuadrícula de días -->
           <div class="grid grid-cols-7 gap-1 pt-2">
-            <button
-              v-for="cell in calendarDays"
-              :key="cell.dateString"
-              type="button"
+            <button v-for="cell in calendarDays" :key="cell.dateString" type="button"
               class="relative flex aspect-square items-center justify-center rounded-full text-xs font-medium transition-all duration-200"
               :class="[
                 cell.currentMonth ? 'text-content' : 'text-content-subtle/40',
                 cell.dateString === modelValue
                   ? 'bg-primary-500 text-white font-bold scale-105 shadow-sm shadow-primary-500/30'
                   : 'hover:bg-surface-muted',
-              ]"
-              @click="selectDay(cell.dateString)"
-            >
+              ]" @click="selectDay(cell.dateString)">
               <span>{{ cell.day }}</span>
-              <span
-                v-if="cell.isToday && cell.dateString !== modelValue"
-                class="absolute bottom-1 h-1 w-1 rounded-full bg-primary-500"
-              />
+              <span v-if="cell.isToday && cell.dateString !== modelValue"
+                class="absolute bottom-1 h-1 w-1 rounded-full bg-primary-500" />
             </button>
           </div>
         </div>
@@ -390,6 +361,7 @@ function toggleOpen() {
 .dropdown-leave-active {
   transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s ease;
 }
+
 .dropdown-enter-from,
 .dropdown-leave-to {
   transform: scaleY(0.95) translateY(4px);
