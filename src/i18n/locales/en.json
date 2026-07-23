@@ -525,7 +525,7 @@
     "deleteAll": "Delete all",
     "clearSuccessMessage": "Transaction history deleted successfully!",
     "memberSince": "Monify member since:",
-    "footer": "Monify v0.1.0 • Built with Supabase & Vue",
+    "footer": "Monify v0.1.0",
     "clearDialog": {
       "title": "Delete all your transactions?",
       "confirmText": "Yes, delete everything",

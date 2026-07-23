@@ -525,7 +525,7 @@
     "deleteAll": "Borrar todo",
     "clearSuccessMessage": "¡Historial de movimientos eliminado con éxito!",
     "memberSince": "Miembro de Monify desde:",
-    "footer": "Monify v0.1.0 • Desarrollado con Supabase & Vue",
+    "footer": "Monify v0.1.0",
     "clearDialog": {
       "title": "¿Borrar todos tus movimientos?",
       "confirmText": "Sí, borrar todo",
