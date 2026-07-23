@@ -63,14 +63,15 @@ describe('BaseDateInput.vue', () => {
     })
 
     await wrapper.find('button').trigger('click') // Abrir
-    const selectElement = wrapper.find('select')
-    const initialMonth = selectElement.element.value
 
-    // Clic en anterior mes (el segundo botón en el componente es prevMonth)
+    // El tercer botón es el botón del mes (p. ej., "Julio" o "July")
+    const initialMonth = wrapper.findAll('button')[2].text()
+
+    // Clic en anterior mes (el segundo botón en el componente es prevAction)
     const navButtons = wrapper.findAll('button')
     await navButtons[1].trigger('click')
 
-    const afterMonth = wrapper.find('select').element.value
+    const afterMonth = wrapper.findAll('button')[2].text()
     expect(initialMonth).not.toBe(afterMonth)
   })
 
@@ -87,7 +88,7 @@ describe('BaseDateInput.vue', () => {
     // Buscar los botones de días en la cuadrícula de días
     const dayButtons = wrapper.findAll('.grid-cols-7 + .grid button')
 
-    // Hacemos clic en uno de los días que tenga un número (por ejemplo, el primero)
+    // Hacemos clic en uno de los días que tenga un número
     await dayButtons[10].trigger('click')
 
     expect(wrapper.emitted('update:modelValue')).toBeTruthy()
@@ -105,5 +106,21 @@ describe('BaseDateInput.vue', () => {
 
     await wrapper.find('button').trigger('click')
     expect(wrapper.find('.grid-cols-7').exists()).toBe(false)
+  })
+
+  it('renderiza el slot-label para descripciones y contenidos adicionales en la etiqueta', () => {
+    const wrapper = mount(BaseDateInput, {
+      ...globalOptions,
+      props: {
+        modelValue: null,
+        label: 'Fecha fin',
+      },
+      slots: {
+        'label-slot': '<span class="extra-slot-content">(opcional)</span>',
+      },
+    })
+
+    expect(wrapper.html()).toContain('extra-slot-content')
+    expect(wrapper.text()).toContain('(opcional)')
   })
 })

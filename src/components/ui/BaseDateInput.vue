@@ -34,6 +34,12 @@ const buttonRef = ref<HTMLButtonElement | null>(null)
 const year = ref(new Date().getFullYear())
 const month = ref(new Date().getMonth()) // 0-11
 
+// Modo de vista: 'days' para cuadrícula de días, 'months' para selección rápida de mes, 'years' para años
+const viewMode = ref<'days' | 'months' | 'years'>('days')
+
+// Año de inicio para la cuadrícula rápida de selección de años
+const startYearPage = ref(new Date().getFullYear() - 7)
+
 // Sincronizar el mes/año del calendario con el valor inicial al abrirse
 watch(open, (isOpen) => {
   if (isOpen) {
@@ -42,6 +48,8 @@ watch(open, (isOpen) => {
       year.value = baseDate.getFullYear()
       month.value = baseDate.getMonth()
     }
+    viewMode.value = 'days'
+    startYearPage.value = year.value - 7
     updateDropdownPosition()
   }
 })
@@ -67,14 +75,9 @@ const monthNames = computed(() => {
   })
 })
 
-// Rango de años para acceso rápido (los últimos 20 años y los próximos 10)
-const availableYears = computed(() => {
-  const currentY = new Date().getFullYear()
-  const years: number[] = []
-  for (let y = currentY - 20; y <= currentY + 10; y++) {
-    years.push(y)
-  }
-  return years
+// Lista de 16 años para mostrar en la cuadrícula de selección
+const displayYears = computed(() => {
+  return Array.from({ length: 16 }, (_, i) => startYearPage.value + i)
 })
 
 // Días de la semana abreviados según idioma local
@@ -172,6 +175,27 @@ function nextMonth() {
   }
 }
 
+// Botones de navegación de la cabecera dependen de viewMode
+function prevAction() {
+  if (viewMode.value === 'years') {
+    startYearPage.value -= 16
+  } else if (viewMode.value === 'months') {
+    year.value--
+  } else {
+    prevMonth()
+  }
+}
+
+function nextAction() {
+  if (viewMode.value === 'years') {
+    startYearPage.value += 16
+  } else if (viewMode.value === 'months') {
+    year.value++
+  } else {
+    nextMonth()
+  }
+}
+
 function selectDay(dateString: string) {
   if (props.disabled) return
   emit('update:modelValue', dateString)
@@ -230,9 +254,6 @@ function resolveTeleportTarget(): string | HTMLElement {
 
 function handleClickOutside(event: MouseEvent) {
   if (open.value && containerRef.value && !containerRef.value.contains(event.target as Node)) {
-    // Si estamos usando Teleport, los clics en el propio calendario flotante (que está en body)
-    // deben ser ignorados y no cerrar el calendario. Por eso comprobamos si el clic ocurrió
-    // dentro de algún elemento con la clase '.calendar-dropdown-container'
     const target = event.target as HTMLElement
     if (target.closest('.calendar-dropdown-container')) return
 
@@ -258,12 +279,21 @@ function toggleOpen() {
     open.value = !open.value
   }
 }
+
+function toggleMonthsView() {
+  viewMode.value = viewMode.value === 'months' ? 'days' : 'months'
+}
+
+function toggleYearsView() {
+  viewMode.value = viewMode.value === 'years' ? 'days' : 'years'
+  startYearPage.value = year.value - 7
+}
 </script>
 
 <template>
   <div class="relative w-full" ref="containerRef">
     <label v-if="label" class="field-label">
-      {{ label }}
+      {{ label }} <slot name="label-slot"></slot>
     </label>
 
     <div class="relative">
@@ -310,74 +340,109 @@ function toggleOpen() {
           class="calendar-dropdown-container rounded-2xl border border-line bg-surface-raised p-4 shadow-raised transition-all duration-300"
           :class="[isPlacedUpward ? 'origin-bottom' : 'origin-top']"
         >
-          <!-- Cabecera del calendario con selectores rápidos -->
+          <!-- Cabecera del calendario con botones rápidos interactivos de excelente diseño -->
           <div class="flex items-center justify-between pb-3">
             <button
               type="button"
               class="flex h-8 w-8 items-center justify-center rounded-full text-content hover:bg-surface-muted transition-colors"
-              @click="prevMonth"
+              @click="prevAction"
             >
               <AppIcon name="solar:alt-arrow-left-linear" :size="16" />
             </button>
 
-            <!-- Acceso directo a meses y años mediante selects integrados -->
-            <div class="flex items-center gap-1.5 px-2 py-0.5 rounded-lg hover:bg-surface-muted transition-colors">
-              <select
-                v-model="month"
-                class="bg-transparent font-bold text-sm text-content focus:outline-none cursor-pointer hover:text-primary-500 py-0.5"
+            <!-- Acceso directo a meses y años 100% customizados -->
+            <div class="flex items-center gap-1">
+              <button
+                type="button"
+                class="px-2.5 py-1 rounded-xl text-sm font-bold text-content hover:bg-surface-muted hover:text-primary-500 transition-colors"
+                :class="[viewMode === 'months' ? 'bg-primary-500/10 text-primary-500' : '']"
+                @click="toggleMonthsView"
               >
-                <option v-for="(mName, idx) in monthNames" :key="idx" :value="idx">
-                  {{ mName }}
-                </option>
-              </select>
+                {{ monthNames[month] }}
+              </button>
 
-              <select
-                v-model="year"
-                class="bg-transparent font-bold text-sm text-content focus:outline-none cursor-pointer hover:text-primary-500 py-0.5"
+              <button
+                type="button"
+                class="px-2.5 py-1 rounded-xl text-sm font-bold text-content hover:bg-surface-muted hover:text-primary-500 transition-colors"
+                :class="[viewMode === 'years' ? 'bg-primary-500/10 text-primary-500' : '']"
+                @click="toggleYearsView"
               >
-                <option v-for="yNum in availableYears" :key="yNum" :value="yNum">
-                  {{ yNum }}
-                </option>
-              </select>
+                {{ year }}
+              </button>
             </div>
 
             <button
               type="button"
               class="flex h-8 w-8 items-center justify-center rounded-full text-content hover:bg-surface-muted transition-colors"
-              @click="nextMonth"
+              @click="nextAction"
             >
               <AppIcon name="solar:alt-arrow-right-linear" :size="16" />
             </button>
           </div>
 
-          <!-- Días de la semana -->
-          <div class="grid grid-cols-7 gap-1 text-center text-[10px] font-bold text-content-subtle uppercase pb-1 border-b border-line/60">
-            <div v-for="day in weekdays" :key="day" class="py-1">
-              {{ day }}
-            </div>
+          <!-- Vista de cuadrícula de meses 100% customizada -->
+          <div v-if="viewMode === 'months'" class="grid grid-cols-3 gap-2 pt-2 animate-fade-in min-h-[190px] items-center">
+            <button
+              v-for="(mName, idx) in monthNames"
+              :key="idx"
+              type="button"
+              class="py-3 text-xs font-semibold rounded-xl text-center transition-all duration-200"
+              :class="idx === month
+                ? 'bg-primary-500 text-white font-bold scale-105 shadow-sm shadow-primary-500/30'
+                : 'text-content hover:bg-surface-muted'"
+              @click="month = idx; viewMode = 'days'"
+            >
+              {{ mName.slice(0, 3) }}
+            </button>
           </div>
 
-          <!-- Cuadrícula de días -->
-          <div class="grid grid-cols-7 gap-1 pt-2">
+          <!-- Vista de cuadrícula de años 100% customizada -->
+          <div v-if="viewMode === 'years'" class="grid grid-cols-4 gap-2 pt-2 animate-fade-in min-h-[190px] items-center">
             <button
-              v-for="cell in calendarDays"
-              :key="cell.dateString"
+              v-for="yNum in displayYears"
+              :key="yNum"
               type="button"
-              class="relative flex aspect-square items-center justify-center rounded-full text-xs font-medium transition-all duration-200"
-              :class="[
-                cell.currentMonth ? 'text-content' : 'text-content-subtle/40',
-                cell.dateString === modelValue
-                  ? 'bg-primary-500 text-white font-bold scale-105 shadow-sm shadow-primary-500/30'
-                  : 'hover:bg-surface-muted',
-              ]"
-              @click="selectDay(cell.dateString)"
+              class="py-3 text-xs font-semibold rounded-xl text-center transition-all duration-200"
+              :class="yNum === year
+                ? 'bg-primary-500 text-white font-bold scale-105 shadow-sm shadow-primary-500/30'
+                : 'text-content hover:bg-surface-muted'"
+              @click="year = yNum; viewMode = 'days'"
             >
-              <span>{{ cell.day }}</span>
-              <span
-                v-if="cell.isToday && cell.dateString !== modelValue"
-                class="absolute bottom-1 h-1 w-1 rounded-full bg-primary-500"
-              />
+              {{ yNum }}
             </button>
+          </div>
+
+          <!-- Vista estándar: cuadrícula de días -->
+          <div v-if="viewMode === 'days'">
+            <!-- Días de la semana -->
+            <div class="grid grid-cols-7 gap-1 text-center text-[10px] font-bold text-content-subtle uppercase pb-1 border-b border-line/60">
+              <div v-for="day in weekdays" :key="day" class="py-1">
+                {{ day }}
+              </div>
+            </div>
+
+            <!-- Cuadrícula de días -->
+            <div class="grid grid-cols-7 gap-1 pt-2">
+              <button
+                v-for="cell in calendarDays"
+                :key="cell.dateString"
+                type="button"
+                class="relative flex aspect-square items-center justify-center rounded-full text-xs font-medium transition-all duration-200"
+                :class="[
+                  cell.currentMonth ? 'text-content' : 'text-content-subtle/40',
+                  cell.dateString === modelValue
+                    ? 'bg-primary-500 text-white font-bold scale-105 shadow-sm shadow-primary-500/30'
+                    : 'hover:bg-surface-muted',
+                ]"
+                @click="selectDay(cell.dateString)"
+              >
+                <span>{{ cell.day }}</span>
+                <span
+                  v-if="cell.isToday && cell.dateString !== modelValue"
+                  class="absolute bottom-1 h-1 w-1 rounded-full bg-primary-500"
+                />
+              </button>
+            </div>
           </div>
         </div>
       </Transition>
@@ -394,12 +459,5 @@ function toggleOpen() {
 .dropdown-leave-to {
   transform: scaleY(0.95) translateY(4px);
   opacity: 0;
-}
-
-/* Ocultar flechas por defecto en los select de la cabecera */
-select {
-  appearance: none;
-  -webkit-appearance: none;
-  -moz-appearance: none;
 }
 </style>
