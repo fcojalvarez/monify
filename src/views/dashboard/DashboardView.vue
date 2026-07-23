@@ -25,6 +25,7 @@ import {
 import { useI18n } from '@/i18n'
 
 const TransactionForm = defineAsyncComponent(() => import('@/components/transactions/TransactionForm.vue'))
+const FamilyForm = defineAsyncComponent(() => import('@/components/family/FamilyForm.vue'))
 
 const profile = useProfileStore()
 const categories = useCategoriesStore()
@@ -63,6 +64,18 @@ const showTransaction = ref(false)
 const editingTransaction = ref<TransactionWithRelations | undefined>()
 
 const transactionFormRef = ref<InstanceType<typeof TransactionForm> | null>(null)
+
+const showAddMember = ref(false)
+const familyFormRef = ref<InstanceType<typeof FamilyForm> | null>(null)
+
+function openAddMember() {
+  showAddMember.value = true
+}
+
+async function onFamilyMemberSaved() {
+  showAddMember.value = false
+  await family.fetchAll(true)
+}
 
 function openNewTransaction() {
   editingTransaction.value = undefined
@@ -196,6 +209,11 @@ onMounted(async () => {
           {{ member.name }}
         </button>
 
+        <button class="shrink-0 rounded-full h-9 w-9 flex items-center justify-center bg-surface-muted text-primary-500 hover:bg-line transition-colors"
+          :aria-label="t('profile.addPerson')"
+          @click="openAddMember">
+          <AppIcon name="solar:add-circle-bold" :size="20" />
+        </button>
       </div>
 
       <BaseCard v-if="limitedUsage.length" as="section">
@@ -252,6 +270,12 @@ onMounted(async () => {
       :has-changes="transactionFormRef?.hasChanges">
       <TransactionForm ref="transactionFormRef" :transaction="editingTransaction" @saved="onTransactionSaved"
         @cancel="showTransaction = false" />
+    </BaseSheet>
+
+    <BaseSheet v-model="showAddMember"
+      :title="t('profile.addPerson')"
+      :has-changes="familyFormRef?.hasChanges">
+      <FamilyForm ref="familyFormRef" @saved="onFamilyMemberSaved" @cancel="showAddMember = false" />
     </BaseSheet>
 
   </div>
