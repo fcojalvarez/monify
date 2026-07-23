@@ -8,18 +8,14 @@ import { filterRecurringTransactions } from '@/utils/recurring-filters'
 import type { RecurringFrequencyFilter, RecurringKindFilter } from '@/utils/recurring-filters'
 import { useI18n } from '@/i18n'
 import { useMemberOptions, useKindOptions, useCategoryOptions } from '@/composables/useEntityOptions'
-import type { CategoryKind, Category } from '@/types'
 import BaseCard from '@/components/ui/BaseCard.vue'
 import BaseSheet from '@/components/ui/BaseSheet.vue'
 import BaseSelect from '@/components/ui/BaseSelect.vue'
-import BaseDateInput from '@/components/ui/BaseDateInput.vue'
 import FilterPanel from '@/components/ui/FilterPanel.vue'
 import BaseSpinner from '@/components/ui/BaseSpinner.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
-import BaseDialog from '@/components/ui/BaseDialog.vue'
 import RecurringItem from '@/components/transactions/RecurringItem.vue'
-import CategoryForm from '@/components/categories/CategoryForm.vue'
 
 const RecurringForm = defineAsyncComponent(() => import('@/components/transactions/RecurringForm.vue'))
 
@@ -51,22 +47,6 @@ const categoryOptions = useCategoryOptions(() => activeKind.value, {
   include: true,
   label: t('recurringList.allCategories'),
 })
-
-const showCategoryDialog = ref(false)
-const categoryFormKind = ref<CategoryKind>('expense')
-const initialCategoryName = ref('')
-
-function openCategoryCreator(closeSelect: () => void, search: string) {
-  closeSelect()
-  categoryFormKind.value = activeKind.value === 'all' ? 'expense' : activeKind.value
-  initialCategoryName.value = search.trim()
-  showCategoryDialog.value = true
-}
-
-function onCategoryCreated(newCategory: Category) {
-  showCategoryDialog.value = false
-  activeCategoryId.value = newCategory.id
-}
 
 const frequencyOptions = computed(() => [
   { value: 'all', label: t('common.all') },
@@ -199,36 +179,28 @@ function closeSearch() {
       <FilterPanel @clear="clearFilters">
         <div class="grid grid-cols-2 gap-3 border-t border-line pt-4">
           <div>
-            <BaseDateInput v-model="filterNextFrom" :label="t('recurringList.nextFrom')">
-              <template v-slot:label-slot>
-                <span class="text-xs text-content-subtle">({{ t('history.to') }})</span>
-              </template>
-            </BaseDateInput>
+            <label class="field-label">
+              {{ t('recurringList.nextFrom') }}
+              <span class="text-xs text-content-subtle">({{ t('history.to').toLowerCase() }})</span>
+            </label>
+            <input v-model="filterNextFrom" type="date"
+              class="h-10 w-full rounded-field border border-line bg-surface px-3 text-sm text-content focus-visible:ring-primary-500">
           </div>
 
           <div>
-            <BaseDateInput v-model="filterNextTo" :label="t('recurringList.nextTo')">
-              <template v-slot:label-slot>
-                <span class="text-xs text-content-subtle">({{ t('history.from') }})</span>
-              </template>
-            </BaseDateInput>
+            <label class="field-label">
+              {{ t('recurringList.nextTo') }}
+              <span class="text-xs text-content-subtle">({{ t('history.from').toLowerCase() }})</span>
+            </label>
+            <input v-model="filterNextTo" type="date"
+              class="h-10 w-full rounded-field border border-line bg-surface px-3 text-sm text-content focus-visible:ring-primary-500">
           </div>
         </div>
 
         <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <BaseSelect v-model="activeMemberId" :label="t('recurringList.member')" :options="memberOptions" />
           <BaseSelect v-model="activeKind" :label="t('recurringList.flowType')" :options="kindOptions" />
-          <BaseSelect v-model="activeCategoryId" :label="t('recurringList.category')" :options="categoryOptions"
-            :no-item-message="t('common.noResults')">
-            <template #header="{ close, search }">
-              <button type="button"
-                class="flex w-full items-center gap-2 rounded-lg px-3 py-3 text-left text-sm font-semibold text-primary-500 hover:bg-surface border-b border-line mb-1"
-                @click="openCategoryCreator(close, search)">
-                <AppIcon name="solar:add-circle-bold" :size="18" />
-                <span>{{ t('common.createCategory') }}</span>
-              </button>
-            </template>
-          </BaseSelect>
+          <BaseSelect v-model="activeCategoryId" :label="t('recurringList.category')" :options="categoryOptions" />
           <BaseSelect v-model="activeFrequency" :label="t('transaction.frequency')" :options="frequencyOptions" />
         </div>
       </FilterPanel>
@@ -263,11 +235,6 @@ function closeSearch() {
       :has-changes="recurringFormRef?.hasChanges">
       <RecurringForm ref="recurringFormRef" :transaction="editingItem" @saved="onSaved" @cancel="showForm = false" />
     </BaseSheet>
-
-    <BaseDialog v-model="showCategoryDialog" :title="t('common.createCategory')" :show-close="true">
-      <CategoryForm v-if="showCategoryDialog" :default-kind="categoryFormKind" :initial-name="initialCategoryName"
-        @saved="onCategoryCreated" @cancel="showCategoryDialog = false" />
-    </BaseDialog>
   </div>
 </template>
 

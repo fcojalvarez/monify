@@ -4,7 +4,6 @@ import { createTestingPinia } from '@pinia/testing'
 import { nextTick } from 'vue'
 import TransactionForm from '@/components/transactions/TransactionForm.vue'
 import BaseDialog from '@/components/ui/BaseDialog.vue'
-import BaseDateInput from '@/components/ui/BaseDateInput.vue'
 import { useTransactionsStore } from '@/stores/transactions'
 import { useRecurringTransactionsStore } from '@/stores/recurring-transactions'
 import type { Category, FamilyMember } from '@/types'
@@ -262,9 +261,9 @@ describe('TransactionForm', () => {
       },
     })
 
-    const dateInput = wrapper.findComponent(BaseDateInput)
+    const dateInput = wrapper.find('input[type="date"]')
 
-    expect(dateInput.props('modelValue')).toBe('2026-05-01')
+    expect((dateInput.element as HTMLInputElement).value).toBe('2026-05-01')
   })
 
   it('muestra error si el gasto en efectivo supera el saldo de la cartera', async () => {

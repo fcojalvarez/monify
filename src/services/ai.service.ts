@@ -6,7 +6,7 @@ export async function parseWithAI(
   categories: Category[],
   familyMembers: FamilyMember[],
   defaultFamilyMemberId: string,
-  apiKey: string,
+  apiKey: string
 ): Promise<{ parsed: ParsedVoiceTransaction; usedAI: boolean }> {
   if (!apiKey || !apiKey.trim()) {
     // Graceful fallback to local parser
@@ -48,7 +48,8 @@ Instrucciones de análisis:
 9. "frequency": Si es recurrente, determina la frecuencia ("daily", "weekly", "monthly", "yearly", "custom").
 10. "months": Si la frecuencia es "custom" (ej. "los meses de enero y marzo"), añade los números de los meses (1-12) en el array. Si no, déjalo vacío.
 11. "dayOfMonth": Si la frecuencia es "monthly" o "custom", indica el día del mes (1-31) en que debe ejecutarse. Por defecto 1 o el día de la fecha de inicio.
-12. "unrecognizedFields": Un array de strings que contiene "amount" si no se detectó un importe válido, "category" si se seleccionó una categoría predeterminada/por defecto por falta de coincidencia, y/o "familyMember" si se seleccionó el miembro por defecto por falta de coincidencia.`
+12. "endOn": Si el comando especifica una fecha de finalización de la recurrencia (ej. "hasta el 15 de diciembre", "finaliza el 31 de diciembre" o "until december 31"), determina la fecha en formato "YYYY-MM-DD". Si no se especifica fecha de finalización, ponlo en null o no lo incluyas.
+13. "unrecognizedFields": Un array de strings que contiene "amount" si no se detectó un importe válido, "category" si se seleccionó una categoría predeterminada/por defecto por falta de coincidencia, y/o "familyMember" si se seleccionó el miembro por defecto por falta de coincidencia.`
 
   const prompt = `Analiza la siguiente transcripción y genera el JSON correspondiente según el esquema solicitado:
 "${text}"`
@@ -90,6 +91,7 @@ Instrucciones de análisis:
               },
               months: { type: 'ARRAY', items: { type: 'INTEGER' } },
               dayOfMonth: { type: 'INTEGER' },
+              endOn: { type: 'STRING' },
               unrecognizedFields: {
                 type: 'ARRAY',
                 items: { type: 'STRING', enum: ['amount', 'category', 'familyMember'] },
@@ -146,6 +148,7 @@ Instrucciones de análisis:
         frequency: parsed.frequency || 'monthly',
         months: Array.isArray(parsed.months) ? parsed.months : [],
         dayOfMonth: typeof parsed.dayOfMonth === 'number' ? parsed.dayOfMonth : 1,
+        endOn: parsed.endOn || null,
         unrecognizedFields: Array.isArray(parsed.unrecognizedFields)
           ? parsed.unrecognizedFields
           : [],
@@ -154,6 +157,6 @@ Instrucciones de análisis:
     }
   } catch (err) {
     console.warn('[AI Parser] Error during Gemini API call.', err)
-    throw err // Lanzamos el error para que sea capturado en la UI
+    throw err
   }
 }

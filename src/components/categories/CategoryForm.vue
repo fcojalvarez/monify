@@ -11,7 +11,6 @@ import IconPicker from '@/components/ui/IconPicker.vue'
 import ColorPicker from '@/components/ui/ColorPicker.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
 import BaseDialog from '@/components/ui/BaseDialog.vue'
-import BaseSwitch from '@/components/ui/BaseSwitch.vue'
 import { useI18n } from '@/i18n'
 
 const props = defineProps<{
@@ -191,7 +190,19 @@ defineExpose({
 
     <!-- Límite mensual opcional (vale también para ingresos) -->
     <div>
-      <BaseSwitch v-model="form.hasLimit" :label="t('category.monthlyLimit')" />
+      <label class="flex cursor-pointer items-center justify-between">
+        <span class="text-sm font-medium text-content">{{ t('category.monthlyLimit') }}</span>
+
+        <div class="relative shrink-0 ml-4">
+          <input v-model="form.hasLimit" type="checkbox" class="sr-only" />
+
+          <span class="relative block h-6 w-11 rounded-pill transition-colors duration-200"
+            :class="form.hasLimit ? 'bg-primary-500' : 'bg-line'">
+            <span class="absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white transition-transform duration-200"
+              :class="form.hasLimit ? 'translate-x-5' : 'translate-x-0'" />
+          </span>
+        </div>
+      </label>
 
       <div v-if="form.hasLimit" class="mt-3">
         <BaseInput v-model="form.limit" type="number" icon="solar:tag-price-bold"
