@@ -6,6 +6,8 @@ import {
   extractDate,
   extractCategory,
   extractFamilyMember,
+  extractNote,
+  replaceWordsWithDigits,
   parseVoiceCommand,
 } from '@/utils/voiceParser'
 import type { Category, FamilyMember } from '@/types'
@@ -29,6 +31,14 @@ describe('voiceParser', () => {
     })
   })
 
+  describe('replaceWordsWithDigits', () => {
+    it('replaces spanish written numbers with digits', () => {
+      expect(replaceWordsWithDigits('dos con cincuenta')).toBe('2 con 50')
+      expect(replaceWordsWithDigits('treinta y cinco con cuarenta y dos')).toBe('35 con 42')
+      expect(replaceWordsWithDigits('un euro con cinco')).toBe('1 euro con 5')
+    })
+  })
+
   describe('extractKind', () => {
     it('detects income terms', () => {
       expect(extractKind('tengo un ingreso de mi nómina')).toBe('income')
@@ -47,6 +57,13 @@ describe('voiceParser', () => {
       expect(extractAmount('gasto de 43.50€ hoy')).toBe(43.5)
       expect(extractAmount('he pagado 43,5 euros')).toBe(43.5)
       expect(extractAmount('un ingreso de 1200 eur')).toBe(1200)
+    })
+
+    it('extracts decimal numbers expressed in spoken Spanish', () => {
+      expect(extractAmount('un gasto de dos con cincuenta euros')).toBe(2.5)
+      expect(extractAmount('pago 2 con 50 de comida')).toBe(2.5)
+      expect(extractAmount('gasto de un euro con cinco centimos')).toBe(1.05)
+      expect(extractAmount('gasto de 2 con 5')).toBe(2.05)
     })
 
     it('extracts number preceded by preposition de/por', () => {
@@ -122,6 +139,18 @@ describe('voiceParser', () => {
     })
   })
 
+  describe('extractNote', () => {
+    it('returns empty string if no note trigger word is found', () => {
+      expect(extractNote('gasto de 43.50 euros hoy de comida')).toBe('')
+    })
+
+    it('extracts the note when con nota/pon en notas is specified', () => {
+      expect(extractNote('gasto de 43 euros con nota cena de cumpleaños')).toBe('cena de cumpleaños')
+      expect(extractNote('gasto de 5€ pon en notas almuerzo rápido')).toBe('almuerzo rápido')
+      expect(extractNote('ingreso de 100 con el concepto transferencia mensual')).toBe('transferencia mensual')
+    })
+  })
+
   describe('parseVoiceCommand', () => {
     beforeEach(() => {
       vi.useFakeTimers()
@@ -132,7 +161,7 @@ describe('voiceParser', () => {
       vi.useRealTimers()
     })
 
-    it('parses a full natural Spanish sentence correctly', () => {
+    it('parses a full natural Spanish sentence without note', () => {
       const sentence = 'Crea un gasto de 43,50€ el día 12 de categoría Comida Rápida para Ana'
       const parsed = parseVoiceCommand(sentence, mockCategories, mockMembers, 'mem-1')
 
@@ -142,7 +171,21 @@ describe('voiceParser', () => {
         categoryId: 'cat-2',
         familyMemberId: 'mem-1',
         occurredOn: '2026-10-12',
-        note: sentence,
+        note: '',
+      })
+    })
+
+    it('parses a full natural Spanish sentence with note', () => {
+      const sentence = 'Crea un gasto de dos con cincuenta el día 12 de categoría Comida Rápida para Ana con nota cena familiar'
+      const parsed = parseVoiceCommand(sentence, mockCategories, mockMembers, 'mem-1')
+
+      expect(parsed).toEqual({
+        kind: 'expense',
+        amount: 2.5,
+        categoryId: 'cat-2',
+        familyMemberId: 'mem-1',
+        occurredOn: '2026-10-12',
+        note: 'cena familiar',
       })
     })
   })
