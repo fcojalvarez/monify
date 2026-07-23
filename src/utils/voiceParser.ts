@@ -7,6 +7,19 @@ export interface ParsedVoiceTransaction {
   familyMemberId: string
   occurredOn: string
   note: string
+  isCash: boolean
+  isRecurring: boolean
+  frequency: 'daily' | 'weekly' | 'monthly' | 'yearly' | 'custom'
+  months: number[]
+  dayOfMonth: number
+  unrecognizedFields: ('amount' | 'category' | 'familyMember')[]
+}
+
+export interface ParsedRecurringInfo {
+  isRecurring: boolean
+  frequency: 'daily' | 'weekly' | 'monthly' | 'yearly' | 'custom'
+  months: number[]
+  dayOfMonth: number
 }
 
 export function normalizeText(str: string): string {
@@ -21,7 +34,7 @@ const WORD_TO_NUM: Record<string, number> = {
   dos: 2, tres: 3, cuatro: 4, cinco: 5, seis: 6, siete: 7, ocho: 8, nueve: 9,
   diez: 10, once: 11, doce: 12, trece: 13, catorce: 14, quince: 15,
   dieciseis: 16, diecisiete: 17, dieciocho: 18, diecinueve: 19,
-  veinte: 20, veintiun: 21, veintiuno: 21, veintidos: 22, veintitres: 23,
+  veinte: 20, veintiun: 21, veintiuno: 21, veintdos: 22, veintitres: 23,
   veinticuatro: 24, veinticinco: 25, veintiseis: 26, veintisiete: 27,
   veintiocho: 28, veintinueve: 29,
   treinta: 30, cuarenta: 40, cincuenta: 50, sesenta: 60, setenta: 70, ochenta: 80, noventa: 90,
@@ -75,6 +88,11 @@ export function extractKind(text: string): 'expense' | 'income' {
   }
 
   return 'expense' // default
+}
+
+export function extractIsCash(text: string): boolean {
+  const normalized = normalizeText(text)
+  return /\b(?:en\s+)?efectivo\b/.test(normalized) || /\b(?:en\s+)?cartera\b/.test(normalized) || /\b(?:con\s+)?cash\b/.test(normalized)
 }
 
 export function extractAmount(text: string): number | null {
@@ -204,8 +222,8 @@ export function extractCategory(
   text: string,
   categories: Category[],
   kind: 'expense' | 'income'
-): string {
-  if (!categories || categories.length === 0) return ''
+): { categoryId: string; exactMatch: boolean } {
+  if (!categories || categories.length === 0) return { categoryId: '', exactMatch: false }
 
   const normalized = normalizeText(text)
   const filteredCategories = categories.filter((c) => c.kind === kind)
@@ -223,34 +241,35 @@ export function extractCategory(
 
   // 1. Try matching within correct kind
   let matchedId = findMatch(filteredCategories)
-  if (matchedId) return matchedId
+  if (matchedId) return { categoryId: matchedId, exactMatch: true }
 
   // 2. Try matching any category as fallback
   matchedId = findMatch(categories)
-  if (matchedId) return matchedId
+  if (matchedId) return { categoryId: matchedId, exactMatch: true }
 
   // 3. Fallback: first category of correct kind
   const firstOfKind = filteredCategories[0] || categories[0]
-  return firstOfKind ? firstOfKind.id : ''
+  return { categoryId: firstOfKind ? firstOfKind.id : '', exactMatch: false }
 }
 
 export function extractFamilyMember(
   text: string,
   members: FamilyMember[],
   defaultMemberId?: string
-): string {
-  if (!members || members.length === 0) return defaultMemberId || ''
+): { familyMemberId: string; exactMatch: boolean } {
+  if (!members || members.length === 0) return { familyMemberId: defaultMemberId || '', exactMatch: false }
 
   const normalized = normalizeText(text)
   const sorted = [...members].sort((a, b) => b.name.length - a.name.length)
   for (const member of sorted) {
     const normalizedName = normalizeText(member.name)
     if (normalizedName && normalized.includes(normalizedName)) {
-      return member.id
+      return { familyMemberId: member.id, exactMatch: true }
     }
   }
 
-  return defaultMemberId || members[0]?.id || ''
+  const fallbackId = defaultMemberId || members[0]?.id || ''
+  return { familyMemberId: fallbackId, exactMatch: false }
 }
 
 export function extractNote(text: string): string {
@@ -276,6 +295,97 @@ export function extractNote(text: string): string {
   return ''
 }
 
+export function extractRecurring(text: string): ParsedRecurringInfo {
+  const normalized = normalizeText(text)
+
+  // 1. Primero comprobar recurrencias personalizadas mensuales con día específico:
+  // "los 1 de cada mes", "el dia 10 de cada mes", "todos los 15 de cada mes"
+  const eachMonthDayRegex = /\b(?:el\s+dia\s+|los\s+)?(\d{1,2})\s+(?:de\s+)?cada\s+mes\b/i
+  const eachMonthDayMatch = eachMonthDayRegex.exec(normalized)
+  if (eachMonthDayMatch) {
+    const day = parseInt(eachMonthDayMatch[1], 10)
+    if (day >= 1 && day <= 31) {
+      return { isRecurring: true, frequency: 'monthly', months: [], dayOfMonth: day }
+    }
+  }
+
+  // 2. Custom months recurrence with days: "los dias 1 de enero marzo y abril"
+  const MONTH_MAP: Record<string, number> = {
+    enero: 1, febrero: 2, marzo: 3, abril: 4, mayo: 5, junio: 6,
+    julio: 7, agosto: 8, septiembre: 9, setiembre: 9, octubre: 10,
+    noviembre: 11, diciembre: 12
+  }
+  const customMonthsRegex = /\b(?:el\s+dia\s+|los\s+dia\s+|los\s+|todos\s+los\s+)?(\d{1,2})\s+de\s+([a-z\s,y]+)\b/i
+  const customMatch = customMonthsRegex.exec(normalized)
+  if (customMatch) {
+    const day = parseInt(customMatch[1], 10)
+    const monthsText = customMatch[2]
+
+    const foundMonths: number[] = []
+    for (const mName of Object.keys(MONTH_MAP)) {
+      if (new RegExp(`\\b${mName}\\b`).test(monthsText)) {
+        foundMonths.push(MONTH_MAP[mName])
+      }
+    }
+
+    if (foundMonths.length > 0 && day >= 1 && day <= 31) {
+      foundMonths.sort((a, b) => a - b)
+      return {
+        isRecurring: true,
+        frequency: 'custom',
+        months: foundMonths,
+        dayOfMonth: day
+      }
+    }
+  }
+
+  // 3. Frecuencias simples estándar
+  const dailyWords = ['todos los dias', 'cada dia', 'diariamente', 'diario', 'frecuencia diaria']
+  const weeklyWords = ['todas las semanas', 'cada semana', 'semanalmente', 'semanal', 'frecuencia semanal']
+  const monthlyWords = ['todos los meses', 'cada mes', 'mensualmente', 'mensual', 'frecuencia mensual']
+  const yearlyWords = ['todos los anos', 'cada ano', 'anualmente', 'anual', 'frecuencia anual']
+
+  for (const w of dailyWords) {
+    if (normalized.includes(w)) {
+      return { isRecurring: true, frequency: 'daily', months: [], dayOfMonth: 1 }
+    }
+  }
+  for (const w of weeklyWords) {
+    if (normalized.includes(w)) {
+      return { isRecurring: true, frequency: 'weekly', months: [], dayOfMonth: 1 }
+    }
+  }
+  for (const w of monthlyWords) {
+    if (normalized.includes(w)) {
+      return { isRecurring: true, frequency: 'monthly', months: [], dayOfMonth: new Date().getDate() }
+    }
+  }
+  for (const w of yearlyWords) {
+    if (normalized.includes(w)) {
+      return { isRecurring: true, frequency: 'yearly', months: [], dayOfMonth: 1 }
+    }
+  }
+
+  // Fallback si contiene "cada mes" o "todos los meses" pero de forma ambigua
+  if (/\bcada\s+mes\b/.test(normalized) || /\btodos\s+los\s+meses\b/.test(normalized)) {
+    const dayMatch = /\b(\d{1,2})\b/.exec(normalized)
+    if (dayMatch) {
+      const day = parseInt(dayMatch[1], 10)
+      if (day >= 1 && day <= 31) {
+        return { isRecurring: true, frequency: 'monthly', months: [], dayOfMonth: day }
+      }
+    }
+    return { isRecurring: true, frequency: 'monthly', months: [], dayOfMonth: new Date().getDate() }
+  }
+
+  return {
+    isRecurring: false,
+    frequency: 'monthly',
+    months: [],
+    dayOfMonth: 1
+  }
+}
+
 export function parseVoiceCommand(
   text: string,
   categories: Category[],
@@ -285,9 +395,16 @@ export function parseVoiceCommand(
   const kind = extractKind(text)
   const amount = extractAmount(text)
   const occurredOn = extractDate(text)
-  const categoryId = extractCategory(text, categories, kind)
-  const familyMemberId = extractFamilyMember(text, members, defaultMemberId)
+  const { categoryId, exactMatch: categoryExact } = extractCategory(text, categories, kind)
+  const { familyMemberId, exactMatch: memberExact } = extractFamilyMember(text, members, defaultMemberId)
   const note = extractNote(text)
+  const isCash = extractIsCash(text)
+  const recInfo = extractRecurring(text)
+
+  const unrecognizedFields: ('amount' | 'category' | 'familyMember')[] = []
+  if (amount === null) unrecognizedFields.push('amount')
+  if (!categoryExact) unrecognizedFields.push('category')
+  if (!memberExact) unrecognizedFields.push('familyMember')
 
   return {
     kind,
@@ -296,5 +413,11 @@ export function parseVoiceCommand(
     familyMemberId,
     occurredOn,
     note,
+    isCash,
+    isRecurring: recInfo.isRecurring,
+    frequency: recInfo.frequency,
+    months: recInfo.months,
+    dayOfMonth: recInfo.dayOfMonth,
+    unrecognizedFields,
   }
 }
