@@ -49,6 +49,8 @@ const saving = ref(false)
 const errorMsg = ref('')
 const unrecognized = ref<('amount' | 'category' | 'familyMember')[]>([])
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const dialogRef = ref<any>(null)
 const usedAI = ref(false)
 const isAIProcessing = ref(false)
 const geminiApiKey = ref(localStorage.getItem('monify_gemini_api_key') || import.meta.env.VITE_GEMINI_API_KEY || '')
@@ -427,6 +429,7 @@ async function handleConfirm() {
     }
 
     emit('saved')
+    hasParsed.value = false // Permitir cerrar sin avisar de cambios
     handleClose()
   } catch (err) {
     console.error(err)
@@ -471,7 +474,7 @@ watch(() => props.modelValue, (isOpen) => {
 </script>
 
 <template>
-  <BaseDialog :model-value="modelValue" :title="t('voice.title')" :show-close="true" @close="handleClose">
+  <BaseDialog ref="dialogRef" :model-value="modelValue" :title="t('voice.title')" :show-close="true" :has-changes="hasParsed" @close="handleClose">
     <div class="space-y-6">
       <!-- Listening State -->
       <div v-if="isListening"
@@ -637,7 +640,7 @@ watch(() => props.modelValue, (isOpen) => {
 
           <!-- Footer Actions -->
           <div class="flex justify-end gap-3 pt-2">
-            <BaseButton variant="ghost" @click="handleClose">
+            <BaseButton variant="ghost" @click="dialogRef?.close()">
               {{ t('voice.discard') }}
             </BaseButton>
             <BaseButton :loading="saving" :disabled="!hasParsed" @click="handleConfirm">

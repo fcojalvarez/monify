@@ -123,7 +123,9 @@ Instrucciones de análisis:
         if (errorJson.error?.message) {
           errorDetail = errorJson.error.message
         }
-      } catch (e) {}
+      } catch {
+        // No parseable error JSON
+      }
       throw new Error(`Error de la API de Gemini: ${response.status} - ${errorDetail}`)
     }
 
