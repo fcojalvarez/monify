@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue'
-import type { CategoryKind, TransactionWithRelations } from '@/types'
+import type { CategoryKind, TransactionWithRelations, Category } from '@/types'
 import { useFamilyStore } from '@/stores/family'
 import { useMemberOptions, useCategoryOptions } from '@/composables/useEntityOptions'
 import { useTransactionsStore } from '@/stores/transactions'
@@ -16,6 +16,8 @@ import SegmentedControl from '@/components/ui/SegmentedControl.vue'
 import CustomMonthsField from '@/components/transactions/CustomMonthsField.vue'
 import { useRecurringTransactionsStore } from '@/stores/recurring-transactions'
 import { useI18n } from '@/i18n'
+import AppIcon from '@/components/ui/AppIcon.vue'
+import CategoryForm from '@/components/categories/CategoryForm.vue'
 
 const props = defineProps<{ transaction?: TransactionWithRelations }>()
 const emit = defineEmits<{ saved: []; cancel: [] }>()
@@ -63,6 +65,22 @@ const isCustomRecurring = computed(() => form.isRecurring && form.frequency === 
 const errors = reactive<Record<string, string | undefined>>({})
 const serverError = ref<string | null>(null)
 const saving = ref(false)
+
+const showCategoryDialog = ref(false)
+const categoryFormKind = ref<CategoryKind>('expense')
+const initialCategoryName = ref('')
+
+function openCategoryCreator(closeSelect: () => void, search: string) {
+  closeSelect()
+  categoryFormKind.value = form.kind
+  initialCategoryName.value = search.trim()
+  showCategoryDialog.value = true
+}
+
+function onCategoryCreated(newCategory: Category) {
+  showCategoryDialog.value = false
+  form.categoryId = newCategory.id
+}
 
 const grossInputRef = ref<{ focus: () => void; $el?: { scrollIntoView?: (options?: ScrollIntoViewOptions) => void } } | null>(null)
 const amountInputRef = ref<{ focus: () => void; $el?: { scrollIntoView?: (options?: ScrollIntoViewOptions) => void } } | null>(null)
@@ -303,12 +321,18 @@ defineExpose({
     <BaseSelect ref="familyMemberInputRef" v-model="form.familyMemberId" :label="t('form.belongsTo')"
       :placeholder="t('form.selectMember')" :options="memberOptions" :error="errors.familyMemberId" />
 
-    <BaseSelect v-if="categoryOptions.length" ref="categoryInputRef" v-model="form.categoryId"
-      :no-item-message="`${t('common.noResults')} ${t('common.goToSettingsToCategories')}`" :label="t('form.category')"
-      :placeholder="t('form.selectCategory')" :options="categoryOptions" :error="errors.categoryId" />
-    <p v-else class="rounded-field bg-surface-muted p-3 text-sm text-content-muted">
-      {{ t('form.noCategories', { kind: form.kind === 'income' ? t('form.kindIncome') : t('form.kindExpense') }) }}
-    </p>
+    <BaseSelect ref="categoryInputRef" v-model="form.categoryId"
+      :no-item-message="t('common.noResults')" :label="t('form.category')"
+      :placeholder="t('form.selectCategory')" :options="categoryOptions" :error="errors.categoryId">
+      <template #footer="{ close, search }">
+        <button type="button"
+          class="flex w-full items-center gap-2 rounded-lg px-3 py-3 text-left text-sm font-semibold text-primary-500 hover:bg-surface border-t border-line mt-1"
+          @click="openCategoryCreator(close, search)">
+          <AppIcon name="solar:add-circle-bold" :size="18" />
+          <span>{{ t('common.createCategory') }}</span>
+        </button>
+      </template>
+    </BaseSelect>
 
     <BaseInput v-model="form.occurredOn" :label="t('form.date')" type="date" icon="solar:calendar-bold" />
 
@@ -363,5 +387,15 @@ defineExpose({
     <p class="text-content">
       {{ t('transactionForm.deleteConfirmBody') }}
     </p>
+  </BaseDialog>
+
+  <BaseDialog v-model="showCategoryDialog" :title="t('common.createCategory')" :show-close="true">
+    <CategoryForm
+      v-if="showCategoryDialog"
+      :default-kind="categoryFormKind"
+      :initial-name="initialCategoryName"
+      @saved="onCategoryCreated"
+      @cancel="showCategoryDialog = false"
+    />
   </BaseDialog>
 </template>

@@ -13,16 +13,20 @@ import AppIcon from '@/components/ui/AppIcon.vue'
 import BaseDialog from '@/components/ui/BaseDialog.vue'
 import { useI18n } from '@/i18n'
 
-const props = defineProps<{ category?: Category }>()
-const emit = defineEmits<{ saved: []; cancel: [] }>()
+const props = defineProps<{
+  category?: Category
+  defaultKind?: CategoryKind
+  initialName?: string
+}>()
+const emit = defineEmits<{ saved: [category: Category]; cancel: [] }>()
 
 const categories = useCategoriesStore()
 const isEdit = computed(() => !!props.category)
 const { t } = useI18n()
 
 const form = reactive({
-  name: props.category?.name ?? '',
-  kind: (props.category?.kind ?? 'expense') as CategoryKind,
+  name: props.category?.name ?? props.initialName ?? '',
+  kind: (props.category?.kind ?? props.defaultKind ?? 'expense') as CategoryKind,
   icon: props.category?.icon ?? DEFAULT_CATEGORY_ICON,
   color: props.category?.color ?? PALETTE[0],
   hasLimit: props.category?.monthly_limit != null,
@@ -89,9 +93,13 @@ async function saveCategory() {
       color: form.color,
       monthly_limit: form.hasLimit ? parseAmount(form.limit) : null,
     }
-    if (props.category) await categories.update(props.category.id, payload)
-    else await categories.create(payload)
-    emit('saved')
+    let result: Category
+    if (props.category) {
+      result = await categories.update(props.category.id, payload)
+    } else {
+      result = await categories.create(payload)
+    }
+    emit('saved', result)
   } catch (error) {
     serverError.value = error instanceof Error ? error.message : t('categories.genericSaveError')
   } finally {

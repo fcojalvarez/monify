@@ -170,7 +170,7 @@ function focus() {
   buttonRef.value?.focus()
 }
 
-defineExpose({ focus, $el: buttonRef })
+defineExpose({ focus, $el: buttonRef, close, open, search })
 </script>
 
 <template>
@@ -270,27 +270,31 @@ defineExpose({ focus, $el: buttonRef })
                   {{ noItemMessage || t('common.noResults') }}
                 </p>
 
-                <button v-else v-for="option in filteredOptions" :key="String(option.value)" type="button" class="
-                    flex
-                    w-full
-                    items-center
-                    justify-between
-                    rounded-lg
-                    px-3
-                    py-3.5
-                    text-left
-                    text-sm
-                    transition-all
-                    duration-200
-                  " :class="option.value === modelValue
-                    ? 'bg-primary-500/10 text-content'
-                    : 'text-content hover:bg-surface'
-                    " @click="select(option.value)">
-                  <span>{{ option.label }}</span>
+                <template v-else>
+                  <button v-for="option in filteredOptions" :key="String(option.value)" type="button" class="
+                      flex
+                      w-full
+                      items-center
+                      justify-between
+                      rounded-lg
+                      px-3
+                      py-3.5
+                      text-left
+                      text-sm
+                      transition-all
+                      duration-200
+                    " :class="option.value === modelValue
+                      ? 'bg-primary-500/10 text-content'
+                      : 'text-content hover:bg-surface'
+                      " @click="select(option.value)">
+                    <span>{{ option.label }}</span>
 
-                  <AppIcon v-if="option.value === modelValue" name="solar:check-circle-bold" :size="16"
-                    class="text-primary-500" />
-                </button>
+                    <AppIcon v-if="option.value === modelValue" name="solar:check-circle-bold" :size="16"
+                      class="text-primary-500" />
+                  </button>
+                </template>
+
+                <slot name="footer" :close="close" :search="search" />
               </div>
 
             </div>
