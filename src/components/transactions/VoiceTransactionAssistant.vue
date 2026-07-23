@@ -6,7 +6,7 @@ import { useTransactionsStore } from '@/stores/transactions'
 import { useRecurringTransactionsStore } from '@/stores/recurring-transactions'
 import { useI18n, getIntlLocale } from '@/i18n'
 import { todayISO, formatDateWithMonthName } from '@/utils/format'
-import { parseVoiceCommand } from '@/utils/voiceParser'
+import { parseVoiceCommand, extractCategory, extractFamilyMember } from '@/utils/voiceParser'
 import { customOccurrenceOnOrAfter, normalizeMonths } from '@/utils/recurring'
 import { useCategoryOptions, useMemberOptions } from '@/composables/useEntityOptions'
 import BaseDialog from '@/components/ui/BaseDialog.vue'
@@ -94,8 +94,13 @@ function initSpeechRecognition() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   recognition.value.onresult = (event: any) => {
     const resultText = event.results[0][0].transcript
-    transcript.value = resultText
-    processTranscript(resultText)
+    if (transcript.value) {
+      transcript.value = transcript.value + ' ' + resultText
+    } else {
+      transcript.value = resultText
+    }
+    const isIncremental = hasParsed.value
+    processTranscript(resultText, isIncremental)
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -134,7 +139,33 @@ function stopListening() {
   }
 }
 
-function processTranscript(text: string) {
+function hasKindMentioned(text: string): boolean {
+  const normalized = text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+  const words = [
+    'ingreso', 'ingresar', 'ganar', 'recibir', 'cobrar', 'sueldo', 'nomina', 'renta', 'deposito',
+    'income', 'salary', 'deposit', 'earn', 'receive',
+    'gasto', 'gastar', 'comprar', 'pagar', 'factura', 'compra', 'salida',
+    'expense', 'spend', 'pay', 'bill', 'purchase', 'outflow'
+  ]
+  return words.some(w => new RegExp(`\\b${w}\\b`).test(normalized))
+}
+
+function hasDateMentioned(text: string): boolean {
+  const normalized = text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+  if (/\b(hoy|today|ayer|yesterday|manana|tomorrow)\b/.test(normalized)) {
+    return true
+  }
+  if (/\b(el\s+(dia\s+)?\d{1,2}|on\s+(the\s+|day\s+)?\d{1,2}(st|nd|rd|th)?)\b/.test(normalized)) {
+    return true
+  }
+  const months = [
+    'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'setiembre', 'octubre', 'noviembre', 'diciembre',
+    'january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december'
+  ]
+  return months.some(m => new RegExp(`\\b${m}\\b`).test(normalized))
+}
+
+function processTranscript(text: string, isIncremental = false) {
   if (!text.trim()) return
 
   const parsed = parseVoiceCommand(
@@ -144,19 +175,63 @@ function processTranscript(text: string) {
     familyStore.self?.id
   )
 
-  form.kind = parsed.kind
-  form.amount = parsed.amount !== null ? String(parsed.amount) : ''
-  form.categoryId = parsed.categoryId
-  form.familyMemberId = parsed.familyMemberId
-  form.occurredOn = parsed.occurredOn
-  form.note = parsed.note
-  form.isCash = parsed.isCash
-  form.isRecurring = parsed.isRecurring
-  form.frequency = parsed.frequency
-  form.months = parsed.months
-  form.dayOfMonth = String(parsed.dayOfMonth)
+  if (!isIncremental) {
+    form.kind = parsed.kind
+    form.amount = parsed.amount !== null ? String(parsed.amount) : ''
+    form.categoryId = parsed.categoryId
+    form.familyMemberId = parsed.familyMemberId
+    form.occurredOn = parsed.occurredOn
+    form.note = parsed.note
+    form.isCash = parsed.isCash
+    form.isRecurring = parsed.isRecurring
+    form.frequency = parsed.frequency
+    form.months = parsed.months
+    form.dayOfMonth = String(parsed.dayOfMonth)
 
-  unrecognized.value = parsed.unrecognizedFields
+    unrecognized.value = parsed.unrecognizedFields.filter(f => f !== 'familyMember')
+  } else {
+    // Incremental merge
+    if (hasKindMentioned(text)) {
+      form.kind = parsed.kind
+    }
+
+    if (parsed.amount !== null) {
+      form.amount = String(parsed.amount)
+      unrecognized.value = unrecognized.value.filter(f => f !== 'amount')
+    }
+
+    const { exactMatch: categoryExact } = extractCategory(text, categoriesStore.items, form.kind)
+    if (categoryExact) {
+      form.categoryId = parsed.categoryId
+      unrecognized.value = unrecognized.value.filter(f => f !== 'category')
+    }
+
+    const { exactMatch: memberExact } = extractFamilyMember(text, familyStore.items)
+    if (memberExact) {
+      form.familyMemberId = parsed.familyMemberId
+      unrecognized.value = unrecognized.value.filter(f => f !== 'familyMember')
+    }
+
+    if (hasDateMentioned(text)) {
+      form.occurredOn = parsed.occurredOn
+    }
+
+    if (parsed.note) {
+      form.note = parsed.note
+    }
+
+    if (parsed.isCash) {
+      form.isCash = true
+    }
+
+    if (parsed.isRecurring) {
+      form.isRecurring = parsed.isRecurring
+      form.frequency = parsed.frequency
+      form.months = parsed.months
+      form.dayOfMonth = String(parsed.dayOfMonth)
+    }
+  }
+
   hasParsed.value = true
 }
 
@@ -371,10 +446,6 @@ watch(() => props.modelValue, (isOpen) => {
           <div v-if="unrecognized.includes('category')" class="rounded-field bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/30 p-2.5 text-xs text-amber-800 dark:text-amber-300 leading-snug">
             <AppIcon name="solar:info-circle-bold" :size="14" class="inline mr-1 text-amber-500" />
             No se reconoció una categoría exacta. Hemos seleccionado una por defecto; puedes cambiarla si lo deseas.
-          </div>
-          <div v-if="unrecognized.includes('familyMember')" class="rounded-field bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/30 p-2.5 text-xs text-amber-800 dark:text-amber-300 leading-snug">
-            <AppIcon name="solar:info-circle-bold" :size="14" class="inline mr-1 text-amber-500" />
-            No detectamos a qué miembro de la familia pertenece. Hemos seleccionado a ti por defecto; puedes cambiarlo.
           </div>
         </div>
 

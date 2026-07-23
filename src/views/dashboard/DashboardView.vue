@@ -355,10 +355,10 @@ onBeforeUnmount(() => {
             <span class="font-semibold text-sm tracking-wide">{{ t('common.add') }}</span>
           </div>
 
-          <!-- Expandido: Opciones Manual y Voz apiladas verticalmente -->
+          <!-- Expandido: Opciones Manual y Voz apiladas verticalmente con separador elegante -->
           <div
             v-else
-            class="flex flex-col gap-1 w-full h-full justify-center p-1 animate-fade-in"
+            class="flex flex-col gap-0.5 w-full h-full justify-center p-1 animate-fade-in"
           >
             <!-- Opción Manual -->
             <button
@@ -369,6 +369,9 @@ onBeforeUnmount(() => {
               <AppIcon name="solar:pen-new-round-bold" :size="16" />
               <span>{{ t('common.manual') }}</span>
             </button>
+
+            <!-- Separador minimalista y elegante -->
+            <div class="h-px bg-white/15 mx-3"></div>
 
             <!-- Opción Voz -->
             <button
