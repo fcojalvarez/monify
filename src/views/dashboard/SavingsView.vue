@@ -93,7 +93,10 @@
       <BaseSpinner v-if="savingsStore.loading" :message="t('savings.loading')" />
 
       <div v-else class="grid animate-fade-in gap-4">
-        <BaseCard v-for="goal in displayGoals" :key="goal.id" class="space-y-4 p-5">
+        <EmptyState v-if="displayGoals.length === 0" icon="solar:target-linear"
+          :title="t('savings.emptyGoals')" :description="t('savings.emptyGoalsHint')" />
+
+        <BaseCard v-else v-for="goal in displayGoals" :key="goal.id" class="space-y-4 p-5">
           <div>
             <div class="flex items-start justify-between">
               <div class="flex items-center gap-3">

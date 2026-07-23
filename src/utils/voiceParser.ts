@@ -413,6 +413,17 @@ export function extractRecurring(text: string): ParsedRecurringInfo {
     }
   }
 
+  // Patrones como "todos los dias X", "cada dia X" (que se refieren a los días X de cada mes)
+  // Ej: "todos los dias 1", "todos los dias 15 de 10 euros", "gasto de 10€ todos los dias 1"
+  const todosLosDiasNumRegex = /\b(?:todos\s+los\s+dias|cada\s+dia)\s+(\d{1,2})\b/i
+  const todosLosDiasNumMatch = todosLosDiasNumRegex.exec(normalized)
+  if (todosLosDiasNumMatch) {
+    const day = parseInt(todosLosDiasNumMatch[1], 10)
+    if (day >= 1 && day <= 31) {
+      return { isRecurring: true, frequency: 'monthly', months: [], dayOfMonth: day }
+    }
+  }
+
   // 2. Custom months recurrence with days: "los dias 5 de enero marzo y abril"
   // English: "on days 5 of january and march"
   const MONTH_MAP: Record<string, number> = {
@@ -509,12 +520,24 @@ export function parseVoiceCommand(
 ): ParsedVoiceTransaction {
   const kind = extractKind(text)
   const amount = extractAmount(text)
-  const occurredOn = extractDate(text)
+  let occurredOn = extractDate(text)
   const { categoryId, exactMatch: categoryExact } = extractCategory(text, categories, kind)
   const { familyMemberId, exactMatch: memberExact } = extractFamilyMember(text, members, defaultMemberId)
   const note = extractNote(text)
   const isCash = extractIsCash(text)
   const recInfo = extractRecurring(text)
+
+  // Ajustar la fecha (occurredOn) si es una recurrencia mensual/personalizada con un día del mes específico.
+  // Solo lo hacemos si la fecha extraída es la de hoy por defecto (el usuario no especificó otra fecha de inicio).
+  if (recInfo.isRecurring && (recInfo.frequency === 'monthly' || recInfo.frequency === 'custom')) {
+    const dayNum = recInfo.dayOfMonth
+    if (dayNum >= 1 && dayNum <= 31 && occurredOn === extractDate('hoy')) {
+      const parts = occurredOn.split('-')
+      if (parts.length === 3) {
+        occurredOn = `${parts[0]}-${parts[1]}-${String(dayNum).padStart(2, '0')}`
+      }
+    }
+  }
 
   const unrecognizedFields: ('amount' | 'category' | 'familyMember')[] = []
   if (amount === null) unrecognizedFields.push('amount')
