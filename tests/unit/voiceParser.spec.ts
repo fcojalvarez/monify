@@ -39,27 +39,39 @@ describe('voiceParser', () => {
       expect(replaceWordsWithDigits('treinta y cinco con cuarenta y dos')).toBe('35 con 42')
       expect(replaceWordsWithDigits('un euro con cinco')).toBe('1 euro con 5')
     })
+
+    it('replaces english written numbers with digits', () => {
+      expect(replaceWordsWithDigits('two point fifty')).toBe('2 point 50')
+      expect(replaceWordsWithDigits('thirty-five point forty-two')).toBe('35 point 42')
+      expect(replaceWordsWithDigits('one dollar and five cents')).toBe('1 dollar and 5 cents')
+    })
   })
 
   describe('extractKind', () => {
-    it('detects income terms', () => {
+    it('detects income terms in Spanish and English', () => {
       expect(extractKind('tengo un ingreso de mi nómina')).toBe('income')
       expect(extractKind('recibir el sueldo del mes')).toBe('income')
+      expect(extractKind('got a monthly salary deposit')).toBe('income')
+      expect(extractKind('receive an income')).toBe('income')
     })
 
-    it('detects expense terms and defaults to expense', () => {
+    it('detects expense terms and defaults to expense in Spanish and English', () => {
       expect(extractKind('he gastado 15 euros en el súper')).toBe('expense')
       expect(extractKind('un pago de la factura de luz')).toBe('expense')
       expect(extractKind('un refresco por 2€')).toBe('expense') // default
+      expect(extractKind('spent five dollars on coffee')).toBe('expense')
+      expect(extractKind('pay the electric bill')).toBe('expense')
     })
   })
 
   describe('extractIsCash', () => {
-    it('detects if the movement is in cash', () => {
+    it('detects if the movement is in cash (Spanish and English)', () => {
       expect(extractIsCash('un gasto de 12 euros en efectivo')).toBe(true)
       expect(extractIsCash('ingreso de 10 con cash')).toBe(true)
       expect(extractIsCash('gasto en la cartera')).toBe(true)
       expect(extractIsCash('compra de 5 euros')).toBe(false)
+      expect(extractIsCash('spend 25 dollars in cash')).toBe(true)
+      expect(extractIsCash('cash transaction of 5')).toBe(true)
     })
   })
 
@@ -68,24 +80,32 @@ describe('voiceParser', () => {
       expect(extractAmount('gasto de 43.50€ hoy')).toBe(43.5)
       expect(extractAmount('he pagado 43,5 euros')).toBe(43.5)
       expect(extractAmount('un ingreso de 1200 eur')).toBe(1200)
+      expect(extractAmount('spent $45.50 yesterday')).toBe(45.5)
+      expect(extractAmount('got a deposit of usd 1250')).toBe(1250)
     })
 
-    it('extracts decimal numbers expressed in spoken Spanish', () => {
+    it('extracts decimal numbers expressed in spoken Spanish and English', () => {
       expect(extractAmount('un gasto de dos con cincuenta euros')).toBe(2.5)
       expect(extractAmount('pago 2 con 50 de comida')).toBe(2.5)
       expect(extractAmount('gasto de un euro con cinco centimos')).toBe(1.05)
       expect(extractAmount('gasto de 2 con 5')).toBe(2.05)
+      expect(extractAmount('spent three point five dollars')).toBe(3.5)
+      expect(extractAmount('spent twenty-five and fifty cents')).toBe(25.5)
+      expect(extractAmount('one dollar and five cents')).toBe(1.05)
     })
 
-    it('extracts number preceded by preposition de/por', () => {
+    it('extracts number preceded by preposition de/por/of/for', () => {
       expect(extractAmount('compra por un importe de 25')).toBe(25)
       expect(extractAmount('un gasto de 125 en comida')).toBe(125)
+      expect(extractAmount('spend for an amount of thirty dollars')).toBe(30)
+      expect(extractAmount('receipt of fifty dollars')).toBe(50)
     })
 
-    it('ignores numbers used as days of month in prefix/suffix', () => {
-      // "15" is part of "el día 15", so 43 should be picked as amount
+    it('ignores numbers used as days of month in prefix/suffix (Spanish and English)', () => {
       expect(extractAmount('gasto de 43 el día 15')).toBe(43)
       expect(extractAmount('gasto el 15 de octubre de 43')).toBe(43)
+      expect(extractAmount('spent 43 on the 15th')).toBe(43)
+      expect(extractAmount('on october 15th spent 43')).toBe(43)
     })
 
     it('returns null if no positive number is found', () => {
@@ -103,19 +123,26 @@ describe('voiceParser', () => {
       vi.useRealTimers()
     })
 
-    it('handles relative terms (hoy, ayer, mañana)', () => {
+    it('handles relative terms (hoy, ayer, mañana, today, yesterday, tomorrow)', () => {
       expect(extractDate('gasto de hoy de comida')).toBe('2026-10-15')
       expect(extractDate('ayer compré comida')).toBe('2026-10-14')
       expect(extractDate('mañana pagaré la factura')).toBe('2026-10-16')
+      expect(extractDate('spent some today')).toBe('2026-10-15')
+      expect(extractDate('yesterday I spent money')).toBe('2026-10-14')
+      expect(extractDate('tomorrow I will pay')).toBe('2026-10-16')
     })
 
-    it('handles explicit day of month with text month', () => {
+    it('handles explicit day of month with text month (Spanish and English)', () => {
       expect(extractDate('el 12 de octubre compré un libro')).toBe('2026-10-12')
       expect(extractDate('el día 3 de febrero del año que sea')).toBe('2026-02-03')
+      expect(extractDate('on the 12th of october')).toBe('2026-10-12')
+      expect(extractDate('on february 3rd')).toBe('2026-02-03')
     })
 
-    it('handles explicit day of current month', () => {
+    it('handles explicit day of current month (Spanish and English)', () => {
       expect(extractDate('gasto el día 22')).toBe('2026-10-22')
+      expect(extractDate('spent money on the 22nd')).toBe('2026-10-22')
+      expect(extractDate('payment on day 5')).toBe('2026-10-05')
     })
 
     it('defaults to today ISO date', () => {
@@ -155,10 +182,12 @@ describe('voiceParser', () => {
       expect(extractNote('gasto de 43.50 euros hoy de comida')).toBe('')
     })
 
-    it('extracts the note when con nota/pon en notas is specified', () => {
+    it('extracts the note when con nota/pon en notas/with note is specified', () => {
       expect(extractNote('gasto de 43 euros con nota cena de cumpleaños')).toBe('cena de cumpleaños')
       expect(extractNote('gasto de 5€ pon en notas almuerzo rápido')).toBe('almuerzo rápido')
       expect(extractNote('ingreso de 100 con el concepto transferencia mensual')).toBe('transferencia mensual')
+      expect(extractNote('spent 15 dollars with note taxi trip')).toBe('taxi trip')
+      expect(extractNote('put in notes groceries for the week')).toBe('groceries for the week')
     })
   })
 
@@ -172,33 +201,39 @@ describe('voiceParser', () => {
       vi.useRealTimers()
     })
 
-    it('detects simple recurrence frequencies', () => {
+    it('detects simple recurrence frequencies in Spanish and English', () => {
       expect(extractRecurring('gasto todos los días de comida')).toEqual({
         isRecurring: true, frequency: 'daily', months: [], dayOfMonth: 1
       })
       expect(extractRecurring('ingreso de nómina cada mes')).toEqual({
         isRecurring: true, frequency: 'monthly', months: [], dayOfMonth: 15 // system date day is 15
       })
-      expect(extractRecurring('gasto semanal de gasolina')).toEqual({
+      expect(extractRecurring('every week on food')).toEqual({
         isRecurring: true, frequency: 'weekly', months: [], dayOfMonth: 1
       })
-      expect(extractRecurring('gasto de seguro anual')).toEqual({
+      expect(extractRecurring('yearly subscription of monify')).toEqual({
         isRecurring: true, frequency: 'yearly', months: [], dayOfMonth: 1
       })
     })
 
-    it('detects custom recurrence with monthly day', () => {
+    it('detects custom recurrence with monthly day (Spanish and English)', () => {
       expect(extractRecurring('gasto los 1 de cada mes')).toEqual({
         isRecurring: true, frequency: 'monthly', months: [], dayOfMonth: 1
       })
       expect(extractRecurring('pago de hipoteca el día 10 de cada mes')).toEqual({
         isRecurring: true, frequency: 'monthly', months: [], dayOfMonth: 10
       })
+      expect(extractRecurring('rent on the 1st of every month')).toEqual({
+        isRecurring: true, frequency: 'monthly', months: [], dayOfMonth: 1
+      })
     })
 
-    it('detects custom recurrence with specific months and days', () => {
+    it('detects custom recurrence with specific months and days (Spanish and English)', () => {
       expect(extractRecurring('gasto los días 5 de enero marzo y abril')).toEqual({
         isRecurring: true, frequency: 'custom', months: [1, 3, 4], dayOfMonth: 5
+      })
+      expect(extractRecurring('rent on day 5 of january and march')).toEqual({
+        isRecurring: true, frequency: 'custom', months: [1, 3], dayOfMonth: 5
       })
     })
 
@@ -239,17 +274,17 @@ describe('voiceParser', () => {
       })
     })
 
-    it('parses a full natural Spanish sentence with note, cash, and recurrence', () => {
-      const sentence = 'gasto de dos con cincuenta en efectivo los días 5 de enero y marzo para Ana con nota cena familiar'
+    it('parses a full natural English sentence with note, cash, and recurrence', () => {
+      const sentence = 'spend two point fifty in cash on days 5 of january and march for Ana with note family dinner'
       const parsed = parseVoiceCommand(sentence, mockCategories, mockMembers, 'mem-1')
 
       expect(parsed).toEqual({
         kind: 'expense',
         amount: 2.5,
-        categoryId: 'cat-1', // Comida is fallback as Comida Rápida is not explicitly said and Comida is first
+        categoryId: 'cat-1', // Comida is first fallback
         familyMemberId: 'mem-1',
         occurredOn: '2026-10-15',
-        note: 'cena familiar',
+        note: 'family dinner',
         isCash: true,
         isRecurring: true,
         frequency: 'custom',

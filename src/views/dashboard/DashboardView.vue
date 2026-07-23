@@ -73,7 +73,36 @@ const showTransaction = ref(false)
 const editingTransaction = ref<TransactionWithRelations | undefined>()
 const showVoiceAssistant = ref(false)
 
+const isExpanded = ref(false)
+const actionMenuRef = ref<HTMLElement | null>(null)
+
 const transactionFormRef = ref<InstanceType<typeof TransactionForm> | null>(null)
+
+function handleClickOutside(event: MouseEvent) {
+  const target = event.target as HTMLElement
+  if (!target || !target.isConnected) {
+    return
+  }
+  if (actionMenuRef.value && !actionMenuRef.value.contains(target)) {
+    isExpanded.value = false
+  }
+}
+
+function handleMainClick() {
+  if (!isExpanded.value) {
+    isExpanded.value = true
+  }
+}
+
+function triggerManual() {
+  openNewTransaction()
+  isExpanded.value = false
+}
+
+function triggerVoice() {
+  openVoiceAssistant()
+  isExpanded.value = false
+}
 
 const showAddMember = ref(false)
 const familyFormRef = ref<InstanceType<typeof FamilyForm> | null>(null)
@@ -160,6 +189,7 @@ function dismissSavingsPrompt() {
 
 onMounted(async () => {
   window.addEventListener('scroll', handleScroll)
+  document.addEventListener('click', handleClickOutside)
 
   const promises: Promise<unknown>[] = [
     categories.fetchAll(),
@@ -188,6 +218,7 @@ onMounted(async () => {
 
 onBeforeUnmount(() => {
   window.removeEventListener('scroll', handleScroll)
+  document.removeEventListener('click', handleClickOutside)
 })
 </script>
 
@@ -296,30 +327,61 @@ onBeforeUnmount(() => {
     </main>
 
     <div
-      class="fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] right-4 md:right-[calc(50vw-20rem)] z-40 flex items-center gap-3 pointer-events-none">
+      class="fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] right-4 md:right-[calc(50vw-20rem)] z-40 flex items-end gap-3 pointer-events-none">
       <Transition enter-active-class="transition duration-200 ease-out"
         leave-active-class="transition duration-150 ease-in" enter-from-class="translate-y-4 opacity-0 scale-95"
         leave-to-class="translate-y-4 opacity-0 scale-95">
         <button v-if="showScrollTop" type="button"
-          class="pointer-events-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary-500 text-white shadow-lg hover:bg-primary-600 active:scale-95 text-content transition-transform hover:bg-surface-muted"
+          class="pointer-events-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary-500 text-white shadow-lg hover:bg-primary-600 active:scale-95 text-content transition-transform hover:bg-surface-muted mb-0 shrink-0"
           :aria-label="t('history.scrollTop')" :title="t('history.scrollTop')" @click="scrollToTop">
           <AppIcon name="solar:alt-arrow-up-bold" :size="22" />
         </button>
       </Transition>
 
-      <button
-        class="pointer-events-auto flex h-14 items-center gap-2 rounded-pill bg-primary-500 px-6 font-semibold text-white shadow-primary-glow transition-transform active:scale-95"
-        :aria-label="t('dashboard.addAria')" @click="openNewTransaction">
-        <AppIcon name="solar:add-circle-bold" :size="22" />
-        {{ t('common.add') }}
-      </button>
+      <!-- Menú de Acción Expandible Verticalmente -->
+      <div
+        ref="actionMenuRef"
+        class="pointer-events-auto relative flex flex-col justify-end items-center rounded-[28px] bg-primary-500 text-white shadow-primary-glow transition-all duration-300 ease-out select-none w-[130px] overflow-hidden"
+        :class="isExpanded ? 'h-[114px]' : 'h-14 cursor-pointer hover:bg-primary-600 active:scale-95'"
+        @click="handleMainClick"
+      >
+        <div class="absolute inset-0 flex flex-col justify-end p-1">
+          <!-- Colapsado: Solo botón Añadir -->
+          <div
+            v-if="!isExpanded"
+            class="flex h-12 items-center justify-center gap-2 transition-all duration-300 ease-out w-full"
+          >
+            <AppIcon name="solar:add-circle-bold" :size="22" />
+            <span class="font-semibold text-sm tracking-wide">{{ t('common.add') }}</span>
+          </div>
 
-      <!-- Botón del Asistente de Voz -->
-      <button
-        class="pointer-events-auto flex h-14 w-14 items-center justify-center rounded-full bg-violet-600 text-white shadow-lg hover:bg-violet-700 transition-transform active:scale-95"
-        :aria-label="t('voice.buttonLabel')" :title="t('voice.buttonLabel')" @click="openVoiceAssistant">
-        <AppIcon name="solar:microphone-bold" :size="24" />
-      </button>
+          <!-- Expandido: Opciones Manual y Voz apiladas verticalmente -->
+          <div
+            v-else
+            class="flex flex-col gap-1 w-full h-full justify-center p-1 animate-fade-in"
+          >
+            <!-- Opción Manual -->
+            <button
+              type="button"
+              class="flex h-11 w-full items-center justify-center gap-2 rounded-[22px] hover:bg-white/10 active:scale-95 transition-all font-semibold text-xs whitespace-nowrap text-white"
+              @click.stop="triggerManual"
+            >
+              <AppIcon name="solar:pen-new-round-bold" :size="16" />
+              <span>{{ t('common.manual') }}</span>
+            </button>
+
+            <!-- Opción Voz -->
+            <button
+              type="button"
+              class="flex h-11 w-full items-center justify-center gap-2 rounded-[22px] hover:bg-white/10 active:scale-95 transition-all font-semibold text-xs whitespace-nowrap text-white"
+              @click.stop="triggerVoice"
+            >
+              <AppIcon name="solar:microphone-bold" :size="16" />
+              <span>{{ t('voice.buttonLabelShort') }}</span>
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
 
     <BaseSheet v-model="showTransaction"

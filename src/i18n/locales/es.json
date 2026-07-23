@@ -278,6 +278,7 @@
     "cancel": "Cancelar",
     "save": "Guardar",
     "add": "Añadir",
+    "manual": "Manual",
     "loading": "Cargando…",
     "addMember": "Añadir miembro",
     "createCategory": "Crear categoría",
@@ -564,6 +565,7 @@
   "voice": {
     "title": "Asistente de voz",
     "buttonLabel": "Asistente de voz",
+    "buttonLabelShort": "Voz",
     "listening": "Escuchando...",
     "speakPrompt": "Di algo como: \"Crea un gasto de 43€ hoy de categoría Comida\"",
     "stop": "Detener",

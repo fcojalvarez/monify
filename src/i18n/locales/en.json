@@ -278,6 +278,7 @@
     "cancel": "Cancel",
     "save": "Save",
     "add": "Add",
+    "manual": "Manual",
     "loading": "Loading…",
     "addMember": "Add member",
     "createCategory": "Create category",
@@ -564,6 +565,7 @@
   "voice": {
     "title": "Voice Assistant",
     "buttonLabel": "Voice Assistant",
+    "buttonLabelShort": "Voice",
     "listening": "Listening...",
     "speakPrompt": "Say something like: \"Create an expense of 43€ today of category Food\"",
     "stop": "Stop",
