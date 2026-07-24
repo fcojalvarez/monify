@@ -2,6 +2,7 @@
 import { ref, watch } from 'vue'
 import BaseButton from './BaseButton.vue'
 import AppIcon from './AppIcon.vue'
+import { useI18n } from '@/i18n'
 
 const props = withDefaults(
     defineProps<{
@@ -26,6 +27,7 @@ const props = withDefaults(
         persistent?: boolean
 
         loading?: boolean
+        hasChanges?: boolean
     }>(),
     {
         variant: 'default',
@@ -36,6 +38,7 @@ const props = withDefaults(
         closeOnBackdrop: true,
         persistent: false,
         loading: false,
+        hasChanges: false,
     },
 )
 
@@ -47,6 +50,8 @@ const emit = defineEmits<{
 }>()
 
 const dialog = ref<HTMLDialogElement>()
+const showConfirmDiscard = ref(false)
+const { t } = useI18n()
 
 watch(
     () => props.modelValue,
@@ -60,12 +65,27 @@ watch(
         if (!open && dialog.value.open) {
             dialog.value.close()
         }
+
+        // Reset confirmation state upon open/close
+        showConfirmDiscard.value = false
     },
 )
 
 function close() {
     if (props.persistent) return
 
+    if (props.hasChanges) {
+        showConfirmDiscard.value = true
+        return
+    }
+
+    dialog.value?.close()
+    emit('update:modelValue', false)
+    emit('close')
+}
+
+function confirmForceClose() {
+    showConfirmDiscard.value = false
     dialog.value?.close()
     emit('update:modelValue', false)
     emit('close')
@@ -87,6 +107,12 @@ function onCancel(event: Event) {
         return
     }
 
+    if (props.hasChanges) {
+        event.preventDefault()
+        showConfirmDiscard.value = true
+        return
+    }
+
     emit('update:modelValue', false)
     emit('close')
 }
@@ -98,13 +124,36 @@ function onBackdrop(event: MouseEvent) {
         close()
     }
 }
+
+defineExpose({
+    close,
+    showConfirmDiscard,
+})
 </script>
 
 <template>
     <dialog ref="dialog"
-        class="w-full max-w-md rounded-card border border-line bg-surface-raised p-0 text-content shadow-raised backdrop:bg-secondary-950/50 backdrop:backdrop-blur-sm"
+        class="relative w-full max-w-md rounded-card border border-line bg-surface-raised p-0 text-content shadow-raised backdrop:bg-secondary-950/50 backdrop:backdrop-blur-sm"
         @cancel="onCancel" @click="onBackdrop">
         <div class="p-6">
+            <!-- Confirmación de cambios sin guardar -->
+            <div v-if="showConfirmDiscard" class="absolute inset-0 z-50 flex flex-col justify-center bg-surface-raised p-6 rounded-card border border-line">
+                <h3 class="text-lg font-bold text-expense flex items-center gap-2 mb-2">
+                    <AppIcon name="solar:danger-bold" class="text-expense" :size="24" />
+                    {{ t('common.unsavedChanges') }}
+                </h3>
+                <p class="text-sm text-content-muted mb-6 leading-relaxed">
+                    {{ t('common.unsavedChangesMessage') }}
+                </p>
+                <div class="flex justify-end gap-3">
+                    <BaseButton type="button" variant="ghost" @click="showConfirmDiscard = false">
+                        {{ t('common.keepEditing') }}
+                    </BaseButton>
+                    <BaseButton type="button" variant="danger" @click="confirmForceClose">
+                        {{ t('common.discard') }}
+                    </BaseButton>
+                </div>
+            </div>
 
             <!-- Header -->
 
