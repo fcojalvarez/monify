@@ -21,7 +21,7 @@ import BaseSelect from '@/components/ui/BaseSelect.vue'
 import BaseSwitch from '@/components/ui/BaseSwitch.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
 import { localeOptions, type AppLocale, useI18n } from '@/i18n'
-import { sendNotification } from '@/utils/notification'
+import { sendNotification, diagnoseNotifications } from '@/utils/notification'
 
 const CategoryManager = defineAsyncComponent(() => import('@/components/categories/CategoryManager.vue'))
 const FamilyManager = defineAsyncComponent(() => import('@/components/family/FamilyManager.vue'))
@@ -241,6 +241,11 @@ const language = computed({
 
 // Test Notification
 const notificationStatus = ref<{ success: boolean; message: string } | null>(null)
+const diagnostics = ref(diagnoseNotifications())
+
+function refreshDiagnostics() {
+  diagnostics.value = diagnoseNotifications()
+}
 
 async function testNotification() {
   notificationStatus.value = null
@@ -252,15 +257,18 @@ async function testNotification() {
     if (success) {
       notificationStatus.value = { success: true, message: '¡Notificación enviada con éxito!' }
     } else {
-      notificationStatus.value = { success: false, message: 'No se pudo enviar la notificación. ¿Están concedidos los permisos?' }
+      notificationStatus.value = { success: false, message: 'No se pudo enviar la notificación.' }
     }
   } catch (error) {
     notificationStatus.value = { success: false, message: error instanceof Error ? error.message : 'Error al enviar' }
+  } finally {
+    refreshDiagnostics()
   }
 }
 
 onMounted(() => {
   void Promise.all([categories.fetchAll(), family.fetchAll()])
+  refreshDiagnostics()
 })
 
 </script>
@@ -299,6 +307,28 @@ onMounted(() => {
           <p v-if="notificationStatus" class="text-xs text-center font-medium" :class="notificationStatus.success ? 'text-primary-500' : 'text-expense'">
             {{ notificationStatus.message }}
           </p>
+        </div>
+
+        <div class="mt-2 p-3 bg-surface-muted rounded-field space-y-1.5 text-xs text-content-muted border border-line">
+          <p class="font-bold text-content mb-1">Diagnóstico de tu dispositivo:</p>
+          <div class="flex justify-between gap-4">
+            <span>Contexto seguro (HTTPS/localhost):</span>
+            <span class="font-medium shrink-0" :class="diagnostics.isSecure ? 'text-primary-500' : 'text-expense'">
+              {{ diagnostics.isSecure ? 'Sí (Correcto)' : 'No (Inseguro - Bloqueado)' }}
+            </span>
+          </div>
+          <div class="flex justify-between gap-4">
+            <span>Permiso de notificaciones:</span>
+            <span class="font-medium shrink-0" :class="diagnostics.webPermission === 'granted' ? 'text-primary-500' : 'text-expense'">
+              {{ diagnostics.webPermission }}
+            </span>
+          </div>
+          <div class="flex justify-between gap-4">
+            <span>Service Worker activo:</span>
+            <span class="font-medium shrink-0" :class="diagnostics.hasServiceWorker ? 'text-primary-500' : 'text-expense'">
+              {{ diagnostics.hasServiceWorker ? 'Sí' : 'No' }}
+            </span>
+          </div>
         </div>
       </BaseCard>
 

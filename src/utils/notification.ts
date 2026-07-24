@@ -1,6 +1,25 @@
 import { Capacitor } from '@capacitor/core'
 
 /**
+ * Realiza un diagnóstico detallado del estado de soporte y permisos de las notificaciones en el dispositivo.
+ */
+export function diagnoseNotifications() {
+  const isNative = Capacitor.isNativePlatform()
+  const hasNotificationAPI = typeof window !== 'undefined' && 'Notification' in window
+  const isSecure = typeof window !== 'undefined' ? (window.isSecureContext ?? false) : false
+  const webPermission = hasNotificationAPI ? Notification.permission : 'not_supported'
+  const hasServiceWorker = typeof navigator !== 'undefined' && 'serviceWorker' in navigator
+
+  return {
+    isNative,
+    hasNotificationAPI,
+    isSecure,
+    webPermission,
+    hasServiceWorker,
+  }
+}
+
+/**
  * Solicita explícitamente permisos de notificación al usuario.
  * @returns Promesa que se resuelve con true si se otorgó el permiso, o false en caso contrario.
  */
@@ -72,6 +91,13 @@ export async function sendNotification(title: string, body: string): Promise<boo
 
   // Web fallback (Notification API estándar)
   if (typeof window !== 'undefined' && 'Notification' in window) {
+    // Diagnóstico de contexto seguro (HTTP vs HTTPS/localhost)
+    if (!window.isSecureContext) {
+      throw new Error(
+        'Las notificaciones web están bloqueadas por el navegador debido a un contexto inseguro (HTTP). Para recibir notificaciones en tu móvil, accede usando HTTPS o desde localhost.'
+      )
+    }
+
     const isGranted = Notification.permission === 'granted'
     const permission = isGranted ? 'granted' : await Notification.requestPermission()
 
@@ -102,10 +128,12 @@ export async function sendNotification(title: string, body: string): Promise<boo
         }
       }
     } else {
-      console.warn('El permiso de notificaciones de navegador está denegado.')
+      throw new Error(
+        `Permiso de notificaciones denegado en el navegador (estado actual: "${Notification.permission}"). Revisa los ajustes de sitio de Chrome para activar las notificaciones.`
+      )
     }
   } else {
-    console.log('Notificaciones de navegador no soportadas. Fallback de consola:', title, '-', body)
+    throw new Error('Las notificaciones no son soportadas por este navegador.')
   }
 
   return false
