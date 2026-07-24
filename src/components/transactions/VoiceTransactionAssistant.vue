@@ -51,6 +51,7 @@ const unrecognized = ref<('amount' | 'category' | 'familyMember')[]>([])
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const dialogRef = ref<any>(null)
+const showConfirmDiscard = ref(false)
 const usedAI = ref(false)
 const isAIProcessing = ref(false)
 const geminiApiKey = ref(localStorage.getItem('monify_gemini_api_key') || import.meta.env.VITE_GEMINI_API_KEY || '')
@@ -357,6 +358,12 @@ function handleClose() {
   emit('update:modelValue', false)
 }
 
+function forceClose() {
+  showConfirmDiscard.value = false
+  hasParsed.value = false
+  handleClose()
+}
+
 async function handleConfirm() {
   errorMsg.value = ''
 
@@ -474,7 +481,7 @@ watch(() => props.modelValue, (isOpen) => {
 </script>
 
 <template>
-  <BaseDialog ref="dialogRef" :model-value="modelValue" :title="t('voice.title')" :show-close="true" :has-changes="hasParsed" @close="handleClose">
+  <BaseDialog ref="dialogRef" :model-value="modelValue" :title="t('voice.title')" :show-close="true" :has-changes="hasParsed" @close-attempt="showConfirmDiscard = true" @close="handleClose">
     <div class="space-y-6">
       <!-- Listening State -->
       <div v-if="isListening"
@@ -683,5 +690,12 @@ watch(() => props.modelValue, (isOpen) => {
         </div>
       </div>
     </div>
+  </BaseDialog>
+
+  <!-- Confirmación de cambios sin guardar (modal sobre el modal) -->
+  <BaseDialog v-model="showConfirmDiscard" variant="danger" :title="t('common.unsavedChanges')" :confirm-text="t('common.discard')" :cancel-text="t('common.keepEditing')" show-cancel @confirm="forceClose">
+    <p class="text-content">
+      {{ t('common.unsavedChangesMessage') }}
+    </p>
   </BaseDialog>
 </template>
