@@ -32,4 +32,13 @@ if (typeof window !== 'undefined') {
   ;(window as any).__useSavingsStore = useSavingsStore
   ;(window as any).__useFamilyStore = useFamilyStore
   ;(window as any).__useProfileStore = useProfileStore
+
+  // Registrar Service Worker para soporte de notificaciones locales en PWA
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js')
+        .then((reg) => console.log('Service Worker registrado en el ámbito:', reg.scope))
+        .catch((err) => console.error('Error al registrar el Service Worker:', err))
+    })
+  }
 }

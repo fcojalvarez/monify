@@ -3,12 +3,22 @@ import { Capacitor } from '@capacitor/core'
 /**
  * Realiza un diagnóstico detallado del estado de soporte y permisos de las notificaciones en el dispositivo.
  */
-export function diagnoseNotifications() {
+export async function diagnoseNotifications() {
   const isNative = Capacitor.isNativePlatform()
   const hasNotificationAPI = typeof window !== 'undefined' && 'Notification' in window
   const isSecure = typeof window !== 'undefined' ? (window.isSecureContext ?? false) : false
   const webPermission = hasNotificationAPI ? Notification.permission : 'not_supported'
   const hasServiceWorker = typeof navigator !== 'undefined' && 'serviceWorker' in navigator
+
+  let hasActiveRegistration = false
+  if (hasServiceWorker) {
+    try {
+      const reg = await navigator.serviceWorker.getRegistration()
+      hasActiveRegistration = !!reg
+    } catch (e) {
+      console.error('Error al consultar Service Worker registrado:', e)
+    }
+  }
 
   return {
     isNative,
@@ -16,6 +26,7 @@ export function diagnoseNotifications() {
     isSecure,
     webPermission,
     hasServiceWorker,
+    hasActiveRegistration,
   }
 }
 
