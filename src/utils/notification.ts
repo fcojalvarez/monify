@@ -32,6 +32,7 @@ export async function requestNotificationPermission(): Promise<boolean> {
 /**
  * Envía una notificación local con el título y cuerpo indicados.
  * En móviles nativos utiliza el plugin de Capacitor; en navegadores web recurre a la Notification API HTML5.
+ * En entornos web móviles y PWAs (especialmente iOS Safari PWA), prioriza mostrar la notificación a través del Service Worker activo.
  * @param title Título de la notificación.
  * @param body Detalles o cuerpo de la notificación.
  * @returns Promesa con un booleano indicando si la notificación se pudo emitir/enviar.
@@ -71,22 +72,34 @@ export async function sendNotification(title: string, body: string): Promise<boo
 
   // Web fallback (Notification API estándar)
   if (typeof window !== 'undefined' && 'Notification' in window) {
-    if (Notification.permission === 'granted') {
+    const isGranted = Notification.permission === 'granted'
+    const permission = isGranted ? 'granted' : await Notification.requestPermission()
+
+    if (permission === 'granted') {
       try {
+        // En navegadores móviles y PWAs (especialmente iOS Safari PWA instalado),
+        // el constructor "new Notification" tradicional no funciona o es bloqueado.
+        // La forma correcta es lanzar la notificación a través del Service Worker registrado.
+        if ('serviceWorker' in navigator) {
+          const reg = await navigator.serviceWorker.getRegistration()
+          if (reg) {
+            await reg.showNotification(title, { body })
+            return true
+          }
+        }
+
+        // Fallback al constructor clásico si no hay un Service Worker activo/listo
         new Notification(title, { body })
         return true
       } catch (e) {
-        console.error('Error al instanciar la notificación web estándar:', e)
-      }
-    } else if (Notification.permission !== 'denied') {
-      try {
-        const permission = await Notification.requestPermission()
-        if (permission === 'granted') {
+        console.error('Error al instanciar la notificación web:', e)
+        // Intentamos fallback directo por si acaso falló el service worker
+        try {
           new Notification(title, { body })
           return true
+        } catch (innerErr) {
+          console.error('Fallback de notificación clásica fallido:', innerErr)
         }
-      } catch (e) {
-        console.error('Error al solicitar permisos e instanciar notificación web:', e)
       }
     } else {
       console.warn('El permiso de notificaciones de navegador está denegado.')
