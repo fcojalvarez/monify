@@ -21,6 +21,7 @@ import BaseSelect from '@/components/ui/BaseSelect.vue'
 import BaseSwitch from '@/components/ui/BaseSwitch.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
 import { localeOptions, type AppLocale, useI18n } from '@/i18n'
+import { sendNotification } from '@/utils/notification'
 
 const CategoryManager = defineAsyncComponent(() => import('@/components/categories/CategoryManager.vue'))
 const FamilyManager = defineAsyncComponent(() => import('@/components/family/FamilyManager.vue'))
@@ -238,6 +239,26 @@ const language = computed({
   },
 })
 
+// Test Notification
+const notificationStatus = ref<{ success: boolean; message: string } | null>(null)
+
+async function testNotification() {
+  notificationStatus.value = null
+  try {
+    const success = await sendNotification(
+      'Movimiento recurrente creado',
+      'Se ha registrado un gasto de 43,00 € en la categoría "Comida". Nota: Compra semanal. Perteneciente a: Papá.'
+    )
+    if (success) {
+      notificationStatus.value = { success: true, message: '¡Notificación enviada con éxito!' }
+    } else {
+      notificationStatus.value = { success: false, message: 'No se pudo enviar la notificación. ¿Están concedidos los permisos?' }
+    }
+  } catch (error) {
+    notificationStatus.value = { success: false, message: error instanceof Error ? error.message : 'Error al enviar' }
+  }
+}
+
 onMounted(() => {
   void Promise.all([categories.fetchAll(), family.fetchAll()])
 })
@@ -260,6 +281,26 @@ onMounted(() => {
           </p>
         </div>
       </div>
+
+      <!-- SECCIÓN TEMPORAL: Probar Notificaciones -->
+      <BaseCard as="section" class="order-first p-5 space-y-4 border border-violet-200 dark:border-violet-800 bg-violet-50/10">
+        <h2 class="text-sm font-semibold text-violet-600 dark:text-violet-400 uppercase tracking-wide flex items-center gap-2">
+          <AppIcon name="solar:bell-bold" :size="18" />
+          Probar Notificaciones
+        </h2>
+        <p class="text-xs text-content-muted leading-relaxed">
+          Usa este botón para solicitar permisos y comprobar inmediatamente cómo se recibirá la notificación de ejemplo cuando se cree automáticamente un movimiento recurrente.
+        </p>
+        <div class="flex flex-col gap-2">
+          <BaseButton type="button" class="w-full justify-center" @click="testNotification">
+            <AppIcon name="solar:notification-lines-portal-bold" :size="18" class="mr-2" />
+            Enviar notificación de prueba
+          </BaseButton>
+          <p v-if="notificationStatus" class="text-xs text-center font-medium" :class="notificationStatus.success ? 'text-primary-500' : 'text-expense'">
+            {{ notificationStatus.message }}
+          </p>
+        </div>
+      </BaseCard>
 
       <!-- Sección 1: Datos Personales -->
       <BaseCard as="section" class="order-3 p-5 space-y-4">
