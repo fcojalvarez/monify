@@ -148,7 +148,7 @@ describe('BaseDialog', () => {
     expect(wrapper.emitted('close')).toBeFalsy()
   })
 
-  it('no cierra el diálogo al hacer clic en el botón de cerrar si tiene cambios sin guardar, y muestra la confirmación', async () => {
+  it('no cierra el diálogo al hacer clic en el botón de cerrar si tiene cambios sin guardar, y emite close-attempt', async () => {
     const wrapper = mount(BaseDialog, {
       ...globalOptions,
       props: {
@@ -167,7 +167,7 @@ describe('BaseDialog', () => {
     expect(wrapper.emitted('close')).toBeFalsy()
     expect(wrapper.emitted('update:modelValue')).toBeFalsy()
 
-    // Debe mostrar la advertencia de cambios sin guardar
-    expect(wrapper.text()).toContain('Cambios sin guardar')
+    // Debe emitir el evento close-attempt
+    expect(wrapper.emitted('close-attempt')).toBeTruthy()
   })
 })
