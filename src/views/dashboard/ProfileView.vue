@@ -241,10 +241,17 @@ const language = computed({
 
 // Test Notification
 const notificationStatus = ref<{ success: boolean; message: string } | null>(null)
-const diagnostics = ref(diagnoseNotifications())
+const diagnostics = ref({
+  isNative: false,
+  hasNotificationAPI: false,
+  isSecure: false,
+  webPermission: 'loading',
+  hasServiceWorker: false,
+  hasActiveRegistration: false
+})
 
-function refreshDiagnostics() {
-  diagnostics.value = diagnoseNotifications()
+async function refreshDiagnostics() {
+  diagnostics.value = await diagnoseNotifications()
 }
 
 async function testNotification() {
@@ -262,13 +269,13 @@ async function testNotification() {
   } catch (error) {
     notificationStatus.value = { success: false, message: error instanceof Error ? error.message : 'Error al enviar' }
   } finally {
-    refreshDiagnostics()
+    await refreshDiagnostics()
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
   void Promise.all([categories.fetchAll(), family.fetchAll()])
-  refreshDiagnostics()
+  await refreshDiagnostics()
 })
 
 </script>
@@ -324,9 +331,15 @@ onMounted(() => {
             </span>
           </div>
           <div class="flex justify-between gap-4">
-            <span>Service Worker activo:</span>
+            <span>Soporte de Service Worker:</span>
             <span class="font-medium shrink-0" :class="diagnostics.hasServiceWorker ? 'text-primary-500' : 'text-expense'">
               {{ diagnostics.hasServiceWorker ? 'Sí' : 'No' }}
+            </span>
+          </div>
+          <div class="flex justify-between gap-4">
+            <span>Service Worker registrado:</span>
+            <span class="font-medium shrink-0" :class="diagnostics.hasActiveRegistration ? 'text-primary-500' : 'text-expense'">
+              {{ diagnostics.hasActiveRegistration ? 'Sí (Correcto)' : 'No (Iniciando/Esperando)' }}
             </span>
           </div>
         </div>
